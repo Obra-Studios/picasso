@@ -26,7 +26,7 @@ you previously didn't notice.
 
 For more information, visit https://www.typescriptlang.org/
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
+Using TypeScript requires a compiler to convert TypeScript (bezierAndPrint.ts) into JavaScript (bezierAndPrint.js)
 for the browser to run.
 
 We recommend writing TypeScript code using Visual Studio code:

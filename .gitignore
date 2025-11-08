@@ -6,3 +6,6 @@ node_modules
 out/
 dist/
 code.js
+
+# OpenAI API Key
+openai-config.json
