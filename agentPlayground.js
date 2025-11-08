@@ -13,26 +13,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const prompts = {
     systemPrompt: "You are a design assistant that helps complete designs in Figma. Given a description of existing shapes (rectangles, circles, ellipses, polygons, stars, lines, vectors) and a user's prompt, you should generate instructions for creating additional shapes to complete the design. CRITICAL: Pay close attention to the spatial positioning of existing shapes. Use the center coordinates (centerX, centerY) and bounds information to position new shapes relative to existing ones. Ensure all new shapes are positioned within the frame bounds and in logical positions relative to the existing design. Respond with a JSON array of shape creation instructions.",
     vectorDescriptionPrompt: "Describe the following vector in detail, including its shape, position, size, and any visual characteristics:",
-    semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, and spatial relationships. For each shape, mention:\n- Exact pixel positions (x, y coordinates)\n- Center coordinates (centerX, centerY)\n- Dimensions (width x height)\n- Spatial relationships between shapes (e.g., 'Shape A is at (100, 200) with center at (150, 250), positioned 50 pixels above Shape B at (100, 300)')\n- Frame bounds and how shapes are positioned within the frame\nUse specific numbers from the bounds data. Keep it to 3-4 sentences:\n\n{domRepresentation}",
-    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT:\n- The existing shape description is: {vectorDescription}\n- The DOM representation includes center coordinates (centerX, centerY) for each existing shape\n- Frame bounds are provided in the DOM representation - ensure all new shapes are positioned within these bounds\n- Use the center coordinates and bounds of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape\n- Position new shapes in a way that makes visual sense relative to existing shapes\n\nDOM representation: {domRepresentation}\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Ensure x and y coordinates place shapes within the frame bounds and in logical positions relative to existing shapes."
+    semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, and spatial relationships.\n\nIMPORTANT: Use the 'relativeBounds' coordinates (not 'bounds') when describing positions, as these are relative to the frame and match what you see in Figma. The frame's top-left corner is at (0, 0).\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to frame)\n- Center coordinates from relativeBounds (centerX, centerY relative to frame)\n- Dimensions (width x height in pixels)\n- Spatial relationships between shapes with specific pixel distances (e.g., 'Shape A is at relative position (125, 164) with center at (190.5, 238.5), positioned 50 pixels above Shape B')\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 3-4 sentences:\n\n{domRepresentation}",
+    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT:\n- The existing shape description is: {vectorDescription}\n- The DOM representation includes both absolute bounds and relativeBounds (relative to frame)\n- IMPORTANT: Use the relativeBounds coordinates when positioning new shapes - these match what you see in Figma\n- The frame's top-left corner is at (0, 0) - all relativeBounds coordinates are relative to this\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as relativeBounds (relative to frame)\n- Position new shapes in a way that makes visual sense relative to existing shapes using the relativeBounds coordinates\n\nDOM representation: {domRepresentation}\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the frame (like relativeBounds) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes."
 };
 // Get DOM-like representation of any shape node
-function getDOMRepresentation(node) {
+function getDOMRepresentation(node, frameBounds) {
     const bounds = node.absoluteBoundingBox;
     const fills = 'fills' in node ? node.fills : [];
     const strokes = 'strokes' in node ? node.strokes : [];
     const strokeWeight = ('strokeWeight' in node && typeof node.strokeWeight === 'number') ? node.strokeWeight : 0;
-    const baseRep = {
-        type: node.type,
-        name: node.name || `Unnamed ${node.type}`,
-        bounds: bounds ? {
+    // Calculate absolute and relative positions
+    let absoluteBounds = null;
+    let relativeBounds = null;
+    if (bounds) {
+        const absCenterX = bounds.x + bounds.width / 2;
+        const absCenterY = bounds.y + bounds.height / 2;
+        absoluteBounds = {
             x: bounds.x,
             y: bounds.y,
             width: bounds.width,
             height: bounds.height,
-            centerX: bounds.x + bounds.width / 2,
-            centerY: bounds.y + bounds.height / 2
-        } : null,
+            centerX: absCenterX,
+            centerY: absCenterY
+        };
+        // If frame bounds are provided, calculate relative positions (relative to frame top-left)
+        if (frameBounds) {
+            relativeBounds = {
+                x: bounds.x - frameBounds.x,
+                y: bounds.y - frameBounds.y,
+                width: bounds.width,
+                height: bounds.height,
+                centerX: absCenterX - frameBounds.x,
+                centerY: absCenterY - frameBounds.y
+            };
+        }
+    }
+    const baseRep = {
+        type: node.type,
+        name: node.name || `Unnamed ${node.type}`,
+        bounds: absoluteBounds, // Absolute coordinates (relative to page)
+        relativeBounds: relativeBounds, // Position relative to frame (0,0 is top-left of frame)
         fills: Array.isArray(fills) ? fills.map((fill) => {
             if (fill.type === 'SOLID') {
                 return {
@@ -105,17 +125,16 @@ function getShapesDOMRepresentation(shapes, frame) {
                 x: bounds.x,
                 y: bounds.y,
                 width: bounds.width,
-                height: bounds.height,
-                centerX: bounds.x + bounds.width / 2,
-                centerY: bounds.y + bounds.height / 2
+                height: bounds.height
             };
         }
     }
     return {
         documentTree: {
             type: 'DOCUMENT',
-            frame: frameBounds,
-            children: shapes.map(shape => getDOMRepresentation(shape))
+            frame: frameBounds ? Object.assign(Object.assign({}, frameBounds), { centerX: frameBounds.x + frameBounds.width / 2, centerY: frameBounds.y + frameBounds.height / 2 }) : null,
+            note: frameBounds ? "All coordinates are relative to the frame. The frame's top-left corner is at (0, 0). Use relativeBounds for positioning shapes within the frame." : "Coordinates are absolute (relative to the page).",
+            children: shapes.map(shape => getDOMRepresentation(shape, frameBounds))
         }
     };
 }
@@ -467,9 +486,20 @@ function parseAndCreateVectors(response, parentFrame) {
                 console.warn('Failed to create node for instruction:', instruction);
                 continue;
             }
-            // Set position
-            node.x = instruction.x;
-            node.y = instruction.y;
+            // Set position - coordinates should be relative to frame if frame exists
+            // If parentFrame exists, coordinates are already relative to frame, so we can use them directly
+            // Otherwise, they're absolute page coordinates
+            if (parentFrame && parentFrame.absoluteBoundingBox) {
+                // Convert relative coordinates to absolute by adding frame position
+                const frameBounds = parentFrame.absoluteBoundingBox;
+                node.x = frameBounds.x + instruction.x;
+                node.y = frameBounds.y + instruction.y;
+            }
+            else {
+                // Use coordinates as-is (absolute page coordinates)
+                node.x = instruction.x;
+                node.y = instruction.y;
+            }
             // Normalize and set fills
             if (instruction.fills && instruction.fills.length > 0) {
                 const normalizedFills = instruction.fills.map((fill) => {
