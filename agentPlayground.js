@@ -14,7 +14,7 @@ const prompts = {
     systemPrompt: "You are a design assistant that helps complete designs in Figma. Given a description of existing shapes (rectangles, circles, ellipses, polygons, stars, lines, vectors) and a user's prompt, you should generate instructions for creating additional shapes to complete the design. CRITICAL: Pay close attention to the spatial positioning of existing shapes. Use the center coordinates (centerX, centerY) and bounds information to position new shapes relative to existing ones. Ensure all new shapes are positioned within the frame bounds and in logical positions relative to the existing design. Respond with a JSON array of shape creation instructions.",
     vectorDescriptionPrompt: "Describe the following vector in detail, including its shape, position, size, and any visual characteristics:",
     semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, and spatial relationships.\n\nIMPORTANT: Use the 'relativeBounds' coordinates (not 'bounds') when describing positions, as these are relative to the frame and match what you see in Figma. The frame's top-left corner is at (0, 0).\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to frame)\n- Center coordinates from relativeBounds (centerX, centerY relative to frame)\n- Dimensions (width x height in pixels)\n- Spatial relationships between shapes with specific pixel distances (e.g., 'Shape A is at relative position (125, 164) with center at (190.5, 238.5), positioned 50 pixels above Shape B')\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 3-4 sentences:\n\n{domRepresentation}",
-    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT:\n- The existing shape description is: {vectorDescription}\n- The DOM representation includes both absolute bounds and relativeBounds (relative to frame)\n- IMPORTANT: Use the relativeBounds coordinates when positioning new shapes - these match what you see in Figma\n- The frame's top-left corner is at (0, 0) - all relativeBounds coordinates are relative to this\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as relativeBounds (relative to frame)\n- Position new shapes in a way that makes visual sense relative to existing shapes using the relativeBounds coordinates\n\nDOM representation: {domRepresentation}\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the frame (like relativeBounds) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes."
+    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT:\n- The existing shape description is: {vectorDescription}\n- The DOM representation includes both absolute bounds and relativeBounds (relative to frame)\n- IMPORTANT: Use the relativeBounds coordinates when positioning new shapes - these match what you see in Figma\n- The frame's top-left corner is at (0, 0) - all relativeBounds coordinates are relative to this\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as relativeBounds (relative to frame)\n- Position new shapes in a way that makes visual sense relative to existing shapes using the relativeBounds coordinates\n\nDOM representation: {domRepresentation}\n\nCRITICAL JSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions (e.g., \"240.5 - 10\") - calculate the values yourself and use the final number\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON array that can be parsed directly\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the frame (like relativeBounds) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes."
 };
 // Get DOM-like representation of any shape node
 function getDOMRepresentation(node, frameBounds) {
@@ -400,6 +400,54 @@ function parseAndCreateVectors(response, parentFrame) {
         else if (jsonString.startsWith('```')) {
             jsonString = jsonString.replace(/```\n?/g, '').trim();
         }
+        // Remove single-line comments (// ...)
+        jsonString = jsonString.replace(/\/\/.*$/gm, '');
+        // Remove multi-line comments (/* ... */)
+        jsonString = jsonString.replace(/\/\*[\s\S]*?\*\//g, '');
+        // Evaluate simple arithmetic expressions in string values (e.g., "240.5 - 10" -> 230.5)
+        // This handles cases where the AI includes calculations in the JSON
+        jsonString = jsonString.replace(/:\s*"([^"]*)"([,\n}])/g, (match, value, suffix) => {
+            // Check if the value contains arithmetic
+            if (/^[\d\s.+\-*/()]+$/.test(value.trim())) {
+                try {
+                    // Evaluate the expression
+                    const result = Function(`"use strict"; return (${value.trim()})`)();
+                    return `: ${result}${suffix}`;
+                }
+                catch (e) {
+                    // If evaluation fails, return original
+                    return match;
+                }
+            }
+            return match;
+        });
+        // Also handle unquoted numeric expressions (e.g., "x": 240.5 - 10)
+        jsonString = jsonString.replace(/:\s*([\d.]+)\s*([+\-*/])\s*([\d.]+)/g, (match, num1, op, num2) => {
+            try {
+                const n1 = parseFloat(num1);
+                const n2 = parseFloat(num2);
+                let result;
+                switch (op) {
+                    case '+':
+                        result = n1 + n2;
+                        break;
+                    case '-':
+                        result = n1 - n2;
+                        break;
+                    case '*':
+                        result = n1 * n2;
+                        break;
+                    case '/':
+                        result = n1 / n2;
+                        break;
+                    default: return match;
+                }
+                return `: ${result}`;
+            }
+            catch (e) {
+                return match;
+            }
+        });
         const instructions = JSON.parse(jsonString);
         if (!Array.isArray(instructions)) {
             throw new Error('Response is not an array');
