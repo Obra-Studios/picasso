@@ -1,17 +1,240 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 16px;
+            margin: 0;
+            background: #ffffff;
+        }
+        h2 {
+            margin: 0 0 16px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666666;
+            margin-bottom: 8px;
+        }
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #18a0fb;
+        }
+        button {
+            width: 100%;
+            padding: 8px 12px;
+            background: #18a0fb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        button:hover {
+            background: #0d8ce8;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            font-size: 11px;
+            color: #666666;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+        .match-button {
+            background: #7c3aed;
+            margin-top: 16px;
+        }
+        .match-button:hover {
+            background: #6d28d9;
+        }
+        .match-button:disabled {
+            background: #cccccc;
+        }
+        .processing {
+            font-size: 11px;
+            color: #18a0fb;
+            font-style: italic;
+        }
+    .llm-response {
+        margin-top: 12px;
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #333;
+        max-height: 150px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .output-box {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #333;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .output-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #000;
+    }
+    </style>
+</head>
+<body>
+    <h2>Picasso - AI Style Matcher</h2>
+    
+    <div class="section">
+        <div class="section-title">OpenAI API Key</div>
+        <input type="password" id="api-key" placeholder="Enter your OpenAI API key (sk-...)" />
+    </div>
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
+    <div class="section">
+        <div class="section-title">Context Frame (Reference)</div>
+        <button id="select-context">Select Context Frame</button>
+        <div class="status" id="context-status">No frame selected</div>
+    </div>
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+    <div class="section">
+        <div class="section-title">Canvas Frame (Target)</div>
+        <button id="select-canvas">Select Canvas Frame</button>
+        <div class="status" id="canvas-status">No frame selected</div>
+    </div>
 
-</script>
+    <button id="match-style" class="match-button" disabled>Match Style with AI</button>
+    
+    <div id="processing-status" class="status processing" style="display: none;"></div>
+    
+    <div id="style-description-box" class="output-box" style="display: none;">
+        <div class="output-title">Style Description (from Context Frame)</div>
+        <div id="style-description-content"></div>
+    </div>
+    
+    <div id="modification-instructions-box" class="output-box" style="display: none;">
+        <div class="output-title">Modification Instructions (for Canvas Frame)</div>
+        <div id="modification-instructions-content"></div>
+    </div>
+
+    <script>
+        let contextFrameId = null;
+        let canvasFrameId = null;
+
+        // Request API key from plugin on load
+        parent.postMessage({ pluginMessage: { type: 'get-api-key' } }, '*');
+
+        // Save API key to clientStorage when changed
+        document.getElementById('api-key').addEventListener('change', (e) => {
+            const apiKey = e.target.value.trim();
+            parent.postMessage({ 
+                pluginMessage: { 
+                    type: 'save-api-key',
+                    apiKey: apiKey
+                } 
+            }, '*');
+        });
+
+        document.getElementById('select-context').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-context' } }, '*');
+        };
+
+        document.getElementById('select-canvas').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-canvas' } }, '*');
+        };
+
+        document.getElementById('match-style').onclick = () => {
+            const apiKey = document.getElementById('api-key').value.trim();
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key');
+                return;
+            }
+            if (contextFrameId && canvasFrameId) {
+                parent.postMessage({ 
+                    pluginMessage: { 
+                        type: 'match-style',
+                        contextFrameId,
+                        canvasFrameId,
+                        apiKey
+                    } 
+                }, '*');
+            }
+        };
+
+        // Listen for messages from the plugin code
+        window.onmessage = (event) => {
+            const msg = event.data.pluginMessage;
+            if (msg.type === 'api-key-loaded') {
+                if (msg.apiKey) {
+                    document.getElementById('api-key').value = msg.apiKey;
+                    updateMatchButton();
+                }
+            } else if (msg.type === 'context-selected') {
+                contextFrameId = msg.frameId;
+                document.getElementById('context-status').textContent = msg.frameName || 'Frame selected';
+                updateMatchButton();
+            } else if (msg.type === 'canvas-selected') {
+                canvasFrameId = msg.frameId;
+                document.getElementById('canvas-status').textContent = msg.frameName || 'Frame selected';
+                console.log("selected canvas");
+                updateMatchButton();
+            } else if (msg.type === 'processing') {
+                document.getElementById('processing-status').style.display = 'block';
+                document.getElementById('processing-status').textContent = msg.message;
+            } else if (msg.type === 'style-description-generated') {
+                document.getElementById('style-description-box').style.display = 'block';
+                document.getElementById('style-description-content').textContent = msg.styleDescription || '';
+            } else if (msg.type === 'modification-instructions-generated') {
+                document.getElementById('processing-status').style.display = 'none';
+                document.getElementById('modification-instructions-box').style.display = 'block';
+                const jsonContent = msg.modificationInstructions || '';
+                try {
+                    // Try to format JSON nicely
+                    const parsed = JSON.parse(jsonContent);
+                    document.getElementById('modification-instructions-content').textContent = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    // If not valid JSON, display as-is
+                    document.getElementById('modification-instructions-content').textContent = jsonContent;
+                }
+            } else if (msg.type === 'error') {
+                document.getElementById('processing-status').style.display = 'none';
+                alert(msg.message);
+            }
+        };
+
+        function updateMatchButton() {
+            const matchButton = document.getElementById('match-style');
+            const apiKey = document.getElementById('api-key').value.trim();
+            matchButton.disabled = !(contextFrameId && canvasFrameId && apiKey);
+        }
+
+        // Update button state when API key changes
+        document.getElementById('api-key').addEventListener('input', updateMatchButton);
+    </script>
+</body>
+</html>
