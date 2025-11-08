@@ -1118,9 +1118,10 @@ const uiHtml = `
   </div>
 
   <script>
-    // Load saved API key and logger URL
+    // Load saved API key, logger URL, and design prompt
     parent.postMessage({ pluginMessage: { type: 'load-api-key' } }, '*');
     parent.postMessage({ pluginMessage: { type: 'load-logger-url' } }, '*');
+    parent.postMessage({ pluginMessage: { type: 'load-prompt' } }, '*');
 
     // Ensure buttons are enabled by default
     const refreshBtn = document.getElementById('refresh');
@@ -1147,6 +1148,11 @@ const uiHtml = `
         const loggerUrlInput = document.getElementById('loggerServerUrl');
         if (loggerUrlInput && msg.loggerUrl) {
           loggerUrlInput.value = msg.loggerUrl;
+        }
+      } else if (msg.type === 'prompt-loaded') {
+        const promptInput = document.getElementById('prompt');
+        if (promptInput && msg.prompt) {
+          promptInput.value = msg.prompt;
         }
       } else if (msg.type === 'description-updated') {
         console.log('Processing description-updated message, description:', msg.description);
@@ -1351,6 +1357,17 @@ const uiHtml = `
       }, '*');
     });
 
+    // Save design prompt when it changes
+    document.getElementById('prompt').addEventListener('blur', () => {
+      const promptInput = document.getElementById('prompt');
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'save-prompt', 
+          prompt: promptInput.value.trim()
+        } 
+      }, '*');
+    });
+
   </script>
 </body>
 </html>
@@ -1377,6 +1394,11 @@ const uiHtml = `
         const savedLoggerUrl = yield figma.clientStorage.getAsync('logger-server-url');
         if (savedLoggerUrl) {
             figma.ui.postMessage({ type: 'logger-url-loaded', loggerUrl: savedLoggerUrl });
+        }
+        // Load and send design prompt to UI
+        const savedPrompt = yield figma.clientStorage.getAsync('design-prompt');
+        if (savedPrompt) {
+            figma.ui.postMessage({ type: 'prompt-loaded', prompt: savedPrompt });
         }
         // Store current state
         let currentDescription = 'Select a frame and click Refresh to generate description';
@@ -1514,6 +1536,15 @@ const uiHtml = `
             if (msg.type === 'save-logger-url' && msg.loggerUrl) {
                 yield figma.clientStorage.setAsync('logger-server-url', msg.loggerUrl);
                 figma.notify('Logger server URL saved');
+                return;
+            }
+            if (msg.type === 'load-prompt') {
+                const prompt = yield figma.clientStorage.getAsync('design-prompt');
+                figma.ui.postMessage({ type: 'prompt-loaded', prompt: prompt || '' });
+                return;
+            }
+            if (msg.type === 'save-prompt' && msg.prompt !== undefined) {
+                yield figma.clientStorage.setAsync('design-prompt', msg.prompt);
                 return;
             }
             if (msg.type === 'frame-selected') {
