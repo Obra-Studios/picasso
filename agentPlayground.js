@@ -10,10 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 // Prompts configuration - can be edited to customize AI behavior
+// Note: These prompts should be kept in sync with prompts.json
 const prompts = {
     systemPrompt: "You are a design assistant that helps complete designs in Figma. Given a description of existing shapes (rectangles, circles, ellipses, polygons, stars, lines, vectors) and a user's prompt, you should generate instructions for creating additional shapes to complete the design. CRITICAL: Pay close attention to the spatial positioning of existing shapes. Use the center coordinates (centerX, centerY) and bounds information to position new shapes relative to existing ones. Ensure all new shapes are positioned within the frame bounds and in logical positions relative to the existing design. Respond with a JSON array of shape creation instructions.",
     vectorDescriptionPrompt: "Describe the following vector in detail, including its shape, position, size, and any visual characteristics:",
     semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, spatial relationships, AND hierarchical structure.\n\nHIERARCHY AWARENESS:\n- The structure preserves the tree-like hierarchy of the design (groups, frames, containers)\n- Shapes may be nested within groups or other containers\n- Use the 'relativeBounds' coordinates (not 'bounds') when describing positions - these are relative to the parent container (group/frame)\n- The frame's top-left corner is at (0, 0)\n- Shapes within groups have coordinates relative to their group, not the frame\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to parent container)\n- Center coordinates from relativeBounds (centerX, centerY relative to parent)\n- Dimensions (width x height in pixels)\n- Which group or container it belongs to (if nested)\n- Spatial relationships between shapes with specific pixel distances\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 4-5 sentences:\n\n{domRepresentation}",
+    screenshotInterpretationPrompt: "IMPORTANT: You have been provided with a screenshot of the frame. Please interpret this screenshot and interpolate between the visual geometries you see in the screenshot and the exact values provided in the DOM representation above. Use the screenshot to understand the visual appearance, spatial relationships, and design intent, while using the DOM representation for precise numerical values, coordinates, and structural information. Combine both sources of information to provide an accurate and comprehensive description.",
     completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT & HIERARCHY:\n- The existing shape description is: {vectorDescription}\n- The DOM representation preserves the hierarchical tree structure (groups, frames, containers)\n- IMPORTANT: Respect the existing hierarchy when positioning new shapes\n- Shapes may be nested within groups - if you're adding shapes that relate to grouped shapes, consider placing them in the same group\n- Use the relativeBounds coordinates when positioning new shapes - these are relative to the parent container (group or frame)\n- The frame's top-left corner is at (0, 0) - coordinates at the frame level are relative to this\n- Shapes within groups have coordinates relative to their group's top-left corner\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as the target container (frame or group)\n- Position new shapes in a way that makes visual sense relative to existing shapes, respecting their hierarchical relationships\n- If shapes are grouped together, new related shapes should likely be placed in the same group or at the same hierarchy level\n\nDOM representation: {domRepresentation}\n\nCRITICAL JSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions (e.g., \"240.5 - 10\") - calculate the values yourself and use the final number\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON array that can be parsed directly\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the appropriate container (frame or group) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes, respecting the hierarchical structure."
 };
 // Get DOM-like representation of any shape node
@@ -259,14 +261,18 @@ function describeShape(shape) {
     return `${shape.name || `Unnamed ${shape.type}`} (${typeInfo}), ${size}, ${position}, ${fillInfo}, ${strokeInfo}`;
 }
 // Generate semantic description using OpenAI
-function generateSemanticDescription(apiKey, domRepresentation, onDebug) {
+function generateSemanticDescription(apiKey, domRepresentation, onDebug, screenshot) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log('generateSemanticDescription: Starting...');
             const domString = JSON.stringify(domRepresentation, null, 2);
-            const userPrompt = prompts.semanticDescriptionPrompt.replace('{domRepresentation}', domString);
+            let userPrompt = prompts.semanticDescriptionPrompt.replace('{domRepresentation}', domString);
+            // Add screenshot interpretation instructions if screenshot is provided
+            if (screenshot) {
+                userPrompt += "\n\n" + prompts.screenshotInterpretationPrompt;
+            }
             console.log('generateSemanticDescription: Calling OpenAI...');
-            const response = yield callOpenAI(apiKey, "You are a design analysis assistant. Describe visual designs in clear, human-readable terms.", userPrompt, onDebug);
+            const response = yield callOpenAI(apiKey, "You are a design analysis assistant. Describe visual designs in clear, human-readable terms.", userPrompt, onDebug, screenshot);
             console.log('generateSemanticDescription: Received response, length:', response.length);
             const trimmed = response.trim();
             console.log('generateSemanticDescription: Returning trimmed response, length:', trimmed.length);
@@ -383,14 +389,38 @@ function findVectorsOnFrame(frameId) {
     });
 }
 // Call OpenAI API
-function callOpenAI(apiKey, systemPrompt, userPrompt, onDebug) {
+function callOpenAI(apiKey, systemPrompt, userPrompt, onDebug, imageBase64) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
+        // Format user message - if image is provided, use vision API format
+        let userMessage;
+        if (imageBase64) {
+            // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+            const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+            userMessage = {
+                role: 'user',
+                content: [
+                    {
+                        type: 'text',
+                        text: userPrompt
+                    },
+                    {
+                        type: 'image_url',
+                        image_url: {
+                            url: `data:image/png;base64,${base64Data}`
+                        }
+                    }
+                ]
+            };
+        }
+        else {
+            userMessage = { role: 'user', content: userPrompt };
+        }
         const requestBody = {
             model: 'gpt-4o-mini',
             messages: [
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
+                userMessage
             ],
             temperature: 0.7,
             max_tokens: 1000
@@ -1343,6 +1373,11 @@ const uiHtml = `
         if (savedApiKey) {
             figma.ui.postMessage({ type: 'api-key-loaded', apiKey: savedApiKey });
         }
+        // Load and send logger server URL to UI
+        const savedLoggerUrl = yield figma.clientStorage.getAsync('logger-server-url');
+        if (savedLoggerUrl) {
+            figma.ui.postMessage({ type: 'logger-url-loaded', loggerUrl: savedLoggerUrl });
+        }
         // Store current state
         let currentDescription = 'Select a frame and click Refresh to generate description';
         let currentDomRep = null;
@@ -1378,6 +1413,8 @@ const uiHtml = `
                     return;
                 }
                 currentDomRep = getShapesDOMRepresentation(currentVectors, currentFrame);
+                // Take screenshot of the frame for visual analysis
+                const frameScreenshot = currentFrame ? yield exportFrameAsImage(currentFrame) : null;
                 // Generate new description with debug callback
                 console.log('Generating semantic description...');
                 try {
@@ -1408,7 +1445,7 @@ const uiHtml = `
                                 console.error('Error sending fallback debug message:', fallbackError);
                             }
                         }
-                    });
+                    }, frameScreenshot);
                     console.log('Description generated:', currentDescription);
                     if (!currentDescription || currentDescription.trim() === '') {
                         console.warn('Empty description received from API');
