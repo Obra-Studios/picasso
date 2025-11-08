@@ -1,17 +1,295 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, Roboto, Arial; padding: 16px; }
+      button { margin: 6px 6px 6px 0; padding: 8px 12px; cursor: pointer; }
+      .hint { color: #666; font-size: 12px; margin-bottom: 8px }
+      .box { border: 1px solid #e1e4e8; padding: 10px; border-radius: 6px; background: #fff }
+      .row { display:flex; align-items:center; gap:8px }
+      .title { font-weight: 600; font-size: 16px; }
+      .small { font-size: 13px; color: #333; line-height: 1.5; }
+      input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
+      .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 8px; border-radius: 4px; font-size: 12px; margin-bottom: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div style="flex:1">
+        <div class="title">Picasso - Prompt by Action</div>
+        <div class="hint">Move a block → AI suggests how to move other blocks</div>
+      </div>
+    </div>
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
+    <div class="warning" id="key-warning">
+      ⚠️ This demo calls OpenAI directly from the plugin UI. Paste your OpenAI API key below (stored only in your browser session).
+    </div>
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+    <div style="margin-top:8px; display:flex; gap:8px; align-items:center">
+      <input id="openai-key" type="password" placeholder="Paste OpenAI API key (sk-...)" />
+      <button id="save-key">Save key</button>
+      <button id="clear-key">Clear</button>
+    </div>
 
-</script>
+    <div class="box" id="suggestion" style="margin-top:10px; display:none">
+      <div id="suggest-text" class="small"></div>
+      <div style="margin-top:8px">
+        <button id="apply">Apply suggestion</button>
+        <button id="ignore">Ignore</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <button id="create-sample">Create sample blocks</button>
+      <button id="close">Close plugin</button>
+    </div>
+
+    <div id="status" style="margin-top:10px; color:#444; font-size:13px"></div>
+
+    <script>
+      const suggestionEl = document.getElementById('suggestion');
+      const suggestText = document.getElementById('suggest-text');
+      const status = document.getElementById('status');
+
+      let currentSuggestion = null;
+      let isQuerying = false;
+
+      document.getElementById('create-sample').onclick = () => {
+        parent.postMessage({ pluginMessage: { type: 'create-sample' } }, '*');
+        status.textContent = 'Creating sample blocks...';
+      };
+
+      document.getElementById('close').onclick = () => {
+        parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+      };
+
+      document.getElementById('apply').onclick = () => {
+        if (!currentSuggestion) return;
+        parent.postMessage({ pluginMessage: { type: 'apply-move', id: currentSuggestion.target.id, x: currentSuggestion.suggested.x, y: currentSuggestion.suggested.y } }, '*');
+        status.textContent = `Applying move to ${currentSuggestion.target.name || currentSuggestion.target.id}...`;
+      };
+
+      document.getElementById('ignore').onclick = () => {
+        currentSuggestion = null;
+        suggestionEl.style.display = 'none';
+        status.textContent = 'Suggestion ignored.';
+      };
+
+      window.onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (!msg) return;
+
+        if (msg.type === 'idle') {
+          status.textContent = 'Select a single node and move it to get suggestions.';
+          return;
+        }
+
+        if (msg.type === 'created-sample') {
+          status.textContent = 'Sample blocks created. Select and move the left block.';
+          return;
+        }
+
+        if (msg.type === 'suggest-move') {
+          if (isQuerying) return; // Prevent multiple concurrent requests
+
+          // Direct OpenAI call from UI (developer demo). The key must be saved in the session.
+          currentSuggestion = msg;
+          suggestionEl.style.display = 'block';
+          status.textContent = 'Requesting suggestion from OpenAI...';
+          isQuerying = true;
+
+          (async () => {
+            try {
+              const key = sessionStorage.getItem('OPENAI_KEY');
+              if (!key) throw new Error('OpenAI key not set. Paste your key above and click Save.');
+
+              const prompt = `You are given two nodes in a 2D canvas: a moved node and a target node.\n` +
+                `Moved node: name=${msg.moved.name || msg.moved.id}, x=${msg.moved.x}, y=${msg.moved.y}.\n` +
+                `Target node: name=${msg.target.name || msg.target.id}, x=${msg.target.x}, y=${msg.target.y}.\n` +
+                `The moved node was translated by dx=${msg.delta.dx}, dy=${msg.delta.dy}.\n` +
+                `Return a JSON object exactly like: {"x": <number>, "y": <number>, "reason": "short explanation"}. Only return JSON.`;
+
+              const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + key,
+                },
+                body: JSON.stringify({
+                  model: 'gpt-3.5-turbo',
+                  messages: [
+                    { role: 'system', content: 'You are a helpful assistant that replies with JSON only.' },
+                    { role: 'user', content: prompt }
+                  ],
+                  temperature: 0.2,
+                  max_tokens: 200
+                })
+              });
+
+              if (!resp.ok) {
+                const txt = await resp.text();
+                throw new Error('OpenAI error: ' + resp.status + ' ' + txt);
+              }
+              const data = await resp.json();
+              const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+              const match = content.match(/\{[\s\S]*\}/);
+              if (!match) throw new Error('LLM did not return JSON');
+              const parsed = JSON.parse(match[0]);
+              if (typeof parsed.x !== 'number' || typeof parsed.y !== 'number') throw new Error('Invalid x/y in response');
+
+              currentSuggestion.suggested = { x: parsed.x, y: parsed.y };
+              suggestText.textContent = `✨ OpenAI suggests moving "${msg.target.name}" to (${Math.round(parsed.x)}, ${Math.round(parsed.y)})\n\n💡 ${parsed.reason || 'No explanation'}`;
+              status.textContent = 'Suggestion ready.';
+            } catch (err) {
+              status.textContent = 'Error: ' + (err.message || err);
+              suggestionEl.style.display = 'none';
+            } finally {
+              isQuerying = false;
+            }
+          })();
+
+          return;
+        }
+
+        if (msg.type === 'applied') {
+          status.textContent = `✅ Moved to (${Math.round(msg.x)}, ${Math.round(msg.y)})`;
+          currentSuggestion = null;
+          suggestionEl.style.display = 'none';
+          return;
+        }
+
+        if (msg.type === 'error') {
+          status.textContent = 'Error: ' + (msg.message || 'unknown');
+          return;
+        }
+      };
+
+  // initial status
+  const keyInput = document.getElementById('openai-key');
+  const saveKeyBtn = document.getElementById('save-key');
+  const clearKeyBtn = document.getElementById('clear-key');
+
+  // Helper: try to use sessionStorage; if unavailable (data: URL), fall back to
+  // asking the plugin main thread to store/retrieve via figma.clientStorage.
+  function storageAvailable() {
+    try {
+      return !!sessionStorage;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function getKeyFromPlugin() {
+    return new Promise((resolve) => {
+      function onMessage(e) {
+        const pm = e.data && e.data.pluginMessage;
+        if (!pm) return;
+        if (pm.type === 'openai-key') {
+          window.removeEventListener('message', onMessage);
+          resolve(pm.key || null);
+        }
+      }
+      window.addEventListener('message', onMessage);
+      parent.postMessage({ pluginMessage: { type: 'get-openai-key' } }, '*');
+    });
+  }
+
+  function saveKeyToPlugin(key) {
+    return new Promise((resolve) => {
+      function onMessage(e) {
+        const pm = e.data && e.data.pluginMessage;
+        if (!pm) return;
+        if (pm.type === 'openai-key-saved') {
+          window.removeEventListener('message', onMessage);
+          resolve(true);
+        }
+        if (pm.type === 'error') {
+          window.removeEventListener('message', onMessage);
+          resolve(false);
+        }
+      }
+      window.addEventListener('message', onMessage);
+      parent.postMessage({ pluginMessage: { type: 'save-openai-key', key } }, '*');
+    });
+  }
+
+  function clearKeyFromPlugin() {
+    return new Promise((resolve) => {
+      function onMessage(e) {
+        const pm = e.data && e.data.pluginMessage;
+        if (!pm) return;
+        if (pm.type === 'openai-key-cleared') {
+          window.removeEventListener('message', onMessage);
+          resolve(true);
+        }
+        if (pm.type === 'error') {
+          window.removeEventListener('message', onMessage);
+          resolve(false);
+        }
+      }
+      window.addEventListener('message', onMessage);
+      parent.postMessage({ pluginMessage: { type: 'clear-openai-key' } }, '*');
+    });
+  }
+
+  (async () => {
+    if (storageAvailable()) {
+      const existing = sessionStorage.getItem('OPENAI_KEY');
+      if (existing) {
+        keyInput.value = '••••••••';
+        status.textContent = 'OpenAI key loaded from session. Move a node to get suggestions.';
+      } else {
+        status.textContent = 'Paste your OpenAI API key above and click Save, then move a node to get suggestions.';
+      }
+
+      saveKeyBtn.addEventListener('click', () => {
+        const v = keyInput.value.trim();
+        if (!v) return;
+        sessionStorage.setItem('OPENAI_KEY', v);
+        keyInput.value = '••••••••';
+        status.textContent = 'OpenAI key saved in session. Move a node to get suggestions.';
+      });
+
+      clearKeyBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('OPENAI_KEY');
+        keyInput.value = '';
+        status.textContent = 'OpenAI key cleared from session.';
+      });
+    } else {
+      // SessionStorage isn't available (data: URL). Use plugin clientStorage via messages.
+      const existing = await getKeyFromPlugin();
+      if (existing) {
+        keyInput.value = '••••••••';
+        status.textContent = 'OpenAI key loaded from plugin storage. Move a node to get suggestions.';
+      } else {
+        status.textContent = 'Paste your OpenAI API key above and click Save, then move a node to get suggestions.';
+      }
+
+      saveKeyBtn.addEventListener('click', async () => {
+        const v = keyInput.value.trim();
+        if (!v) return;
+        const ok = await saveKeyToPlugin(v);
+        if (ok) {
+          keyInput.value = '••••••••';
+          status.textContent = 'OpenAI key saved in plugin storage. Move a node to get suggestions.';
+        } else {
+          status.textContent = 'Failed to save key.';
+        }
+      });
+
+      clearKeyBtn.addEventListener('click', async () => {
+        const ok = await clearKeyFromPlugin();
+        if (ok) {
+          keyInput.value = '';
+          status.textContent = 'OpenAI key cleared from plugin storage.';
+        } else {
+          status.textContent = 'Failed to clear key.';
+        }
+      });
+    }
+  })();
+    </script>
+  </body>
+</html>

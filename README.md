@@ -1,40 +1,54 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# Picasso - AI-Powered Figma Plugin (simple demo)
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+Move one block → AI suggests how to move others. This is a minimal developer demo that calls OpenAI directly from the plugin UI.
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+IMPORTANT: calling OpenAI from the UI requires an API key in the browser. This demo stores the key in your session only. For production, host a server-side proxy and keep keys off the client.
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+## Quick Start
 
-  https://nodejs.org/en/download/
+1. Build/watch the plugin
 
-Next, install TypeScript using the command:
+```bash
+bun install
+bun watch  # Keep this running in the project root
+```
 
-  npm install -g typescript
+2. Load the plugin in Figma
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+1. Figma → Plugins → Development → Import plugin from manifest...
+2. Select `manifest.json` from this folder
+3. Run **Plugins** → **Development** → **Picasso**
 
-  npm install --save-dev @figma/plugin-typings
+3. Use it
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+1. Paste your OpenAI API key (sk-...) into the plugin UI and click Save.
+2. Click **Create sample blocks**.
+3. Select the left block and drag it.
+4. The plugin will call OpenAI and show a suggested move for the nearest block. Click **Apply** to accept.
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+## Files
 
-For more information, visit https://www.typescriptlang.org/
+```
+code.ts       - Plugin logic (TypeScript)
+code.js       - Compiled plugin (auto-generated)
+ui.html       - Plugin UI (direct OpenAI calls for demo)
+manifest.json - Plugin config (allows https://api.openai.com)
+server/       - DEPRECATED: server-side proxy (left in repo but not used in demo)
+```
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+## Security note
 
-We recommend writing TypeScript code using Visual Studio code:
+- Do NOT publish the plugin with the key in the UI. This demo is for local development only.
+- For production, restore a server-side proxy and keep keys on the server.
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+## If you want the proxy-based setup (safer)
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+See `server/REMOVED.md` for notes on the previously included proxy. I can restore a minimal proxy (Express) that forwards requests to OpenAI and keeps the key server-side if you'd prefer.
+
+## How it works (high-level)
+
+1. `code.ts` detects a moved node and picks a nearby node as the suggestion target.
+2. The plugin UI (`ui.html`) sends the move context to OpenAI and parses a JSON response with x/y coordinates.
+3. The UI shows the suggestion; clicking Apply sends a message back to the plugin main thread, which moves the target node.
+
+Happy testing!

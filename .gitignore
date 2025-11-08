@@ -6,3 +6,8 @@ node_modules
 out/
 dist/
 code.js
+
+# Env files
+.env
+server/.env
+
