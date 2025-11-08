@@ -608,24 +608,37 @@ async function saveGenerationLog(
         }
     };
 
-    // Get existing logs from clientStorage
-    const existingLogs = await figma.clientStorage.getAsync('generation-logs') || [];
-    const logs = Array.isArray(existingLogs) ? existingLogs : [];
+    // Get logger server URL from clientStorage (set by user via ngrok)
+    const loggerServerUrl = await figma.clientStorage.getAsync('logger-server-url') || 'http://localhost:8000';
 
-    // Add new log
-    logs.push(log);
+    // Send log to logger server
+    try {
+        const response = await fetch(`${loggerServerUrl}/log`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(log)
+        });
 
-    // Keep only last 100 logs to avoid storage issues
-    const trimmedLogs = logs.slice(-100);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error sending log to server:', errorText);
+            figma.notify('Warning: Could not save log to server. Check console.');
+        } else {
+            const result = await response.json();
+            console.log('Log saved to server:', result);
+        }
+    } catch (error) {
+        console.error('Error connecting to logger server:', error);
+        figma.notify('Warning: Could not connect to logger server. Check if server is running.');
+    }
 
-    // Save back to clientStorage
-    await figma.clientStorage.setAsync('generation-logs', trimmedLogs);
-
-    // Also send to UI for download
+    // Also send to UI for display
     figma.ui.postMessage({
         type: 'log-generated',
         log: log,
-        logIndex: trimmedLogs.length - 1
+        logIndex: 0
     });
 }
 
@@ -1117,6 +1130,12 @@ const uiHtml = `
     <div class="info">Your API key is stored locally and never shared.</div>
   </div>
   
+  <div class="api-key-section">
+    <label for="loggerServerUrl">Logger Server URL (ngrok):</label>
+    <input type="text" id="loggerServerUrl" placeholder="https://your-ngrok-url.ngrok.io" />
+    <div class="info">Enter your ngrok URL for the logger server (e.g., https://abc123.ngrok.io)</div>
+  </div>
+  
   <div class="frame-section">
     <label for="frameSelect">Select Frame:</label>
     <select id="frameSelect">
@@ -1173,8 +1192,9 @@ const uiHtml = `
   </div>
 
   <script>
-    // Load saved API key
+    // Load saved API key and logger URL
     parent.postMessage({ pluginMessage: { type: 'load-api-key' } }, '*');
+    parent.postMessage({ pluginMessage: { type: 'load-logger-url' } }, '*');
 
     // Ensure buttons are enabled by default
     const refreshBtn = document.getElementById('refresh');
@@ -1196,6 +1216,11 @@ const uiHtml = `
         const apiKeyInput = document.getElementById('apiKey');
         if (apiKeyInput && msg.apiKey) {
           apiKeyInput.value = msg.apiKey;
+        }
+      } else if (msg.type === 'logger-url-loaded') {
+        const loggerUrlInput = document.getElementById('loggerServerUrl');
+        if (loggerUrlInput && msg.loggerUrl) {
+          loggerUrlInput.value = msg.loggerUrl;
         }
       } else if (msg.type === 'description-updated') {
         console.log('Processing description-updated message, description:', msg.description);
@@ -1292,8 +1317,7 @@ const uiHtml = `
           }
         }
         
-        // Handle log generation - download files
-        downloadGenerationLog(msg.log, msg.logIndex);
+        // Logs are now saved to the server automatically
       }
     };
 
@@ -1390,76 +1414,17 @@ const uiHtml = `
       }, '*');
     });
 
-    // Download generation log files
-    function downloadGenerationLog(log, logIndex) {
-      const timestamp = log.timestamp.replace(/[:.]/g, '-').replace('T', '_').substring(0, 19);
-      
-      // Create JSON log file with relative paths to screenshots
-      const logJson = {
-        timestamp: log.timestamp,
-        designPrompt: log.designPrompt,
-        figmaDOM: log.figmaDOM,
-        descriptionAPI: log.descriptionAPI,
-        generationAPI: log.generationAPI,
-        screenshots: {
-          before: log.screenshots.before ? \`media/before-\${timestamp}.png\` : null,
-          after: log.screenshots.after ? \`media/after-\${timestamp}.png\` : null
-        }
-      };
-      
-      // Download JSON file (use flat filename since browsers can't create directories)
-      const jsonBlob = new Blob([JSON.stringify(logJson, null, 2)], { type: 'application/json' });
-      const jsonUrl = URL.createObjectURL(jsonBlob);
-      const jsonLink = document.createElement('a');
-      jsonLink.href = jsonUrl;
-      jsonLink.download = \`logger-\${timestamp}-log.json\`;
-      document.body.appendChild(jsonLink);
-      jsonLink.click();
-      document.body.removeChild(jsonLink);
-      URL.revokeObjectURL(jsonUrl);
-      
-      // Download screenshots if available
-      if (log.screenshots.before) {
-        setTimeout(() => {
-          const beforeBlob = base64ToBlob(log.screenshots.before);
-          const beforeUrl = URL.createObjectURL(beforeBlob);
-          const beforeLink = document.createElement('a');
-          beforeLink.href = beforeUrl;
-          beforeLink.download = \`logger-\${timestamp}-before.png\`;
-          document.body.appendChild(beforeLink);
-          beforeLink.click();
-          document.body.removeChild(beforeLink);
-          URL.revokeObjectURL(beforeUrl);
-        }, 100);
-      }
-      
-      if (log.screenshots.after) {
-        setTimeout(() => {
-          const afterBlob = base64ToBlob(log.screenshots.after);
-          const afterUrl = URL.createObjectURL(afterBlob);
-          const afterLink = document.createElement('a');
-          afterLink.href = afterUrl;
-          afterLink.download = \`logger-\${timestamp}-after.png\`;
-          document.body.appendChild(afterLink);
-          afterLink.click();
-          document.body.removeChild(afterLink);
-          URL.revokeObjectURL(afterUrl);
-        }, 200);
-      }
-    }
-    
-    // Convert base64 data URL to Blob
-    function base64ToBlob(dataUrl) {
-      const arr = dataUrl.split(',');
-      const mime = arr[0].match(/:(.*?);/)[1];
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-      }
-      return new Blob([u8arr], { type: mime });
-    }
+    // Save logger server URL when it changes
+    document.getElementById('loggerServerUrl').addEventListener('blur', () => {
+      const loggerUrlInput = document.getElementById('loggerServerUrl');
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'save-logger-url', 
+          loggerUrl: loggerUrlInput.value.trim()
+        } 
+      }, '*');
+    });
+
   </script>
 </body>
 </html>
@@ -1614,6 +1579,7 @@ const uiHtml = `
             prompt?: string;
             apiKey?: string;
             frameId?: string | null;
+            loggerUrl?: string;
         }) => {
             if (msg.type === 'cancel') {
                 // Don't close plugin, just return
@@ -1628,6 +1594,18 @@ const uiHtml = `
             if (msg.type === 'load-api-key') {
                 const apiKey = await figma.clientStorage.getAsync('openai-api-key');
                 figma.ui.postMessage({ type: 'api-key-loaded', apiKey: apiKey || '' });
+                return;
+            }
+
+            if (msg.type === 'load-logger-url') {
+                const loggerUrl = await figma.clientStorage.getAsync('logger-server-url');
+                figma.ui.postMessage({ type: 'logger-url-loaded', loggerUrl: loggerUrl || '' });
+                return;
+            }
+
+            if (msg.type === 'save-logger-url' && msg.loggerUrl) {
+                await figma.clientStorage.setAsync('logger-server-url', msg.loggerUrl);
+                figma.notify('Logger server URL saved');
                 return;
             }
 

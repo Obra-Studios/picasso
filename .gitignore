@@ -9,3 +9,8 @@ code.js
 
 # OpenAI API Key
 openai-config.json
+
+# Logger data directory (logs and screenshots)
+logger_data/
+.venv
+ngrok_url.txt

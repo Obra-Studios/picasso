@@ -12,7 +12,13 @@
     "ui": "ui.html",
     "networkAccess": {
         "allowedDomains": [
-            "https://api.openai.com"
+            "https://api.openai.com",
+            "https://*.ngrok.io",
+            "https://*.ngrok-free.app",
+            "https://*.ngrok.app"
+        ],
+        "devAllowedDomains": [
+            "http://localhost:8000"
         ]
     }
 }
