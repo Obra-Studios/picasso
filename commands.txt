@@ -1,1 +1,2 @@
-draw a 20 px by 20 px rectangle that is centered within the larger rectangle on the frame.
+draw a 20 px by 20 px yellow rectangle with a darker hued border with stroke weight of 4 px that is centered within the larger rectangle on the frame.
+draw a circle that is of the form a 20 px by 20 px with color fill of hex FFDD00 and a darker colored border of hex 7D602D with stroke weight of 4 px that is IMPORTANT centered within the larger rectangle on the frame

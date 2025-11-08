@@ -305,7 +305,8 @@ async function generateSemanticDescription(
     apiKey: string,
     domRepresentation: object,
     onDebug?: (request: object, response: object) => void,
-    screenshot?: string | null
+    screenshot?: string | null,
+    temperature?: number
 ): Promise<string> {
     try {
         console.log('generateSemanticDescription: Starting...');
@@ -324,7 +325,8 @@ async function generateSemanticDescription(
             "You are a design analysis assistant. Describe visual designs in clear, human-readable terms.",
             userPrompt,
             onDebug,
-            screenshot
+            screenshot,
+            temperature
         );
 
         console.log('generateSemanticDescription: Received response, length:', response.length);
@@ -455,7 +457,8 @@ async function callOpenAI(
     systemPrompt: string,
     userPrompt: string,
     onDebug?: (request: object, response: object) => void,
-    imageBase64?: string | null
+    imageBase64?: string | null,
+    temperature?: number
 ): Promise<string> {
     // Format user message - if image is provided, use vision API format
     let userMessage: any;
@@ -487,7 +490,7 @@ async function callOpenAI(
             { role: 'system', content: systemPrompt },
             userMessage
         ],
-        temperature: 0.7,
+        temperature: temperature !== undefined ? temperature : 0.7,
         max_tokens: 1000
     };
 
@@ -1028,6 +1031,48 @@ const uiHtml = `
       color: #666;
       margin-top: 4px;
     }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .slider-container label {
+      min-width: 100px;
+      margin-bottom: 0;
+    }
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #e0e0e0;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #18a0fb;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #18a0fb;
+      cursor: pointer;
+      border: none;
+    }
+    .slider-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 500;
+      color: #333;
+    }
     select {
       width: 100%;
       padding: 8px;
@@ -1171,6 +1216,15 @@ const uiHtml = `
     <div class="info">Enter your ngrok URL for the logger server (e.g., https://abc123.ngrok.io)</div>
   </div>
   
+  <div class="api-key-section">
+    <div class="slider-container">
+      <label for="temperature">Temperature:</label>
+      <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7" />
+      <span class="slider-value" id="temperatureValue">0.7</span>
+    </div>
+    <div class="info">Controls randomness: lower (0-0.5) = more focused, higher (1-2) = more creative</div>
+  </div>
+  
   <div class="frame-section">
     <label for="frameSelect">Select Frame:</label>
     <select id="frameSelect">
@@ -1227,10 +1281,11 @@ const uiHtml = `
   </div>
 
   <script>
-    // Load saved API key, logger URL, and design prompt
+    // Load saved API key, logger URL, design prompt, and temperature
     parent.postMessage({ pluginMessage: { type: 'load-api-key' } }, '*');
     parent.postMessage({ pluginMessage: { type: 'load-logger-url' } }, '*');
     parent.postMessage({ pluginMessage: { type: 'load-prompt' } }, '*');
+    parent.postMessage({ pluginMessage: { type: 'load-temperature' } }, '*');
 
     // Ensure buttons are enabled by default
     const refreshBtn = document.getElementById('refresh');
@@ -1262,6 +1317,15 @@ const uiHtml = `
         const promptInput = document.getElementById('prompt');
         if (promptInput && msg.prompt) {
           promptInput.value = msg.prompt;
+        }
+      } else if (msg.type === 'temperature-loaded') {
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperatureValue');
+        if (temperatureSlider && msg.temperature !== undefined) {
+          temperatureSlider.value = msg.temperature.toString();
+          if (temperatureValue) {
+            temperatureValue.textContent = msg.temperature.toString();
+          }
         }
       } else if (msg.type === 'description-updated') {
         console.log('Processing description-updated message, description:', msg.description);
@@ -1477,6 +1541,22 @@ const uiHtml = `
       }, '*');
     });
 
+    // Update temperature value display and save when slider changes
+    const temperatureSlider = document.getElementById('temperature');
+    const temperatureValue = document.getElementById('temperatureValue');
+    if (temperatureSlider && temperatureValue) {
+      temperatureSlider.addEventListener('input', () => {
+        const value = parseFloat(temperatureSlider.value);
+        temperatureValue.textContent = value.toFixed(1);
+        parent.postMessage({ 
+          pluginMessage: { 
+            type: 'save-temperature', 
+            temperature: value
+          } 
+        }, '*');
+      });
+    }
+
   </script>
 </body>
 </html>
@@ -1516,6 +1596,12 @@ const uiHtml = `
             figma.ui.postMessage({ type: 'prompt-loaded', prompt: savedPrompt });
         }
 
+        // Load and send temperature to UI
+        const savedTemperature = await figma.clientStorage.getAsync('temperature');
+        if (savedTemperature !== undefined) {
+            figma.ui.postMessage({ type: 'temperature-loaded', temperature: savedTemperature });
+        }
+
         // Store current state
         let currentDescription = 'Select a frame and click Refresh to generate description';
         let currentDomRep: object | null = null;
@@ -1534,7 +1620,7 @@ const uiHtml = `
         }
 
         // Function to refresh description
-        const refreshDescription = async (apiKey: string, frameId: string | null) => {
+        const refreshDescription = async (apiKey: string, frameId: string | null, temperature?: number) => {
             try {
                 if (!frameId) {
                     figma.notify('Please select a frame first');
@@ -1593,7 +1679,8 @@ const uiHtml = `
                                 }
                             }
                         },
-                        frameScreenshot
+                        frameScreenshot,
+                        temperature
                     );
 
                     console.log('Description generated:', currentDescription);
@@ -1639,7 +1726,8 @@ const uiHtml = `
 
         // Generate initial description if API key and frame are available
         if (savedApiKey && selectedFrameId) {
-            await refreshDescription(savedApiKey, selectedFrameId);
+            const initialTemperature = savedTemperature !== undefined ? savedTemperature : 0.7;
+            await refreshDescription(savedApiKey, selectedFrameId, initialTemperature);
         }
 
         figma.ui.onmessage = async (msg: {
@@ -1648,6 +1736,7 @@ const uiHtml = `
             apiKey?: string;
             frameId?: string | null;
             loggerUrl?: string;
+            temperature?: number;
         }) => {
             if (msg.type === 'cancel') {
                 // Don't close plugin, just return
@@ -1688,6 +1777,17 @@ const uiHtml = `
                 return;
             }
 
+            if (msg.type === 'load-temperature') {
+                const temperature = await figma.clientStorage.getAsync('temperature');
+                figma.ui.postMessage({ type: 'temperature-loaded', temperature: temperature !== undefined ? temperature : 0.7 });
+                return;
+            }
+
+            if (msg.type === 'save-temperature' && msg.temperature !== undefined) {
+                await figma.clientStorage.setAsync('temperature', msg.temperature);
+                return;
+            }
+
             if (msg.type === 'frame-selected') {
                 selectedFrameId = msg.frameId || null;
                 await figma.clientStorage.setAsync('selected-frame-id', selectedFrameId || '');
@@ -1702,7 +1802,8 @@ const uiHtml = `
                         // Auto-refresh description if API key is available
                         const apiKey = await figma.clientStorage.getAsync('openai-api-key');
                         if (apiKey) {
-                            await refreshDescription(apiKey, selectedFrameId);
+                            const tempValue = savedTemperature !== undefined ? savedTemperature : 0.7;
+                            await refreshDescription(apiKey, selectedFrameId, tempValue);
                         } else {
                             figma.ui.postMessage({
                                 type: 'description-updated',
@@ -1720,7 +1821,9 @@ const uiHtml = `
             }
 
             if (msg.type === 'refresh-description' && msg.apiKey && msg.frameId) {
-                await refreshDescription(msg.apiKey, msg.frameId);
+                const temperature = await figma.clientStorage.getAsync('temperature');
+                const tempValue = temperature !== undefined ? temperature : 0.7;
+                await refreshDescription(msg.apiKey, msg.frameId, tempValue);
                 return;
             }
 
@@ -1762,6 +1865,10 @@ const uiHtml = `
 
                     console.log('Completion prompt:', completionPrompt);
 
+                    // Get temperature from storage
+                    const temperature = await figma.clientStorage.getAsync('temperature');
+                    const tempValue = temperature !== undefined ? temperature : 0.7;
+
                     // Call OpenAI API with debug callback
                     const response = await callOpenAI(
                         msg.apiKey,
@@ -1792,7 +1899,9 @@ const uiHtml = `
                                     console.error('Error sending fallback debug message:', fallbackError);
                                 }
                             }
-                        }
+                        },
+                        null,
+                        tempValue
                     );
 
                     console.log('OpenAI response:', response);
