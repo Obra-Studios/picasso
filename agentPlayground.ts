@@ -4,8 +4,8 @@
 const prompts = {
     systemPrompt: "You are a design assistant that helps complete designs in Figma. Given a description of existing shapes (rectangles, circles, ellipses, polygons, stars, lines, vectors) and a user's prompt, you should generate instructions for creating additional shapes to complete the design. CRITICAL: Pay close attention to the spatial positioning of existing shapes. Use the center coordinates (centerX, centerY) and bounds information to position new shapes relative to existing ones. Ensure all new shapes are positioned within the frame bounds and in logical positions relative to the existing design. Respond with a JSON array of shape creation instructions.",
     vectorDescriptionPrompt: "Describe the following vector in detail, including its shape, position, size, and any visual characteristics:",
-    semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, and spatial relationships.\n\nIMPORTANT: Use the 'relativeBounds' coordinates (not 'bounds') when describing positions, as these are relative to the frame and match what you see in Figma. The frame's top-left corner is at (0, 0).\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to frame)\n- Center coordinates from relativeBounds (centerX, centerY relative to frame)\n- Dimensions (width x height in pixels)\n- Spatial relationships between shapes with specific pixel distances (e.g., 'Shape A is at relative position (125, 164) with center at (190.5, 238.5), positioned 50 pixels above Shape B')\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 3-4 sentences:\n\n{domRepresentation}",
-    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT:\n- The existing shape description is: {vectorDescription}\n- The DOM representation includes both absolute bounds and relativeBounds (relative to frame)\n- IMPORTANT: Use the relativeBounds coordinates when positioning new shapes - these match what you see in Figma\n- The frame's top-left corner is at (0, 0) - all relativeBounds coordinates are relative to this\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as relativeBounds (relative to frame)\n- Position new shapes in a way that makes visual sense relative to existing shapes using the relativeBounds coordinates\n\nDOM representation: {domRepresentation}\n\nCRITICAL JSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions (e.g., \"240.5 - 10\") - calculate the values yourself and use the final number\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON array that can be parsed directly\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the frame (like relativeBounds) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes."
+    semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, spatial relationships, AND hierarchical structure.\n\nHIERARCHY AWARENESS:\n- The structure preserves the tree-like hierarchy of the design (groups, frames, containers)\n- Shapes may be nested within groups or other containers\n- Use the 'relativeBounds' coordinates (not 'bounds') when describing positions - these are relative to the parent container (group/frame)\n- The frame's top-left corner is at (0, 0)\n- Shapes within groups have coordinates relative to their group, not the frame\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to parent container)\n- Center coordinates from relativeBounds (centerX, centerY relative to parent)\n- Dimensions (width x height in pixels)\n- Which group or container it belongs to (if nested)\n- Spatial relationships between shapes with specific pixel distances\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 4-5 sentences:\n\n{domRepresentation}",
+    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT & HIERARCHY:\n- The existing shape description is: {vectorDescription}\n- The DOM representation preserves the hierarchical tree structure (groups, frames, containers)\n- IMPORTANT: Respect the existing hierarchy when positioning new shapes\n- Shapes may be nested within groups - if you're adding shapes that relate to grouped shapes, consider placing them in the same group\n- Use the relativeBounds coordinates when positioning new shapes - these are relative to the parent container (group or frame)\n- The frame's top-left corner is at (0, 0) - coordinates at the frame level are relative to this\n- Shapes within groups have coordinates relative to their group's top-left corner\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as the target container (frame or group)\n- Position new shapes in a way that makes visual sense relative to existing shapes, respecting their hierarchical relationships\n- If shapes are grouped together, new related shapes should likely be placed in the same group or at the same hierarchy level\n\nDOM representation: {domRepresentation}\n\nCRITICAL JSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions (e.g., \"240.5 - 10\") - calculate the values yourself and use the final number\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON array that can be parsed directly\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the appropriate container (frame or group) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes, respecting the hierarchical structure."
 };
 
 // Types for OpenAI API
@@ -144,7 +144,65 @@ function getDOMRepresentation(node: SceneNode, frameBounds?: { x: number; y: num
     return baseRep;
 }
 
-// Get DOM representation of all shapes as a structured tree
+// Build hierarchical representation of a node and its children
+function buildHierarchicalRepresentation(node: SceneNode, parentBounds?: { x: number; y: number; width: number; height: number } | null): any {
+    const bounds = node.absoluteBoundingBox;
+    let relativeBounds = null;
+
+    if (bounds) {
+        const absCenterX = bounds.x + bounds.width / 2;
+        const absCenterY = bounds.y + bounds.height / 2;
+
+        if (parentBounds) {
+            relativeBounds = {
+                x: bounds.x - parentBounds.x,
+                y: bounds.y - parentBounds.y,
+                width: bounds.width,
+                height: bounds.height,
+                centerX: absCenterX - parentBounds.x,
+                centerY: absCenterY - parentBounds.y
+            };
+        }
+    }
+
+    const nodeRep: any = {
+        type: node.type,
+        name: node.name || `Unnamed ${node.type}`,
+        bounds: bounds ? {
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+            centerX: bounds.x + bounds.width / 2,
+            centerY: bounds.y + bounds.height / 2
+        } : null,
+        relativeBounds: relativeBounds
+    };
+
+    // Add type-specific properties for shape nodes
+    const supportedShapeTypes = ['RECTANGLE', 'ELLIPSE', 'POLYGON', 'STAR', 'VECTOR', 'LINE'];
+    if (supportedShapeTypes.indexOf(node.type) !== -1) {
+        const shapeRep = getDOMRepresentation(node, parentBounds) as any;
+        // Merge shape-specific properties
+        if (shapeRep.fills !== undefined) nodeRep.fills = shapeRep.fills;
+        if (shapeRep.strokes !== undefined) nodeRep.strokes = shapeRep.strokes;
+        if (shapeRep.strokeWeight !== undefined) nodeRep.strokeWeight = shapeRep.strokeWeight;
+        if (shapeRep.cornerRadius !== undefined) nodeRep.cornerRadius = shapeRep.cornerRadius;
+        if (shapeRep.pointCount !== undefined) nodeRep.pointCount = shapeRep.pointCount;
+        if (shapeRep.innerRadius !== undefined) nodeRep.innerRadius = shapeRep.innerRadius;
+        if (shapeRep.vectorPaths !== undefined) nodeRep.vectorPaths = shapeRep.vectorPaths;
+    }
+
+    // Recursively process children if this node has them
+    if ('children' in node && node.children.length > 0) {
+        const currentBounds = bounds || parentBounds;
+        nodeRep.children = node.children.map(child => buildHierarchicalRepresentation(child, currentBounds));
+    }
+
+    return nodeRep;
+}
+
+// Get DOM representation of all shapes as a structured tree preserving hierarchy
 function getShapesDOMRepresentation(shapes: SceneNode[], frame?: FrameNode | null): object {
     // Get frame bounds if available
     let frameBounds = null;
@@ -160,18 +218,32 @@ function getShapesDOMRepresentation(shapes: SceneNode[], frame?: FrameNode | nul
         }
     }
 
-    return {
-        documentTree: {
-            type: 'DOCUMENT',
-            frame: frameBounds ? {
-                ...frameBounds,
-                centerX: frameBounds.x + frameBounds.width / 2,
-                centerY: frameBounds.y + frameBounds.height / 2
-            } : null,
-            note: frameBounds ? "All coordinates are relative to the frame. The frame's top-left corner is at (0, 0). Use relativeBounds for positioning shapes within the frame." : "Coordinates are absolute (relative to the page).",
-            children: shapes.map(shape => getDOMRepresentation(shape, frameBounds))
-        }
-    };
+    // Build hierarchical tree starting from the frame
+    if (frame && frameBounds) {
+        const frameRep = buildHierarchicalRepresentation(frame, null);
+        return {
+            documentTree: {
+                type: 'DOCUMENT',
+                frame: {
+                    ...frameBounds,
+                    centerX: frameBounds.x + frameBounds.width / 2,
+                    centerY: frameBounds.y + frameBounds.height / 2
+                },
+                note: "The structure preserves hierarchy. Coordinates in relativeBounds are relative to the parent container (group/frame). The frame's top-left corner is at (0, 0).",
+                hierarchy: frameRep
+            }
+        };
+    } else {
+        // Fallback: flat structure if no frame
+        return {
+            documentTree: {
+                type: 'DOCUMENT',
+                frame: null,
+                note: "Coordinates are absolute (relative to the page).",
+                children: shapes.map(shape => getDOMRepresentation(shape, null))
+            }
+        };
+    }
 }
 
 // Describe any shape node
@@ -432,16 +504,27 @@ async function callOpenAI(
         responseData = { raw: responseText };
     }
 
+    const responseObj = {
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData
+    };
+
     if (onDebug) {
         try {
-            onDebug(requestData, {
-                status: response.status,
-                statusText: response.statusText,
-                data: responseData
-            });
+            onDebug(requestData, responseObj);
         } catch (debugError) {
             console.error('Error in onDebug callback:', debugError);
         }
+    }
+
+    // Store for logging (determine if description or generation based on system prompt)
+    if (systemPrompt.includes('design analysis assistant') || systemPrompt.includes('Describe visual designs')) {
+        descriptionAPIRequest = requestData;
+        descriptionAPIResponse = responseObj;
+    } else {
+        generationAPIRequest = requestData;
+        generationAPIResponse = responseObj;
     }
 
     const data: OpenAIResponse = responseData;
@@ -456,6 +539,94 @@ async function callOpenAI(
     const trimmed = content.trim();
     console.log('Returning trimmed content, length:', trimmed.length);
     return trimmed;
+}
+
+// Logger interface
+interface GenerationLog {
+    timestamp: string;
+    designPrompt: string;
+    figmaDOM: object;
+    descriptionAPI?: {
+        request: any;
+        response: any;
+    };
+    generationAPI?: {
+        request: any;
+        response: any;
+    };
+    screenshots: {
+        before: string | null; // base64 or path
+        after: string | null;
+    };
+}
+
+// Store API request/response data for logging
+let descriptionAPIRequest: any = null;
+let descriptionAPIResponse: any = null;
+let generationAPIRequest: any = null;
+let generationAPIResponse: any = null;
+
+// Export frame as image (returns base64)
+async function exportFrameAsImage(frame: FrameNode): Promise<string | null> {
+    try {
+        const imageBytes = await frame.exportAsync({
+            format: 'PNG',
+            constraint: { type: 'SCALE', value: 2 } // 2x for better quality
+        });
+        // Convert Uint8Array to base64
+        const base64 = figma.base64Encode(imageBytes);
+        return `data:image/png;base64,${base64}`;
+    } catch (error) {
+        console.error('Error exporting frame:', error);
+        return null;
+    }
+}
+
+// Save generation log
+async function saveGenerationLog(
+    designPrompt: string,
+    figmaDOM: object,
+    frame: FrameNode | null,
+    beforeScreenshot: string | null,
+    afterScreenshot: string | null
+): Promise<void> {
+    const log: GenerationLog = {
+        timestamp: new Date().toISOString(),
+        designPrompt: designPrompt,
+        figmaDOM: figmaDOM,
+        descriptionAPI: descriptionAPIRequest && descriptionAPIResponse ? {
+            request: descriptionAPIRequest,
+            response: descriptionAPIResponse
+        } : undefined,
+        generationAPI: generationAPIRequest && generationAPIResponse ? {
+            request: generationAPIRequest,
+            response: generationAPIResponse
+        } : undefined,
+        screenshots: {
+            before: beforeScreenshot,
+            after: afterScreenshot
+        }
+    };
+
+    // Get existing logs from clientStorage
+    const existingLogs = await figma.clientStorage.getAsync('generation-logs') || [];
+    const logs = Array.isArray(existingLogs) ? existingLogs : [];
+
+    // Add new log
+    logs.push(log);
+
+    // Keep only last 100 logs to avoid storage issues
+    const trimmedLogs = logs.slice(-100);
+
+    // Save back to clientStorage
+    await figma.clientStorage.setAsync('generation-logs', trimmedLogs);
+
+    // Also send to UI for download
+    figma.ui.postMessage({
+        type: 'log-generated',
+        log: log,
+        logIndex: trimmedLogs.length - 1
+    });
 }
 
 // Parse OpenAI response and create vectors
@@ -611,16 +782,17 @@ function parseAndCreateVectors(response: string, parentFrame?: FrameNode): void 
                 continue;
             }
 
-            // Set position - coordinates should be relative to frame if frame exists
-            // If parentFrame exists, coordinates are already relative to frame, so we can use them directly
-            // Otherwise, they're absolute page coordinates
-            if (parentFrame && parentFrame.absoluteBoundingBox) {
-                // Convert relative coordinates to absolute by adding frame position
-                const frameBounds = parentFrame.absoluteBoundingBox;
-                node.x = frameBounds.x + instruction.x;
-                node.y = frameBounds.y + instruction.y;
+            // Set position - coordinates from AI are relative to the frame
+            // In Figma, when you place a node in a frame, the coordinates are automatically relative to the frame
+            // So we should use the coordinates as-is when appending to a frame
+            // Only convert to absolute if we're placing on the page (no parentFrame)
+            if (parentFrame) {
+                // Coordinates are relative to frame - use them directly
+                // Figma will automatically position them relative to the frame
+                node.x = instruction.x;
+                node.y = instruction.y;
             } else {
-                // Use coordinates as-is (absolute page coordinates)
+                // No frame - use coordinates as absolute page coordinates
                 node.x = instruction.x;
                 node.y = instruction.y;
             }
@@ -889,6 +1061,53 @@ const uiHtml = `
       background: #f0fff4;
       border-color: #51cf66;
     }
+    .screenshot-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+    .screenshot-section h3 {
+      margin: 0 0 12px 0;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .screenshot-container {
+      display: flex;
+      gap: 12px;
+    }
+    .screenshot-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .screenshot-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .screenshot-image-container {
+      width: 100%;
+      height: 150px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: #f8f8f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .screenshot-placeholder {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+    }
+    .screenshot-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -921,6 +1140,24 @@ const uiHtml = `
   <div class="button-group">
     <button class="primary" id="generate">Generate</button>
     <button class="secondary" id="cancel">Cancel</button>
+  </div>
+
+  <div class="screenshot-section">
+    <h3>Screenshots</h3>
+    <div class="screenshot-container">
+      <div class="screenshot-box">
+        <div class="screenshot-label">Before</div>
+        <div class="screenshot-image-container" id="beforeScreenshot">
+          <div class="screenshot-placeholder">No screenshot yet</div>
+        </div>
+      </div>
+      <div class="screenshot-box">
+        <div class="screenshot-label">After</div>
+        <div class="screenshot-image-container" id="afterScreenshot">
+          <div class="screenshot-placeholder">No screenshot yet</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="debug-section">
@@ -1034,6 +1271,29 @@ const uiHtml = `
             responseBox.className = 'debug-box';
           }
         }
+      } else if (msg.type === 'log-generated') {
+        // Update screenshots in UI
+        const beforeContainer = document.getElementById('beforeScreenshot');
+        const afterContainer = document.getElementById('afterScreenshot');
+        
+        if (beforeContainer) {
+          if (msg.log.screenshots.before) {
+            beforeContainer.innerHTML = '<img src="' + msg.log.screenshots.before + '" alt="Before generation" />';
+          } else {
+            beforeContainer.innerHTML = '<div class="screenshot-placeholder">No screenshot available</div>';
+          }
+        }
+        
+        if (afterContainer) {
+          if (msg.log.screenshots.after) {
+            afterContainer.innerHTML = '<img src="' + msg.log.screenshots.after + '" alt="After generation" />';
+          } else {
+            afterContainer.innerHTML = '<div class="screenshot-placeholder">No screenshot available</div>';
+          }
+        }
+        
+        // Handle log generation - download files
+        downloadGenerationLog(msg.log, msg.logIndex);
       }
     };
 
@@ -1129,6 +1389,77 @@ const uiHtml = `
         } 
       }, '*');
     });
+
+    // Download generation log files
+    function downloadGenerationLog(log, logIndex) {
+      const timestamp = log.timestamp.replace(/[:.]/g, '-').replace('T', '_').substring(0, 19);
+      
+      // Create JSON log file with relative paths to screenshots
+      const logJson = {
+        timestamp: log.timestamp,
+        designPrompt: log.designPrompt,
+        figmaDOM: log.figmaDOM,
+        descriptionAPI: log.descriptionAPI,
+        generationAPI: log.generationAPI,
+        screenshots: {
+          before: log.screenshots.before ? \`media/before-\${timestamp}.png\` : null,
+          after: log.screenshots.after ? \`media/after-\${timestamp}.png\` : null
+        }
+      };
+      
+      // Download JSON file (use flat filename since browsers can't create directories)
+      const jsonBlob = new Blob([JSON.stringify(logJson, null, 2)], { type: 'application/json' });
+      const jsonUrl = URL.createObjectURL(jsonBlob);
+      const jsonLink = document.createElement('a');
+      jsonLink.href = jsonUrl;
+      jsonLink.download = \`logger-\${timestamp}-log.json\`;
+      document.body.appendChild(jsonLink);
+      jsonLink.click();
+      document.body.removeChild(jsonLink);
+      URL.revokeObjectURL(jsonUrl);
+      
+      // Download screenshots if available
+      if (log.screenshots.before) {
+        setTimeout(() => {
+          const beforeBlob = base64ToBlob(log.screenshots.before);
+          const beforeUrl = URL.createObjectURL(beforeBlob);
+          const beforeLink = document.createElement('a');
+          beforeLink.href = beforeUrl;
+          beforeLink.download = \`logger-\${timestamp}-before.png\`;
+          document.body.appendChild(beforeLink);
+          beforeLink.click();
+          document.body.removeChild(beforeLink);
+          URL.revokeObjectURL(beforeUrl);
+        }, 100);
+      }
+      
+      if (log.screenshots.after) {
+        setTimeout(() => {
+          const afterBlob = base64ToBlob(log.screenshots.after);
+          const afterUrl = URL.createObjectURL(afterBlob);
+          const afterLink = document.createElement('a');
+          afterLink.href = afterUrl;
+          afterLink.download = \`logger-\${timestamp}-after.png\`;
+          document.body.appendChild(afterLink);
+          afterLink.click();
+          document.body.removeChild(afterLink);
+          URL.revokeObjectURL(afterUrl);
+        }, 200);
+      }
+    }
+    
+    // Convert base64 data URL to Blob
+    function base64ToBlob(dataUrl) {
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
   </script>
 </body>
 </html>
@@ -1338,6 +1669,11 @@ const uiHtml = `
 
             if (msg.type === 'generate' && msg.prompt && msg.apiKey && msg.frameId) {
                 try {
+                    // Preserve description API calls (they may have been made earlier)
+                    // Only reset generation API calls
+                    generationAPIRequest = null;
+                    generationAPIResponse = null;
+
                     // Save API key and frame ID
                     await figma.clientStorage.setAsync('openai-api-key', msg.apiKey);
                     await figma.clientStorage.setAsync('selected-frame-id', msg.frameId);
@@ -1353,6 +1689,9 @@ const uiHtml = `
                         figma.notify('No vectors found in the selected frame.');
                         return;
                     }
+
+                    // Take before screenshot
+                    const beforeScreenshot = currentFrame ? await exportFrameAsImage(currentFrame) : null;
 
                     currentDomRep = getShapesDOMRepresentation(currentVectors, currentFrame);
                     const latestVectorDescriptions = currentVectors.map(describeShape).join('\n');
@@ -1406,6 +1745,20 @@ const uiHtml = `
 
                     // Parse and create vectors
                     parseAndCreateVectors(response, parentFrame);
+
+                    // Take after screenshot
+                    const afterScreenshot = currentFrame ? await exportFrameAsImage(currentFrame) : null;
+
+                    // Save generation log
+                    if (currentDomRep) {
+                        await saveGenerationLog(
+                            msg.prompt,
+                            currentDomRep,
+                            currentFrame,
+                            beforeScreenshot,
+                            afterScreenshot
+                        );
+                    }
 
                     figma.notify('Design generation complete!');
                     // Don't close plugin - keep it open for further use

@@ -1,0 +1,1 @@
+draw a 20 px by 20 px rectangle that is centered within the larger rectangle on the frame.
