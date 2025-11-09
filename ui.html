@@ -855,8 +855,10 @@
                 interpretationEl.className = 'interpretation';
                 window.startLogoAnimations();
                 const apiCallsEl = document.getElementById('api-calls');
-                apiCallsEl.className = 'api-calls-box';
-                apiCallsEl.innerHTML = '';
+                if (apiCallsEl) {
+                    apiCallsEl.className = 'api-calls-box';
+                    apiCallsEl.innerHTML = '';
+                }
             } else if (msg.type === 'execution-progress') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = msg.message;
@@ -868,37 +870,39 @@
 
                 // Display API calls
                 const apiCallsEl = document.getElementById('api-calls');
-                if (msg.apiCalls && msg.apiCalls.length > 0) {
-                    apiCallsEl.className = 'api-calls-box visible';
-                    apiCallsEl.innerHTML = `
-                        <div class="api-calls-title">API Calls</div>
-                        ${msg.apiCalls.map((apiCall, index) => {
-                        const isSuccess = apiCall.response.status >= 200 && apiCall.response.status < 300;
-                        const requestBodyStr = JSON.stringify(apiCall.request.body, null, 2);
-                        const responseBodyStr = JSON.stringify(apiCall.response.body, null, 2);
-                        const timestamp = new Date(apiCall.timestamp).toLocaleTimeString();
+                if (apiCallsEl) {
+                    if (msg.apiCalls && msg.apiCalls.length > 0) {
+                        apiCallsEl.className = 'api-calls-box visible';
+                        apiCallsEl.innerHTML = `
+                            <div class="api-calls-title">API Calls</div>
+                            ${msg.apiCalls.map((apiCall, index) => {
+                            const isSuccess = apiCall.response.status >= 200 && apiCall.response.status < 300;
+                            const requestBodyStr = JSON.stringify(apiCall.request.body, null, 2);
+                            const responseBodyStr = JSON.stringify(apiCall.response.body, null, 2);
+                            const timestamp = new Date(apiCall.timestamp).toLocaleTimeString();
 
-                        return `
-                                <div class="api-call-item">
-                                    <div class="api-call-method">${apiCall.request.method} ${apiCall.request.url}</div>
-                                    <div class="api-call-url">${timestamp}</div>
-                                    <span class="api-call-status ${isSuccess ? 'success' : 'error'}">
-                                        ${apiCall.response.status} ${apiCall.response.statusText}
-                                    </span>
-                                    <div class="api-call-section">
-                                        <div class="api-call-section-title">Request</div>
-                                        <div class="api-call-content">${escapeHtml(requestBodyStr)}</div>
+                            return `
+                                    <div class="api-call-item">
+                                        <div class="api-call-method">${apiCall.request.method} ${apiCall.request.url}</div>
+                                        <div class="api-call-url">${timestamp}</div>
+                                        <span class="api-call-status ${isSuccess ? 'success' : 'error'}">
+                                            ${apiCall.response.status} ${apiCall.response.statusText}
+                                        </span>
+                                        <div class="api-call-section">
+                                            <div class="api-call-section-title">Request</div>
+                                            <div class="api-call-content">${escapeHtml(requestBodyStr)}</div>
+                                        </div>
+                                        <div class="api-call-section">
+                                            <div class="api-call-section-title">Response</div>
+                                            <div class="api-call-content">${escapeHtml(responseBodyStr)}</div>
+                                        </div>
                                     </div>
-                                    <div class="api-call-section">
-                                        <div class="api-call-section-title">Response</div>
-                                        <div class="api-call-content">${escapeHtml(responseBodyStr)}</div>
-                                    </div>
-                                </div>
-                            `;
-                    }).join('')}
-                    `;
-                } else {
-                    apiCallsEl.className = 'api-calls-box';
+                                `;
+                        }).join('')}
+                        `;
+                    } else {
+                        apiCallsEl.className = 'api-calls-box';
+                    }
                 }
 
                 if (msg.errors && msg.errors.length > 0) {

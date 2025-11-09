@@ -1,11 +1,17 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": ["es6"],
+    "lib": ["es6", "dom"],
     "strict": true,
+    "skipLibCheck": true,
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@figma"
     ]
-  }
+  },
+  "exclude": [
+    "code-old.ts",
+    "intent.ts",
+    "test-action-agent.ts"
+  ]
 }

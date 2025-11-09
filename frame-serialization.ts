@@ -7,6 +7,7 @@
 export function serializeNodeToJSON(node: SceneNode): Record<string, unknown> {
     // Positions are already relative to the frame (absolute in frame coordinates)
     const json: Record<string, unknown> = {
+        id: node.id, // CRITICAL: Include Figma node ID for component lookup
         type: node.type,
         name: node.name,
         x: Math.round(node.x), // Position relative to frame
