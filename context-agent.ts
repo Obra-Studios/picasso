@@ -1,6 +1,8 @@
 // Context Agent - Generates natural language descriptions of design frames
 // Based on JSON serialization of the DOM and optional user-provided context
 
+import { fetchWithRetry } from './api-utils';
+
 export async function generateContextDescription(
     additionalContext: string | null,
     frameJSON: any,
@@ -77,7 +79,8 @@ Be specific about:
         });
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithRetry({
+        url: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

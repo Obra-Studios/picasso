@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type { CanvasObject } from './constraints';
+import { fetchWithRetry } from './api-utils';
 
 // ============================================================================
 // INPUT TYPES
@@ -324,7 +325,8 @@ export async function generateActions(
   const prompt = buildActionPrompt(contextDescription, contextFrameJSON, canvasFrameJSON, intentAnalysis);
   const schema = getActionSchema();
   
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetchWithRetry({
+    url: 'https://api.openai.com/v1/chat/completions',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { config } from './config';
+import { fetchWithRetry } from './api-utils';
 
 export interface UserAction {
     type: 'add' | 'move';
@@ -188,7 +189,8 @@ Examples:
         content: userContent,
     });
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithRetry({
+        url: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -358,7 +360,8 @@ Examples:
         content: userContent,
     });
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithRetry({
+        url: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

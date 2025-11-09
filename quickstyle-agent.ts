@@ -3,6 +3,8 @@
 // Quickly applies styling to new elements based on context patterns
 // ============================================================================
 
+import { fetchWithRetry } from './api-utils';
+
 export interface QuickStyleSuggestion {
     // Fill colors (empty array if not applicable)
     fills: Array<{
@@ -193,7 +195,8 @@ Return your suggestion in the response format.`;
         additionalProperties: false,
     };
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithRetry({
+        url: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

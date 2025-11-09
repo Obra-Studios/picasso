@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan } from './execution';
+import { fetchWithRetry } from './api-utils';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -195,7 +196,8 @@ Format your response as a clear, numbered list of operations with all specific v
         'Authorization': `Bearer ${apiKey.substring(0, 7)}...`, // Mask API key in logs
     };
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithRetry({
+        url: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -764,7 +766,8 @@ Be precise and extract all operations from the natural language description.`;
         'Authorization': `Bearer ${apiKey.substring(0, 7)}...`, // Mask API key in logs
     };
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetchWithRetry({
+        url: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
