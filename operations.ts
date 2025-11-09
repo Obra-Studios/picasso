@@ -83,7 +83,9 @@ function collectFigmaDOMInfo(): string {
  */
 export async function convertConstraintsToNaturalLanguage(
     constraintPlan: ConstraintBasedPlan,
-    apiKey: string
+    apiKey: string,
+    canvasFrame?: { id: string; name: string },
+    contextData?: { contextDescription: string; contextJSON: any }
 ): Promise<{ naturalLanguageOperations: string; apiCall: APICallInfo }> {
     const prompt = `You are an expert at converting constraint-based design actions into clear, detailed natural language descriptions of operations.
 
@@ -94,6 +96,34 @@ The user has provided constraint-based actions (similar to CSS constraints) that
 - Container relationships
 - Any other properties needed
 
+${canvasFrame ? `**CANVAS FRAME:**
+All new objects will be created inside the canvas frame: "${canvasFrame.name}"
+
+IMPORTANT: Express ALL coordinates (x, y) as RELATIVE to the canvas frame's coordinate system:
+- x=0, y=0 is the TOP-LEFT corner of the canvas frame
+- If an object should be 50px from the left and 100px from the top of the frame, use x=50, y=100
+- If positioning relative to another element, calculate the position within the frame coordinate system
+- DO NOT use absolute page coordinates - use frame-relative coordinates
+` : ''}
+${contextData ? `**CONTEXT DESIGN PATTERNS:**
+The following context provides the design system and styling patterns to follow when creating new objects.
+Use these patterns to determine colors, sizes, fonts, spacing, and other styling properties.
+
+**Context Description:**
+${contextData.contextDescription}
+
+**Context Frame Structure (for extracting precise colors, sizes, fonts, etc.):**
+${JSON.stringify(contextData.contextJSON, null, 2)}
+
+IMPORTANT STYLING RULES:
+- Extract exact RGB color values from context elements (e.g., if context has a button with fill color {r: 0.2, g: 0.4, b: 0.8}, use those exact values)
+- Match font sizes, font families, and font weights from similar elements in the context
+- Apply similar corner radius values (e.g., if context buttons use 8px corner radius, new buttons should too)
+- Use consistent spacing patterns from the context (e.g., padding, gaps between elements)
+- Follow the same sizing conventions (e.g., if context has input fields at 40px height, maintain that)
+- **OPACITY: Default to 1.0 (fully visible) unless context elements specifically use transparency. NEVER set opacity to 0**
+- Preserve stroke properties that match the design system
+` : ''}
 **CONSTRAINT-BASED ACTIONS:**
 ${JSON.stringify(constraintPlan, null, 2)}
 
@@ -209,7 +239,9 @@ Format your response as a clear, numbered list of operations with all specific v
  */
 export async function parseNaturalLanguageOperations(
     naturalLanguageOperations: string,
-    apiKey: string
+    apiKey: string,
+    canvasFrame?: { id: string; name: string },
+    contextData?: { contextDescription: string; contextJSON: any }
 ): Promise<{ plan: ExecutionPlan; apiCall: APICallInfo }> {
     // Collect current Figma DOM information for exact node ID matching
     const domInfo = collectFigmaDOMInfo();
@@ -218,6 +250,32 @@ export async function parseNaturalLanguageOperations(
 
 The user has provided natural language descriptions of design operations with exact calculated values. Your task is to convert this into a structured JSON format that specifies exactly what objects to ADD or MODIFY.
 
+${canvasFrame ? `**CANVAS FRAME:**
+All new objects will be created inside the canvas frame: "${canvasFrame.name}"
+(Note: The code will automatically set the container, so you can omit the container field or set it to any value)
+
+IMPORTANT: Ensure ALL coordinates (x, y) are RELATIVE to the canvas frame's coordinate system:
+- x=0, y=0 is the TOP-LEFT corner of the canvas frame, not the page
+- If positioning relative to another element, calculate coordinates relative to the frame origin
+- DO NOT use absolute page coordinates
+` : ''}
+${contextData ? `**CONTEXT DESIGN PATTERNS:**
+Use these design patterns to determine precise styling for new objects.
+
+**Context Description:**
+${contextData.contextDescription}
+
+**Context Frame Structure (for extracting precise colors, sizes, fonts, etc.):**
+${JSON.stringify(contextData.contextJSON, null, 2)}
+
+STYLING RULES:
+- Extract and use exact RGB color values from context elements (fills array contains {r, g, b} in 0-1 range)
+- Match font sizes, families, and weights from similar context elements
+- Copy corner radius and stroke properties from matching element types
+- Follow spacing and sizing conventions from the context
+- **OPACITY: Always set to 1.0 (fully visible) unless context specifically uses transparency. NEVER use 0 (invisible)**
+- For example, if creating a button and context has buttons with cornerRadius: 8, fills: [{color: {r: 0.2, g: 0.4, b: 0.8}}], fontSize: 16, use those exact values
+` : ''}
 **CURRENT FIGMA PAGE DOM (for exact node identification):**
 The following is a list of all nodes currently on the Figma page. Use the exact "id" field for targetId when modifying existing nodes. This ensures precise node identification instead of fuzzy name matching.
 

@@ -301,16 +301,18 @@ export interface ActionAgentOutput {
 /**
  * Generate actions and constraints from context, state, and intent
  * 
- * @param context - Static context from context agent
- * @param domState - Current DOM state
- * @param intent - User intent from intent agent
+ * @param contextDescription - Natural language description of the design context from context agent
+ * @param contextFrameJSON - JSON serialized structure of the context/reference frame
+ * @param canvasFrameJSON - JSON serialized structure of the current canvas frame
+ * @param intentAnalysis - Intent and suggested next steps from intent agent
  * @param apiKey - Optional OpenAI API key (defaults to OPENAI_API_KEY env var)
  * @returns Actions and constraints to execute
  */
 export async function generateActions(
-  context: Context,
-  domState: DOMState,
-  intent: Intent,
+  contextDescription: string,
+  contextFrameJSON: any,
+  canvasFrameJSON: any,
+  intentAnalysis: { intent: string; suggestedNextSteps?: string[] },
   apiKey?: string
 ): Promise<ActionAgentOutput> {
   // Get API key from parameter or environment variable (Bun automatically loads .env)
@@ -319,7 +321,7 @@ export async function generateActions(
   if (!key) {
     throw new Error('OpenAI API key is required. Set OPENAI_API_KEY in .env file or pass it as a parameter.');
   }
-  const prompt = buildActionPrompt(context, domState, intent);
+  const prompt = buildActionPrompt(contextDescription, contextFrameJSON, canvasFrameJSON, intentAnalysis);
   const schema = getActionSchema();
   
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -366,6 +368,9 @@ export async function generateActions(
 
   const parsed = JSON.parse(content);
   
+  // Convert canvasFrameJSON to DOMState format for constraint enrichment
+  const domState = convertJSONToDOMState(canvasFrameJSON);
+  
   // Enrich constraints within each action with exact DOM values
   const actionsWithEnrichedConstraints = (parsed.actions || []).map((action: any) => ({
     ...action,
@@ -377,7 +382,7 @@ export async function generateActions(
     metadata: {
       timestamp: Date.now(),
       model: 'gpt-4o-2024-08-06',
-      intent,
+      intent: intentAnalysis.intent,
     },
   };
 }
@@ -385,6 +390,55 @@ export async function generateActions(
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Convert serialized frame JSON to DOMState format
+ */
+function convertJSONToDOMState(frameJSON: any): DOMState {
+  const objects: CanvasObject[] = [];
+  
+  // Recursive function to flatten the frame structure
+  function flattenNode(node: any, parentId?: string) {
+    if (!node) return;
+    
+    // Add current node if it has position and size
+    if (node.id && node.name && node.type && 
+        typeof node.x === 'number' && typeof node.y === 'number' &&
+        typeof node.width === 'number' && typeof node.height === 'number') {
+      objects.push({
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        x: node.x,
+        y: node.y,
+        width: node.width,
+        height: node.height,
+        parentId,
+      });
+    }
+    
+    // Process children recursively
+    if (node.children && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        flattenNode(child, node.id);
+      }
+    }
+  }
+  
+  // Start flattening from the root
+  flattenNode(frameJSON);
+  
+  // Extract viewport dimensions from the root frame
+  const viewport = {
+    width: frameJSON.width || 1920,
+    height: frameJSON.height || 1080,
+  };
+  
+  return {
+    objects,
+    viewport,
+  };
+}
 
 /**
  * Enrich constraints with exact values calculated from DOM state
@@ -626,27 +680,29 @@ function enrichSpacingConstraint(
  * Build the prompt for action generation
  */
 function buildActionPrompt(
-  context: Context,
-  domState: DOMState,
-  intent: Intent
+  contextDescription: string,
+  contextFrameJSON: any,
+  canvasFrameJSON: any,
+  intentAnalysis: { intent: string; suggestedNextSteps?: string[] }
 ): string {
+  // Build suggested next steps section
+  const nextStepsSection = intentAnalysis.suggestedNextSteps && intentAnalysis.suggestedNextSteps.length > 0
+    ? `\n**SUGGESTED NEXT STEPS:**\n${intentAnalysis.suggestedNextSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n`
+    : '';
+  
   return `You are an action agent that translates user intent into concrete design actions and constraints.
 
 **USER INTENT:**
-${intent}
+${intentAnalysis.intent}
+${nextStepsSection}
+**DESIGN CONTEXT (Reference Frame):**
+${contextDescription}
 
-**DESIGN CONTEXT:**
-- Colors: ${JSON.stringify(context.colors, null, 2)}
-- Spacing: ${JSON.stringify(context.spacing, null, 2)}
-- Typography: ${JSON.stringify(context.typography, null, 2)}
+**CONTEXT FRAME STRUCTURE:**
+${JSON.stringify(contextFrameJSON, null, 2)}
 
-**CURRENT DOM STATE:**
-- Canvas: ${domState.viewport.width}×${domState.viewport.height}
-- Objects: ${domState.objects.length} total
-${domState.objects.slice(0, 10).map(obj => 
-  `  • ${obj.name} (${obj.type}): position (${obj.x}, ${obj.y}), size ${obj.width}×${obj.height}`
-).join('\n')}
-${domState.objects.length > 10 ? `  ... and ${domState.objects.length - 10} more objects` : ''}
+**CURRENT CANVAS STATE:**
+${JSON.stringify(canvasFrameJSON, null, 2)}
 
 **YOUR TASK:**
 1. Break down the intent into atomic actions (one per asset)

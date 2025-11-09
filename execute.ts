@@ -540,12 +540,42 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                     }
                 } else {
                     // For non-text or text without text box, use regular container
-                    targetParent = operation.container ? findContainer(operation.container) : null;
+                    if (operation.container) {
+                        console.log(`Looking for container: "${operation.container}"`);
+                        targetParent = findContainer(operation.container);
+                        if (targetParent) {
+                            console.log(`Found container: ${targetParent.name} (${targetParent.id})`);
+                        } else {
+                            console.log(`Container NOT found: "${operation.container}"`);
+                        }
+                    } else {
+                        console.log('No container specified for operation');
+                        targetParent = null;
+                    }
                 }
 
                 // Add to container or page
                 if (targetParent && 'appendChild' in targetParent) {
+                    console.log(`Adding ${normalizedType} "${operation.name || 'unnamed'}" to container "${(targetParent as any).name}"`);
                     targetParent.appendChild(newNode);
+                    
+                    // IMPORTANT: When appending to a container, coordinates need to be relative to the container
+                    // If the operation specifies absolute page coordinates, convert them to container-relative
+                    if (operation.x !== undefined && operation.y !== undefined) {
+                        const parent = targetParent as FrameNode | GroupNode;
+                        if ('x' in parent && 'y' in parent) {
+                            // Convert absolute coordinates to container-relative
+                            // Since the coordinates from the AI are likely absolute, we need to subtract the parent's position
+                            // But wait - if coordinates are already relative, this would break things
+                            // Let's just use the coordinates as-is and assume they're relative to the parent
+                            newNode.x = operation.x;
+                            newNode.y = operation.y;
+                            console.log(`Set position (relative to container): x=${operation.x}, y=${operation.y}`);
+                        } else {
+                            newNode.x = operation.x;
+                            newNode.y = operation.y;
+                        }
+                    }
                 } else {
                     const hasTextBoxForText = normalizedType === 'text' &&
                         ((operation.textBoxId && operation.textBoxId.trim() !== '') ||

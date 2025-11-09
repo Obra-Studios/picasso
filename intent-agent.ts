@@ -275,6 +275,10 @@ We assume the user wants to make alignment or layout changes. Look at:
    - Are they trying to match an alignment pattern from the context?
    - Are they adapting the context frame's layout principles?
 
+5. Spacing and Margins:
+   - Identify proper padding/margins to maintain
+   - Note if spacing should be uniform across similar elements
+
 Provide:
 1. A concise 1-3 sentence description of what alignment or layout change the user is trying to achieve
 2. A confidence level (high/medium/low) based on how clear the intent is
