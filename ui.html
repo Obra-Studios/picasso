@@ -370,6 +370,25 @@
     </div>
 
     <div class="button-container">
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Frames</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <button id="select-context" style="flex: 1; padding: 8px 12px; font-size: 11px; margin-bottom: 0;">Context</button>
+                <button id="select-canvas" style="flex: 1; padding: 8px 12px; font-size: 11px; margin-bottom: 0;">Canvas</button>
+            </div>
+            <div style="display: flex; gap: 8px; font-size: 10px; color: #666;">
+                <div style="flex: 1;" id="context-status">No context</div>
+                <div style="flex: 1;" id="canvas-status">No canvas</div>
+            </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Additional Context</div>
+            <textarea 
+                id="additional-context" 
+                placeholder="Enter any additional context or instructions for the AI..."
+                style="width: 100%; padding: 8px; font-size: 11px; font-family: 'Inter', sans-serif; border: 1px solid #e0e0e0; border-radius: 4px; resize: vertical; min-height: 60px; box-sizing: border-box;"
+            ></textarea>
+        </div>
         <button id="start-tracking">Start AI Tracking</button>
         <button id="stop-tracking" class="stop-button" style="display: none;">Stop Tracking</button>
     </div>
@@ -390,39 +409,8 @@
 
     <script>
         let isTracking = false;
-        let apiKey = '';
-
-        // Request saved API key from plugin on load
-        parent.postMessage({ pluginMessage: { type: 'get-api-key' } }, '*');
-
-        // Request saved action description from plugin on load
-        parent.postMessage({ pluginMessage: { type: 'get-action-description' } }, '*');
-
-        // Save API key when changed - save to plugin storage immediately
-        document.getElementById('api-key').addEventListener('input', (e) => {
-            apiKey = e.target.value;
-            // Save to plugin storage whenever it changes
-            if (apiKey) {
-                parent.postMessage({
-                    pluginMessage: {
-                        type: 'save-api-key',
-                        apiKey: apiKey
-                    }
-                }, '*');
-            }
-        });
-
-        // Also save on blur (when user leaves the field)
-        document.getElementById('api-key').addEventListener('blur', (e) => {
-            if (apiKey) {
-                parent.postMessage({
-                    pluginMessage: {
-                        type: 'save-api-key',
-                        apiKey: apiKey
-                    }
-                }, '*');
-            }
-        });
+        let contextFrameId = null;
+        let canvasFrameId = null;
 
         document.getElementById('start-tracking').onclick = () => {
             if (!apiKey) {
@@ -436,60 +424,45 @@
             parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
         };
 
-        // Save action description when changed
-        const actionDescriptionEl = document.getElementById('action-description');
-        actionDescriptionEl.addEventListener('input', (e) => {
-            const description = e.target.value;
-            parent.postMessage({
-                pluginMessage: {
-                    type: 'save-action-description',
-                    description: description
-                }
-            }, '*');
-        });
-
-        actionDescriptionEl.addEventListener('blur', (e) => {
-            const description = e.target.value;
-            parent.postMessage({
-                pluginMessage: {
-                    type: 'save-action-description',
-                    description: description
-                }
-            }, '*');
-        });
-
-        document.getElementById('execute-button').onclick = () => {
-            const description = document.getElementById('action-description').value.trim();
-            if (!description) {
-                alert('Please enter a description of actions to execute');
-                return;
-            }
-            if (!apiKey) {
-                alert('Please enter your OpenAI API key first');
-                return;
-            }
-            // Save description before executing
-            parent.postMessage({
-                pluginMessage: {
-                    type: 'save-action-description',
-                    description: description
-                }
-            }, '*');
-            parent.postMessage({
-                pluginMessage: {
-                    type: 'execute',
-                    description: description,
-                    apiKey: apiKey
-                }
-            }, '*');
+        document.getElementById('select-context').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-context' } }, '*');
         };
+
+        document.getElementById('select-canvas').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-canvas' } }, '*');
+        };
+
+        // Save additional context when changed
+        const additionalContextInput = document.getElementById('additional-context');
+        additionalContextInput.addEventListener('input', (e) => {
+            const context = e.target.value.trim();
+            parent.postMessage({ 
+                pluginMessage: { 
+                    type: 'save-additional-context',
+                    context: context
+                } 
+            }, '*');
+        });
+
+        // Request saved additional context on load
+        parent.postMessage({ pluginMessage: { type: 'get-additional-context' } }, '*');
 
         window.onmessage = (event) => {
             const msg = event.data.pluginMessage;
             const statusEl = document.getElementById('status');
             const interpretationEl = document.getElementById('interpretation');
-
-            if (msg.type === 'tracking-started') {
+            
+            if (msg.type === 'context-selected') {
+                contextFrameId = msg.frameId;
+                document.getElementById('context-status').textContent = msg.frameName || 'Selected';
+            } else if (msg.type === 'canvas-selected') {
+                canvasFrameId = msg.frameId;
+                document.getElementById('canvas-status').textContent = msg.frameName || 'Selected';
+            } else if (msg.type === 'additional-context-loaded') {
+                if (msg.context) {
+                    additionalContextInput.value = msg.context;
+                }
+            } else if (msg.type === 'tracking-started') {
                 isTracking = true;
                 updateButtons();
                 statusEl.className = 'status visible success';

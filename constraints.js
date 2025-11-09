@@ -8,13 +8,13 @@
 export function detectConstraints(objects) {
     const constraints = [];
     // Detect alignments
-    constraints.push(...detectAlignments(objects));
+    constraints.push.apply(constraints, detectAlignments(objects));
     // Detect spacing patterns
-    constraints.push(...detectSpacing(objects));
+    constraints.push.apply(constraints, detectSpacing(objects));
     // Detect distributions
-    constraints.push(...detectDistributions(objects));
+    constraints.push.apply(constraints, detectDistributions(objects));
     // Detect grids
-    constraints.push(...detectGrids(objects));
+    constraints.push.apply(constraints, detectGrids(objects));
     return constraints;
 }
 function detectAlignments(objects) {
@@ -104,8 +104,8 @@ function detectSpacing(objects) {
     const constraints = [];
     const TOLERANCE = 3;
     // Sort objects by position
-    const sortedByX = [...objects].sort((a, b) => a.x - b.x);
-    const sortedByY = [...objects].sort((a, b) => a.y - b.y);
+    const sortedByX = objects.slice().sort((a, b) => a.x - b.x);
+    const sortedByY = objects.slice().sort((a, b) => a.y - b.y);
     // Detect horizontal spacing
     for (let i = 0; i < sortedByX.length - 1; i++) {
         const obj1 = sortedByX[i];
@@ -277,7 +277,7 @@ function groupByCoordinate(objects, getCoord, tolerance) {
     return groups;
 }
 function groupObjectsIntoRows(objects, tolerance) {
-    const sortedByY = [...objects].sort((a, b) => a.y - b.y);
+    const sortedByY = objects.slice().sort((a, b) => a.y - b.y);
     const rows = [];
     for (const obj of sortedByY) {
         let foundRow = false;
@@ -301,7 +301,7 @@ function groupObjectsIntoRows(objects, tolerance) {
     return rows;
 }
 function groupObjectsIntoColumns(objects, tolerance) {
-    const sortedByX = [...objects].sort((a, b) => a.x - b.x);
+    const sortedByX = objects.slice().sort((a, b) => a.x - b.x);
     const columns = [];
     for (const obj of sortedByX) {
         let foundColumn = false;
