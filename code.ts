@@ -1,6 +1,6 @@
 // ============================================================================
 // PICASSO - AI-Powered Layout Assistant for Figma
-// Execution Agent Only
+// Component-Based Architecture
 // ============================================================================
 
 import { serializeFrame } from './frame-serialization';
@@ -10,7 +10,11 @@ import { generateActions } from './action-agent';
 import { convertConstraintsToNaturalLanguage, parseNaturalLanguageOperations } from './operations';
 import { executePlan } from './execute';
 import { Action as ExecutionAction, ExecutionOperation } from './execution';
-import { suggestQuickStyle, applyQuickStyle } from './quickstyle-agent';
+import { extractComponentLibrary } from './component-library-agent';
+import { analyzeComponentIntent } from './component-intent-agent';
+import { generateComponentPlan } from './component-plan-agent';
+import { executeComponentPlan } from './component-execution';
+import { ComponentLibrary } from './component-types';
 import { config } from './config';
 
 figma.showUI(__html__, { width: 400, height: 500 });
@@ -31,6 +35,7 @@ let isApplyingChanges = false; // Lock to prevent detecting our own changes as u
 let previousContextHash: string | null = null;
 let contextChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 let storedContextDescription: string | null = null;
+let storedComponentLibrary: ComponentLibrary | null = null;
 
 // Frame selection state
 let contextFrameId: string | null = null;
@@ -58,6 +63,16 @@ let additionalContextTimeout: ReturnType<typeof setTimeout> | null = null;
                 const savedDescription = await figma.clientStorage.getAsync('context_description');
                 if (savedDescription) {
                     storedContextDescription = savedDescription as string;
+                }
+                // Load stored component library if available
+                const savedComponentLibrary = await figma.clientStorage.getAsync('component_library');
+                if (savedComponentLibrary) {
+                    try {
+                        storedComponentLibrary = JSON.parse(savedComponentLibrary as string);
+                        console.log(`✅ Loaded component library with ${storedComponentLibrary?.components.length || 0} components`);
+                    } catch (e) {
+                        console.log('Could not parse stored component library:', e);
+                    }
                 }
                 figma.ui.postMessage({
                     type: 'context-selected',
@@ -546,21 +561,238 @@ async function performIntentAnalysis(
     }
 }
 
-// Generate and store context description
-async function generateAndStoreContextDescription(frame: FrameNode, apiKey: string): Promise<void> {
+// NEW: Component-based workflow
+async function performComponentAnalysis(
+    action: UserAction
+): Promise<void> {
     try {
-        if (!apiKey) {
-            console.log('No API key available, skipping context description generation');
+        if (!OPENAI_API_KEY) {
+            console.log('No API key available, skipping component analysis');
             return;
         }
         
-        console.log('Generating context description for frame:', frame.name);
+        // Get canvas frame
+        const canvasFrame = canvasFrameId ? 
+            await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null : null;
+        
+        if (!canvasFrame) {
+            console.log('No canvas frame selected, skipping component analysis');
+            return;
+        }
+        
+        // Check if component library is available
+        if (!storedComponentLibrary) {
+            console.log('No component library available, skipping component analysis');
+            figma.notify('⚠️ Please select a context frame first');
+            return;
+        }
+        
+        // Serialize canvas
+        let canvasJSON = serializeFrame(canvasFrame);
+        
+        // Show analyzing message
+        figma.ui.postMessage({
+            type: 'processing',
+            message: '🤔 Analyzing component intent...',
+        });
+        
+        // Analyze component intent
+        console.log('🤔 Analyzing component intent...');
+        const componentIntentResponse = await analyzeComponentIntent(
+            action,
+            storedComponentLibrary,
+            canvasJSON,
+            OPENAI_API_KEY,
+            additionalContext || undefined
+        );
+        
+        figma.notify(`💡 ${componentIntentResponse.overallIntent} (${componentIntentResponse.actions.length} actions)`);
+        
+        // Track the last created component to use as reference for the next one
+        let lastCreatedComponentId: string | null = null;
+        
+        // Process each action
+        for (let i = 0; i < componentIntentResponse.actions.length; i++) {
+            const componentIntent = componentIntentResponse.actions[i];
+            
+            // If this is not the first action and we have a previously created component,
+            // update the placement to be relative to the last created component
+            if (i > 0 && lastCreatedComponentId) {
+                console.log(`📍 Adjusting placement: using last created component (${lastCreatedComponentId}) as reference`);
+                componentIntent.placement.relativeTo = lastCreatedComponentId;
+            }
+            
+            console.log(`\n📐 Generating plan for action ${i + 1}/${componentIntentResponse.actions.length}...`);
+            figma.ui.postMessage({
+                type: 'processing',
+                message: `📐 Planning: ${componentIntent.description}`,
+            });
+            
+            // Update canvas JSON to include previously created components
+            if (canvasFrameId && i > 0) {
+                const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+                if (canvasFrame) {
+                    canvasJSON = serializeFrame(canvasFrame);
+                }
+            }
+            
+            const componentPlan = await generateComponentPlan(
+                componentIntent,
+                storedComponentLibrary,
+                canvasJSON,
+                canvasFrame.id
+            );
+            
+            // Execute the plan
+            console.log(`⚡ Executing plan ${i + 1}...`);
+            figma.ui.postMessage({
+                type: 'processing',
+                message: `⚡ Creating: ${componentIntent.description}`,
+            });
+            
+            // Set lock to prevent detecting our own changes
+            isApplyingChanges = true;
+            console.log('🔒 Lock engaged: preventing detection of applied changes');
+            
+            try {
+                const executionResult = await executeComponentPlan(componentPlan);
+                
+                // Track the actual Figma node ID of the created component for the next iteration
+                if (executionResult.created > 0 && executionResult.createdNodeIds.length > 0) {
+                    lastCreatedComponentId = executionResult.createdNodeIds[0];
+                    console.log(`✅ Tracked created component with Figma ID: ${lastCreatedComponentId}`);
+                }
+                
+                console.log(`=== ACTION ${i + 1} COMPLETE ===`);
+                console.log(`Created: ${executionResult.created}`);
+                console.log(`Modified: ${executionResult.modified}`);
+                console.log(`Errors: ${executionResult.errors.length}`);
+                if (executionResult.errors.length > 0) {
+                    console.log('Errors:', executionResult.errors);
+                }
+                console.log('==========================');
+                
+                figma.ui.postMessage({
+                    type: 'execution-complete',
+                    created: executionResult.created,
+                    modified: executionResult.modified,
+                    errors: executionResult.errors,
+                    success: executionResult.success,
+                });
+                
+                if (executionResult.success) {
+                    figma.notify(`✨ Component ${i + 1}/${componentIntentResponse.actions.length} added!`);
+                } else {
+                    figma.notify(`⚠️ Action ${i + 1} completed with ${executionResult.errors.length} error(s)`);
+                }
+                
+                // Add a small delay between actions to allow UI messages to render
+                // This prevents the UI from lagging behind the actual execution
+                if (i < componentIntentResponse.actions.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            } finally {
+                // Release lock after a delay
+                setTimeout(async () => {
+                    // Update canvas state
+                    if (canvasFrameId) {
+                        const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+                        if (canvasFrame) {
+                            previousCanvasState = captureCanvasState(canvasFrame);
+                            previousCanvasHash = await getFrameHash(canvasFrame);
+                            console.log('📸 Updated canvas state after applying changes');
+                        }
+                    }
+                    
+                    isApplyingChanges = false;
+                    console.log('🔓 Lock released: now detecting user changes again');
+                }, 500);
+            }
+        }
+        
+        // Show final summary
+        figma.notify(`✨ All done! Added ${componentIntentResponse.actions.length} component(s)`);
+        
+    } catch (e) {
+        console.log('Error in component analysis:', e);
+        figma.notify('⚠️ Could not complete component analysis');
+        
+        // Release lock immediately on error
+        isApplyingChanges = false;
+        console.log('🔓 Lock released due to error');
+    }
+}
+
+// Generate and store context description and component library
+async function generateAndStoreContextDescription(frame: FrameNode, apiKey: string): Promise<void> {
+    try {
+        if (!apiKey) {
+            console.log('No API key available, skipping context analysis');
+            return;
+        }
+        
+        console.log('Analyzing context frame:', frame.name);
         
         // Serialize the frame to JSON
         const frameJSON = serializeFrame(frame);
         
+        // Count all elements recursively
+        function countElements(node: any): number {
+            let count = 1; // Count this node
+            if (node.children && Array.isArray(node.children)) {
+                for (const child of node.children) {
+                    count += countElements(child);
+                }
+            }
+            return count;
+        }
+        
+        // Flatten all elements for easier viewing
+        function flattenElements(node: any, depth: number = 0, list: any[] = []): any[] {
+            const indent = '  '.repeat(depth);
+            list.push({
+                indent,
+                name: node.name,
+                type: node.type,
+                id: node.id || '(no id)',
+                x: node.x,
+                y: node.y,
+                width: node.width,
+                height: node.height,
+            });
+            
+            if (node.children && Array.isArray(node.children)) {
+                for (const child of node.children) {
+                    flattenElements(child, depth + 1, list);
+                }
+            }
+            
+            return list;
+        }
+        
+        const totalElements = countElements(frameJSON);
+        const elementsList = flattenElements(frameJSON);
+        
+        // Print complete frame JSON structure
+        console.log('=== CONTEXT FRAME JSON (Complete DOM Structure) ===');
+        console.log(`Total elements in frame: ${totalElements}`);
+        console.log('\nElement hierarchy:');
+        elementsList.forEach(el => {
+            console.log(`${el.indent}${el.type}: "${el.name}" (${el.width}x${el.height} at ${el.x},${el.y})`);
+        });
+        console.log('\nFull JSON:');
+        console.log(JSON.stringify(frameJSON, null, 2));
+        console.log('====================================================');
+        
         // Export frame as image
         const frameImageBase64 = await exportFrameAsImage(frame);
+        
+        // Extract component library (NEW!)
+        console.log('🔍 Extracting component library...');
+        const componentLibrary = await extractComponentLibrary(frameJSON, apiKey, additionalContext || undefined);
+        storedComponentLibrary = componentLibrary;
+        await figma.clientStorage.setAsync('component_library', JSON.stringify(componentLibrary));
+        console.log('✅ Component library extracted and stored');
         
         // Generate context description using the context agent
         const description = await generateContextDescription(
@@ -585,8 +817,8 @@ async function generateAndStoreContextDescription(frame: FrameNode, apiKey: stri
         await figma.clientStorage.setAsync('context_frame_hash', currentHash);
         
     } catch (e) {
-        console.log('Error generating context description:', e);
-        figma.notify('Could not generate context description');
+        console.log('Error analyzing context:', e);
+        figma.notify('Could not analyze context frame');
     }
 }
 
@@ -824,8 +1056,11 @@ figma.on('documentchange', async () => {
             // Check if canvas frame content actually changed
             const currentHash = await getFrameHash(canvasFrame);
             if (previousCanvasHash === null) {
-                // First time, just store the hash
+                // First time, just store the hash and capture initial state
+                console.log('📸 First time: capturing initial canvas state');
                 previousCanvasHash = currentHash;
+                previousCanvasState = captureCanvasState(canvasFrame);
+                console.log(`📸 Initial state captured: ${previousCanvasState.objects.length} objects`);
                 return;
             }
             
@@ -874,63 +1109,10 @@ figma.on('documentchange', async () => {
                     size: addition.size,
                 };
                 
-                // Run quickstyle asynchronously (don't await - runs in parallel)
-                const contextFrame = contextFrameId ? 
-                    await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null : null;
-                
-                if (contextFrame && OPENAI_API_KEY) {
-                    console.log('⚡ Starting quickstyle agent (async)...');
-                    const contextJSON = serializeFrame(contextFrame);
-                    
-                    // Run async without blocking
-                    suggestQuickStyle(
-                        {
-                            id: addition.objectId,
-                            name: addition.objectName,
-                            type: addition.objectType,
-                            x: addition.position.x,
-                            y: addition.position.y,
-                            width: addition.size.width,
-                            height: addition.size.height,
-                        },
-                        contextJSON,
-                        OPENAI_API_KEY
-                    ).then(async (suggestion) => {
-                        console.log('=== QUICKSTYLE SUGGESTION ===');
-                        console.log(`Matched: ${suggestion.reasoning}`);
-                        console.log(`Confidence: ${suggestion.confidence}`);
-                        console.log('Applying styles...');
-                        
-                        // Engage lock to prevent re-triggering
-                        isApplyingChanges = true;
-                        console.log('🔒 Quickstyle lock engaged');
-                        
-                        try {
-                            const result = await applyQuickStyle(addition.objectId, suggestion);
-                            
-                            if (result.success) {
-                                console.log(`✅ Quickstyle applied: ${result.applied.join(', ')}`);
-                                figma.notify(`⚡ Quick-styled: ${result.applied.join(', ')}`);
-                            } else {
-                                console.log('❌ Quickstyle failed to apply');
-                            }
-                        } finally {
-                            // Release lock after a short delay
-                            setTimeout(() => {
-                                isApplyingChanges = false;
-                                console.log('🔓 Quickstyle lock released');
-                            }, 300);
-                        }
-                        console.log('=============================');
-                    }).catch((error) => {
-                        console.log('⚠️ Quickstyle error:', error);
-                    });
-                }
-                
-                // Analyze intent (runs in parallel with quickstyle)
-                console.log('🤔 Starting intent analysis for addition...');
-                await performIntentAnalysis(userAction);
-                console.log('✅ Intent analysis complete for addition');
+                // NEW: Use component-based workflow
+                console.log('🎯 Starting component analysis for addition...');
+                await performComponentAnalysis(userAction);
+                console.log('✅ Component analysis complete for addition');
                 
                 // Update state for next time
                 previousCanvasState = currentState;
@@ -948,9 +1130,9 @@ figma.on('documentchange', async () => {
                     delta: movement.delta,
                 };
                 
-                // Analyze intent
-                console.log('🤔 Starting intent analysis for movement...');
-                await performIntentAnalysis(userAction);
+                // NEW: Use component-based workflow
+                console.log('🎯 Starting component analysis for movement...');
+                await performComponentAnalysis(userAction);
                 console.log('✅ Intent analysis complete for movement');
                 
                 // Update state after changes
