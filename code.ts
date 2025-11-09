@@ -9,6 +9,7 @@ import { analyzeIntent, UserAction } from './intent-agent';
 import { generateActions } from './action-agent';
 import { convertConstraintsToNaturalLanguage, parseNaturalLanguageOperations } from './operations';
 import { executePlan } from './execute';
+import { suggestQuickStyle, applyQuickStyle } from './quickstyle-agent';
 import { Action as ExecutionAction, ExecutionOperation } from './execution';
 import { extractComponentLibrary } from './component-library-agent';
 import { analyzeComponentIntent } from './component-intent-agent';
@@ -1130,62 +1131,10 @@ figma.on('documentchange', async () => {
                     size: addition.size,
                 };
                 
-                // Run quickstyle asynchronously (don't await - runs in parallel)
                 const contextFrame = contextFrameId ? 
                     await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null : null;
                 const canvasFrame = canvasFrameId ?
                     await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null : null;
-                
-                if (contextFrame && canvasFrame && OPENAI_API_KEY) {
-                    console.log('⚡ Starting quickstyle agent (async)...');
-                    const contextJSON = serializeFrame(contextFrame);
-                    const canvasJSON = serializeFrame(canvasFrame);
-                    
-                    // Run async without blocking
-                    suggestQuickStyle(
-                        {
-                            id: addition.objectId,
-                            name: addition.objectName,
-                            type: addition.objectType,
-                            x: addition.position.x,
-                            y: addition.position.y,
-                            width: addition.size.width,
-                            height: addition.size.height,
-                        },
-                        contextJSON,
-                        canvasJSON,
-                        OPENAI_API_KEY
-                    ).then(async (suggestion) => {
-                        console.log('=== QUICKSTYLE SUGGESTION ===');
-                        console.log(`Matched: ${suggestion.reasoning}`);
-                        console.log(`Confidence: ${suggestion.confidence}`);
-                        console.log('Applying styles...');
-                        
-                        // Engage lock to prevent re-triggering
-                        isApplyingChanges = true;
-                        console.log('🔒 Quickstyle lock engaged');
-                        
-                        try {
-                            const result = await applyQuickStyle(addition.objectId, suggestion);
-                            
-                            if (result.success) {
-                                console.log(`✅ Quickstyle applied: ${result.applied.join(', ')}`);
-                                figma.notify(`⚡ Quick-styled: ${result.applied.join(', ')}`);
-                            } else {
-                                console.log('❌ Quickstyle failed to apply');
-                            }
-                        } finally {
-                            // Release lock after a short delay
-                            setTimeout(() => {
-                                isApplyingChanges = false;
-                                console.log('🔓 Quickstyle lock released');
-                            }, 300);
-                        }
-                        console.log('=============================');
-                    }).catch((error) => {
-                        console.log('⚠️ Quickstyle error:', error);
-                    });
-                }
                 
                 // Conditionally run full inference suite based on quick mode
                 if (!quickMode) {
@@ -1194,6 +1143,57 @@ figma.on('documentchange', async () => {
                     console.log(':white_check_mark: Component analysis complete for addition');
                 } else {
                     console.log('🚀 Quick mode ON: Skipping full inference suite (quickstyle only)');
+
+                    if (contextFrame && canvasFrame && OPENAI_API_KEY) {
+                        console.log('⚡ Starting quickstyle agent (async)...');
+                        const contextJSON = serializeFrame(contextFrame);
+                        const canvasJSON = serializeFrame(canvasFrame);
+                        
+                        // Run async without blocking
+                        suggestQuickStyle(
+                            {
+                                id: addition.objectId,
+                                name: addition.objectName,
+                                type: addition.objectType,
+                                x: addition.position.x,
+                                y: addition.position.y,
+                                width: addition.size.width,
+                                height: addition.size.height,
+                            },
+                            contextJSON,
+                            canvasJSON,
+                            OPENAI_API_KEY
+                        ).then(async (suggestion) => {
+                            console.log('=== QUICKSTYLE SUGGESTION ===');
+                            console.log(`Matched: ${suggestion.reasoning}`);
+                            console.log(`Confidence: ${suggestion.confidence}`);
+                            console.log('Applying styles...');
+                            
+                            // Engage lock to prevent re-triggering
+                            isApplyingChanges = true;
+                            console.log('🔒 Quickstyle lock engaged');
+                            
+                            try {
+                                const result = await applyQuickStyle(addition.objectId, suggestion);
+                                
+                                if (result.success) {
+                                    console.log(`✅ Quickstyle applied: ${result.applied.join(', ')}`);
+                                    figma.notify(`⚡ Quick-styled: ${result.applied.join(', ')}`);
+                                } else {
+                                    console.log('❌ Quickstyle failed to apply');
+                                }
+                            } finally {
+                                // Release lock after a short delay
+                                setTimeout(() => {
+                                    isApplyingChanges = false;
+                                    console.log('🔓 Quickstyle lock released');
+                                }, 300);
+                            }
+                            console.log('=============================');
+                        }).catch((error) => {
+                            console.log('⚠️ Quickstyle error:', error);
+                        });
+                    }
                 }
                 
                 // Update state for next time
