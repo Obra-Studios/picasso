@@ -3,8 +3,7 @@
 // Architecture: Constraint-Based Multi-Stage Pipeline
 // ============================================================================
 
-import { detectConstraints, computeConstraintDiff, Constraint, isConstraintSatisfied } from './constraints';
-import { quickSolve } from './solver';
+import { detectConstraints, Constraint, isConstraintSatisfied } from './constraints';
 
 figma.showUI(__html__, { width: 350, height: 400 });
 
