@@ -35,6 +35,14 @@
             height: 48px;
             display: block;
             flex: 0 0 auto;
+            overflow: visible;
+        }
+        
+        /* Animation for logo paths */
+        .logo path {
+            transform-box: fill-box;
+            transform-origin: center;
+            transition: transform 0.5s ease-in-out;
         }
 
         .wordmark {
@@ -43,6 +51,8 @@
             display: block;
             flex: 0 0 auto;
             opacity: 0.95;
+            transform-origin: center;
+            transition: transform 1.2s ease-in-out;
         }
 
         /* Inline toggle (placed inside the same row) */
@@ -409,22 +419,22 @@
 <body>
     <div class="logo-container">
         <!-- Primary logo (icon) -->
-        <!-- Begin picasso.svg content -->
-        <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465.99 637.66" aria-hidden="true">
-            <defs>
-                <style>
-                    .cls-1{fill:#57b8c1}.cls-2{fill:#f1e912}.cls-3{fill:#fee600}.cls-4{fill:#fff}.cls-5{fill:#1f7741}.cls-6{fill:#0a0c0b}
-                </style>
-            </defs>
-            <path class="cls-2" d="M47.77,161.36s140.53-32.23,191.28-35.88c47.99-3.45,148.18,9.99,186.16,50.57,5.86,6.26,26.77-45,26.77-45l-106.06-47.66-26.74-68.92-58.63,26.74-57.65-23.13-42.02-.98-63.25,86.24-80.03-5.06,30.16,63.07Z"/>
-            <path class="cls-1" d="M320.63,443.31c43.39,0,15.15-293.91-121.36-329.75C-22.21,55.41-17.57,421.61,48.83,536.5c66.4,114.89,153.71,107.65,207.74,93.19,43.22-11.57-3.32-137.43-8.33-186.38-1.06-10.35,30.97,0,72.38,0Z"/>
-            <path class="cls-3" d="M266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27Z"/>
-            <path class="cls-6" d="M270.57,564.48c-14.09,2.46-61.57,10.37-72.29,4.86-10.43-5.36-7.48-25.33-12.89-30.56-1.72-1.67-37.98-13.23-45.05-16.4-39.8-17.82-100.67-62.38-123.52-99.76-6.14-10.05-9.19-14.38-4-25.97,4.18-9.32,25.78-31.26,26.06-39.45.35-9.99-21.73-65.05-26.06-79.43C10.26,269.23-.71,235.89.04,229.59c.93-7.81,22.69-20.73,29.77-25.75,4.18-2.97,32.94-20.21,32.93-22.48-3.85-5.14-11.65-8.42-15.95-12.49-11.87-11.23-23.25-24.45-29.82-39.61-4.49-10.35-17.31-42.71,3.29-43.32l77.31,10.81C113.43,62.37,144.5-4.07,190.89,1.3c17.09,1.98,62.31,28.09,71.11,27.69,16.8-.78,44.21-47.3,65.93-20.86,10.26,12.48,25.75,70.67,28.96,72.94,2.34,1.65,24.04,2.91,29.76,4.21,19.59,4.44,43.09,19.62,58.22,32.7,7.39,6.39,23.79,18.37,18.97,28.9-4.82,10.52-41.97,38.25-43.43,46.56l38.73,119.6c-13.29,24.28-36.87,42.45-52.24,65.63l-17.21,152.62c-1.8,4.41-4.26,5.1-8.21,6.77-22.68,9.6-84.76,21.89-110.91,26.45ZM266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27ZM247.6,111.92c-1.28-1.27-31.24,2.6-35.97,3-40.61,3.47-73.97,5.21-114.89,2-9.05-.71-62.65-10.33-64.93-7.99-6.19,6.34,20.85,37.09,25.97,41.95,3.54,3.37,20.83,18.55,24.48,18.58,7.77.08,41.1-27.79,53.47-26.18,4.18.54,65.52,39.36,71.62,44.34,10.02,8.18,15.39,23.6-1.51,20.54-14.89-2.7-63.85-43.08-74.52-42.28-6.61.5-48.98,27.13-57.47,32.54-6.3,4.01-49.31,32.27-50.51,35.41-1.95,5.11,26.69,102.19,31.5,104.81,1.25.68,2.45-.37,3.48-.89,16.33-8.19,50.32-56.46,69.43-67.43,4.68-2.68,13.53-3.1,14.78,3.17-.54,3.98-1.67,7.78-7.21,14.17-8.66,9.99-13.44,14.72-18.62,20.56-13.99,13.69-81.85,81.12-84.68,95.19-1.29,6.4,7.73,15.57,11.79,20.68,28.02,35.29,76.06,69.3,117.89,85.91,3.21,1.27,17.75,8.35,18.87,4.92l-40.88-168.22h19.98c7.64,33.86,17.55,67.27,25.97,100.9,6.47,25.8,10.98,52.2,17.98,77.92.97,3.56,4.89,22.09,5.92,23.3,2.71,3.19,40.35.81,42.45-1.19,1.24-1.18.49-15.9.58-19.11.77-26.89-5.16-32.23,12.99-53.95,2.03-2.43,15.72-12.71,13.57-16.03-1.59-2.44-27.98-8.43-32.55-9.95-15.65-5.17-43.12-7.38-26.48-28.98,1.95-2.53,23.32-21.97,24.98-21.97h39.96c2.36,0,1.55-21.01,1.53-23.51-.27-56.45-7.75-116.54-6.08-172.74.18-6.11.15-13.99,3.04-19.53,6.02-11.54,29.05-18.52,41.43-17.95,27.1,1.26,78.81,36.96,54.44,67.37-20.59,25.7-66.9,11.85-66.9-15.95v-28.47c-15.84,2.06-11.79,15.39-11.99,26.97-1.28,74.43,10.14,152.94,6.99,226.78-1.12,26.24-4.31,22.19-19.98,40.96-4.14,4.96-11.78,9.42-14.2,16.27-3.08,8.7-.96,13.65-.78,21.7.02,1-.04,2,0,3v17.98l98.68-22.22,17.49-147.84,48.75-62.22-39.84-119.61c.43-9.68,43.14-42.61,42.68-47.08-42.86-52.64-112.11-41.19-171.23-31.6-2.25,2.44-2.22,41.27-2.52,47.93-2.84,63.98-3.7,128.09-6.21,192.09-1.45,11.04-45.24,7.29-48.33,3.81-2.99-3.38-2.69-12.54,1.19-14.98,5.69-3.58,25.78,2.32,28.37-4.6-.75-59.98,6.86-122.13,6.05-181.77l-.04-40.52ZM335,185.88c-1.42.45-1.02,26.49-.51,29.47,3.02,17.76,30,10.19,31.58-.46,1.32-8.9-27.16-30.25-31.06-29.01Z"/>
-            <!-- End picasso.svg content -->
-
-            <!-- Wordmark (inline) -->
-            <!-- Begin picasso-wordmark.svg content -->
+        <!-- Begin animated picasso.svg content -->
+        <svg class="logo" viewBox="0 0 1104 1396" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M837 1085C799 1002 717.5 1023.5 630.5 1048L576.5 1085V1224.5L837 1153.5V1085Z" fill="#549F65"/>
+            <path d="M1025.77 692.727C1003.03 800.299 895.818 791.585 873.377 788.263C850.935 784.942 789.843 746.736 759.746 711.803C722.124 668.136 765.543 608.439 815 581C864.457 553.561 1048.5 585.156 1025.77 692.727Z" fill="#C54646"/>
+            <path d="M104.563 353.258C104.563 353.258 412.168 282.698 523.254 274.708C628.298 267.155 847.603 296.578 930.737 385.418C943.564 399.123 989.334 286.902 989.334 286.902L757.18 182.562L698.649 31.6785L570.315 90.2192L444.125 39.5817L352.148 37.4363L213.701 226.238L38.5244 215.16L104.541 353.236L104.563 353.258Z" fill="#F0B800"/>
+            <path d="M436.18 248.612C734.985 327.075 796.799 970.518 701.823 970.518H701.801C683.562 970.518 666.154 969.601 650 968.32L570.692 1104C598.251 1222.73 627.295 1360.96 561.603 1378.55C443.337 1410.21 252.226 1426.06 106.883 1174.54C-38.4588 923.012 -48.6152 121.307 436.18 248.612Z" fill="#57B8C1"/>
+            <path d="M583.514 111.63C556.415 119.095 442.352 37.5676 393.65 47.5068C341.751 58.1028 274.027 166.208 264.243 216.605C410.592 219.473 557.006 201.477 701.604 181.621C713.577 179.979 732.183 183.875 732.139 169.864C732.117 159.356 691.667 52.3451 685.713 49.7399C668.486 42.1869 602.185 106.485 583.514 111.63Z" fill="#F0B800"/>
+            <path d="M592.247 1235.79C561.406 1241.18 457.478 1258.49 434.013 1246.43C411.183 1234.7 417.64 1190.98 405.798 1179.53C402.033 1175.87 322.664 1150.56 307.189 1143.62C220.071 1104.61 86.8331 1007.06 36.817 925.222C23.3773 903.22 16.7012 893.741 28.0615 868.368C37.211 847.964 84.491 799.932 85.1039 782.002C85.87 760.131 37.5394 639.59 28.0615 608.109C22.4579 589.413 -1.55417 516.423 0.0875001 502.631C2.12317 485.533 49.7534 457.248 65.2507 446.257C74.4003 439.755 137.353 402.013 137.331 397.043C128.904 385.79 111.83 378.61 102.418 369.699C76.4359 345.114 51.5264 316.172 37.1454 282.983C27.3173 260.324 -0.744278 189.48 44.3468 188.144L213.57 211.81C248.286 136.544 316.294 -8.91038 417.837 2.84592C455.245 7.18064 554.226 64.3421 573.489 63.4664C610.262 61.7587 670.259 -40.0854 717.802 17.7985C740.26 45.1204 774.166 172.513 781.192 177.483C786.314 181.095 833.813 183.853 846.334 186.699C889.214 196.42 940.653 229.653 973.771 258.288C989.947 272.277 1025.84 298.505 1015.29 321.558C1004.74 344.589 923.426 405.297 920.23 423.489L1005.01 685.324C975.916 738.479 924.302 778.258 890.659 829.005L852.988 1163.13C849.048 1172.78 843.663 1174.29 835.017 1177.95C785.373 1198.97 649.487 1225.87 592.247 1235.86V1235.79ZM583.514 111.63C556.415 119.095 442.352 37.5675 393.65 47.5067C341.751 58.1027 274.027 166.208 264.243 216.605C410.592 219.473 557.006 201.477 701.604 181.62C713.577 179.978 732.183 183.875 732.139 169.864C732.117 159.356 691.667 52.345 685.713 49.7397C668.486 42.1868 602.185 106.485 583.514 111.63ZM541.969 245.021C539.167 242.241 473.588 250.713 463.234 251.589C374.344 259.186 301.322 262.995 211.753 255.967C191.944 254.413 74.6191 233.353 69.6285 238.475C56.0793 252.355 115.267 319.675 126.474 330.315C134.223 337.692 172.068 370.925 180.058 370.991C197.066 371.166 270.021 310.152 297.098 313.676C306.247 314.858 440.514 399.845 453.866 410.748C475.799 428.656 487.553 462.414 450.561 455.715C417.968 449.804 310.8 361.402 287.445 363.153C272.976 364.248 180.233 422.548 161.649 434.392C147.859 443.171 53.7153 505.039 51.0886 511.913C46.8203 523.1 109.51 735.633 120.039 741.369C122.775 742.858 125.401 740.559 127.656 739.421C163.4 721.491 237.801 615.815 279.63 591.799C289.874 585.932 309.246 585.012 311.982 598.739C310.8 607.452 308.327 615.771 296.2 629.761C277.245 651.631 266.782 661.987 255.443 674.772C224.821 704.743 76.2827 852.364 70.0882 883.167C67.2645 897.178 87.0083 917.254 95.8951 928.441C157.228 1005.7 262.382 1080.16 353.943 1116.52C360.97 1119.3 392.796 1134.8 395.248 1127.29L305.766 759.014H349.5C366.223 833.143 387.915 906.285 406.345 979.91C420.507 1036.39 430.379 1094.19 445.701 1150.5C447.825 1158.29 456.405 1198.86 458.66 1201.51C464.591 1208.49 546.981 1203.28 551.578 1198.9C554.292 1196.32 552.65 1164.09 552.847 1157.06C554.533 1098.2 541.553 1086.5 581.281 1038.95C585.725 1033.63 615.69 1011.13 610.984 1003.86C607.504 998.519 549.739 985.405 539.736 982.077C505.48 970.759 445.351 965.921 481.774 918.633C486.043 913.094 532.819 870.535 536.453 870.535H623.921C629.086 870.535 627.313 824.539 627.27 819.066C626.679 695.482 610.306 563.93 613.961 440.894C614.355 427.517 614.29 410.266 620.615 398.138C633.793 372.874 684.203 357.593 711.301 358.841C770.62 361.599 883.807 439.755 830.464 506.331C785.395 562.594 684.028 532.273 684.028 471.412V409.084C649.356 413.594 658.221 442.777 657.783 468.128C654.981 631.074 679.978 802.953 673.083 964.607C670.632 1022.05 663.649 1013.19 629.349 1054.28C620.287 1065.14 603.564 1074.9 598.267 1089.9C591.525 1108.94 596.166 1119.78 596.56 1137.41C596.603 1139.59 596.472 1141.78 596.56 1143.97V1183.34L812.559 1134.69L850.843 811.031L957.551 674.816L870.346 412.959C871.287 391.767 964.774 319.675 963.767 309.889C869.952 194.646 718.371 219.713 588.964 240.708C584.039 246.05 584.105 331.059 583.448 345.639C577.232 485.708 575.349 626.061 569.855 766.173C566.681 790.343 470.83 782.133 464.066 774.514C457.521 767.115 458.178 747.061 466.671 741.719C479.126 733.882 523.1 746.798 528.77 731.649C527.128 600.337 543.785 464.275 542.012 333.708L541.925 244.999L541.969 245.021ZM733.277 406.938C730.169 407.924 731.045 464.932 732.161 471.456C738.772 510.337 797.828 493.764 801.286 470.449C804.176 450.964 741.836 404.224 733.299 406.938H733.277ZM628.342 909.92H558.363C554.008 909.92 535.38 928.703 529.864 931.725L531.112 937.198L632.676 962.462L628.342 909.92Z" fill="black"/>
+            <path d="M323.561 436.318C290.093 437.128 244.718 458.102 225.849 486.649C191.353 538.841 294.778 578.27 337.001 575.533C365.916 573.672 414.838 550.225 431.189 525.903C463.388 477.98 363.771 435.355 323.561 436.318Z" fill="black"/>
+            <path d="M627.899 910H545.541C540.414 910 518.492 928.59 512 931.58L513.468 936.997L633 962L627.899 910Z" fill="#FFF9F0"/>
+            <path d="M348.34 462.108C332.755 460.553 323.167 467.603 312.77 479.753C293.771 501.974 326.823 526.319 346.567 527.479C360.094 528.267 384.15 520.211 393.124 509.877C410.811 489.495 367.033 463.991 348.34 462.108Z" fill="#FFF9F0"/>
         </svg>
+        <!-- End animated picasso.svg content -->
+
+        <!-- Wordmark (inline) -->
+        <!-- Begin picasso-wordmark.svg content -->
 
         <svg class="wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 633.56 249.42" aria-hidden="true">
             <path d="M622.04,0c2.87,7.45,2.77,15.52,4.69,23.46,1.74,7.2,4.92,14.17,6.82,21.33v10.34c-6.47,14.69-29.56,22.73-44.42,26.33-18.88,4.57-26.56,3.96-20.12-17.77,6.89-23.27,26.88-50.51,47.27-63.68h5.76ZM613.97,35.61c-2.79-2.15-14.16,14.91-14.75,18.08-1.37,7.32,4.75,11.39,10.73,7.17,10.39-7.33,6.62-14.69,4.02-25.25Z"/>
@@ -445,11 +455,6 @@
                 </svg>
             </button>
         </div>
-    </div>
-
-    <div class="input-group">
-        <label class="input-label" for="api-key">OpenAI API Key</label>
-        <input type="password" id="api-key" placeholder="sk-..." />
     </div>
 
     <div class="button-container">
@@ -490,9 +495,9 @@
             const btn = e.currentTarget;
             btn.setAttribute('aria-pressed', String(isTracking));
             if (isTracking) {
-                parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
+            parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
             } else {
-                parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
+            parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
             }
             updateToggleUI();
         };
@@ -537,19 +542,19 @@
                     }
                 }
 
-            additionalContextInput.addEventListener('input', (e) => {
+        additionalContextInput.addEventListener('input', (e) => {
                 const el = e.target;
                 // keep fixed height
                 autoResizeTextarea();
 
                 const context = el.value.trim();
-                parent.postMessage({ 
-                    pluginMessage: { 
-                        type: 'save-additional-context',
-                        context: context
-                    } 
-                }, '*');
-            });
+            parent.postMessage({ 
+                pluginMessage: { 
+                    type: 'save-additional-context',
+                    context: context
+                } 
+            }, '*');
+        });
 
             // ensure fixed height initial
             autoResizeTextarea();
@@ -587,7 +592,7 @@
                     eventStream.removeChild(eventStream.firstChild);
                 }
             }
-
+            
             if (msg.type === 'context-selected') {
                 contextFrameId = msg.frameId;
                 const ctxName = msg.frameName || 'Selected';
@@ -642,10 +647,12 @@
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = msg.message;
                 interpretationEl.className = 'interpretation';
+                window.startLogoAnimations();
             } else if (msg.type === 'intent-extraction') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = '🧠 ' + msg.message;
                 interpretationEl.className = 'interpretation';
+                window.startLogoAnimations();
             } else if (msg.type === 'intent-extracted') {
                 interpretationEl.className = 'interpretation visible';
                 interpretationEl.innerHTML = `
@@ -663,9 +670,11 @@
             } else if (msg.type === 'arrangement-started') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = `🎯 Arranging to satisfy: "${msg.intent}"`;
+                window.startLogoAnimations();
             } else if (msg.type === 'arrangement-iteration') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = `🔄 Arrangement iteration ${msg.iteration}/${msg.maxIterations}...`;
+                window.startLogoAnimations();
             } else if (msg.type === 'arrangement-evaluation') {
                 if (msg.intentSatisfied) {
                     statusEl.className = 'status visible success';
@@ -677,6 +686,7 @@
             } else if (msg.type === 'arrangement-complete') {
                 statusEl.className = 'status visible success';
                 statusEl.textContent = msg.message;
+                window.stopLogoAnimations();
             } else if (msg.type === 'interpretation') {
                 interpretationEl.className = 'interpretation visible';
                 interpretationEl.innerHTML = `
@@ -687,12 +697,15 @@
             } else if (msg.type === 'actions-applied') {
                 statusEl.className = 'status visible success';
                 statusEl.textContent = '✨ ' + msg.message;
+                window.stopLogoAnimations();
             } else if (msg.type === 'refinement-started') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = '🔄 ' + msg.message;
+                window.startLogoAnimations();
             } else if (msg.type === 'validation-step') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = `🔍 ${msg.message}`;
+                window.startLogoAnimations();
             } else if (msg.type === 'validation-result') {
                 if (msg.isAligned) {
                     statusEl.className = 'status visible success';
@@ -704,22 +717,27 @@
             } else if (msg.type === 'refinement-complete') {
                 statusEl.className = 'status visible success';
                 statusEl.textContent = msg.message;
+                window.stopLogoAnimations();
             } else if (msg.type === 'error') {
                 statusEl.className = 'status visible error';
                 statusEl.textContent = '⚠️ ' + msg.message;
+                window.stopLogoAnimations();
             } else if (msg.type === 'execution-started') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = '🔄 Parsing and executing actions...';
                 interpretationEl.className = 'interpretation';
+                window.startLogoAnimations();
                 const apiCallsEl = document.getElementById('api-calls');
                 apiCallsEl.className = 'api-calls-box';
                 apiCallsEl.innerHTML = '';
             } else if (msg.type === 'execution-progress') {
                 statusEl.className = 'status visible processing';
                 statusEl.textContent = msg.message;
+                window.startLogoAnimations();
             } else if (msg.type === 'execution-complete') {
                 statusEl.className = 'status visible success';
                 statusEl.textContent = `✅ Execution complete! Created: ${msg.created}, Modified: ${msg.modified}`;
+                window.stopLogoAnimations();
 
                 // Display API calls
                 const apiCallsEl = document.getElementById('api-calls');
@@ -776,12 +794,6 @@
             } else if (msg.type === 'save-screenshot') {
                 // Save screenshot to downloads folder
                 saveScreenshot(msg.screenshot, msg.filename);
-            } else if (msg.type === 'api-key-loaded') {
-                // Load API key from plugin storage
-                if (msg.apiKey) {
-                    document.getElementById('api-key').value = msg.apiKey;
-                    apiKey = msg.apiKey;
-                }
             } else if (msg.type === 'action-description-loaded') {
                 // Load action description from plugin storage
                 const actionDescriptionEl = document.getElementById('action-description');
@@ -903,6 +915,119 @@
 
         // No external icon library (CSP); icons are inlined above.
         updateToggleUI();
+
+        // ======================
+        // LOGO & WORDMARK ANIMATION
+        // ======================
+        const logo = document.querySelector('.logo');
+        const wordmark = document.querySelector('.wordmark');
+        let logoAnimationInterval = null;
+        let wordmarkAnimationInterval = null;
+        let isAnimating = false;
+        
+        // Logo animation variables
+        let currentElement = null;
+        let previousIndex = -1;
+        
+        function animateRandomLogoElement() {
+            if (!logo) return;
+            
+            const paths = logo.querySelectorAll('path');
+            
+            // Pick a random path element (different from the previous one)
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * paths.length);
+            } while (randomIndex === previousIndex && paths.length > 1);
+            
+            // Reset previous element (if it exists)
+            if (currentElement) {
+                currentElement.style.transform = 'rotate(0deg) scale(1) translate(0px, 0px)';
+            }
+            
+            currentElement = paths[randomIndex];
+            previousIndex = randomIndex;
+            
+            // Get the bounding box to determine element size
+            const bbox = currentElement.getBBox();
+            const elementArea = bbox.width * bbox.height;
+            
+            // Calculate size factor (smaller elements = higher factor)
+            const sizeFactor = Math.max(0.5, 1 / (elementArea / 30000));
+            
+            // Generate random transforms
+            const tiltAngle = (Math.random() - 0.5) * Math.max(10, 30 * sizeFactor);
+            const baseScale = 1.05 + Math.random() * 0.08;
+            const scale = Math.max(1.02, 1 + (baseScale - 1) * sizeFactor);
+            const translateX = (Math.random() - 0.5) * Math.max(6, 20 * sizeFactor);
+            const translateY = (Math.random() - 0.5) * Math.max(6, 20 * sizeFactor);
+            
+            // Apply the transform
+            currentElement.style.transform = `rotate(${tiltAngle}deg) scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+        }
+        
+        function animateWordmark() {
+            if (!wordmark) return;
+            
+            // Generate a random tilt angle between -4 and 4 degrees
+            const tiltAngle = (Math.random() - 0.5) * 8;
+            wordmark.style.transform = `rotate(${tiltAngle}deg)`;
+        }
+        
+        function startAnimations() {
+            if (isAnimating) return; // Already animating
+            
+            isAnimating = true;
+            
+            // Start logo animation
+            if (logo) {
+                animateRandomLogoElement(); // Animate immediately
+                logoAnimationInterval = setInterval(animateRandomLogoElement, 450);
+            }
+            
+            // Start wordmark animation
+            if (wordmark) {
+                animateWordmark(); // Animate immediately
+                wordmarkAnimationInterval = setInterval(animateWordmark, 1200);
+            }
+        }
+        
+        function stopAnimations() {
+            if (!isAnimating) return; // Already stopped
+            
+            isAnimating = false;
+            
+            // Stop logo animation
+            if (logoAnimationInterval) {
+                clearInterval(logoAnimationInterval);
+                logoAnimationInterval = null;
+            }
+            
+            // Reset all logo paths to default
+            if (logo) {
+                const paths = logo.querySelectorAll('path');
+                paths.forEach(path => {
+                    path.style.transform = 'rotate(0deg) scale(1) translate(0px, 0px)';
+                });
+                currentElement = null;
+                previousIndex = -1;
+            }
+            
+            // Stop wordmark animation
+            if (wordmarkAnimationInterval) {
+                clearInterval(wordmarkAnimationInterval);
+                wordmarkAnimationInterval = null;
+            }
+            
+            // Reset wordmark to default
+            if (wordmark) {
+                wordmark.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // Expose animation controls globally
+        window.startLogoAnimations = startAnimations;
+        window.stopLogoAnimations = stopAnimations;
     </script>
 </body>
 
