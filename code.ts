@@ -26,6 +26,7 @@ let canvasChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 const recentlyProcessed = new Set<string>();
 let isProcessing = false;
 let isApplyingChanges = false; // Lock to prevent detecting our own changes as user actions
+let quickMode = true; // Quick mode: only run quickstyle agent (faster). When disabled, runs full inference suite.
 
 // Context frame hash tracking
 let previousContextHash: string | null = null;
@@ -682,6 +683,20 @@ figma.ui.onmessage = async (msg) => {
             frameId: canvasFrameId,
             frameName: selection[0].name,
         });
+    } else if (msg.type === 'start-tracking') {
+        // Enable quick mode (only quickstyle agent)
+        quickMode = true;
+        console.log('🚀 Quick mode enabled: will only run quickstyle agent');
+        figma.ui.postMessage({
+            type: 'tracking-started',
+        });
+    } else if (msg.type === 'stop-tracking') {
+        // Disable quick mode (run full inference suite)
+        quickMode = false;
+        console.log('🧠 Quick mode disabled: will run full inference suite');
+        figma.ui.postMessage({
+            type: 'tracking-stopped',
+        });
     } else if (msg.type === 'save-additional-context') {
         additionalContext = msg.context || null;
         await figma.clientStorage.setAsync('additional_context', additionalContext || '');
@@ -877,10 +892,13 @@ figma.on('documentchange', async () => {
                 // Run quickstyle asynchronously (don't await - runs in parallel)
                 const contextFrame = contextFrameId ? 
                     await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null : null;
+                const canvasFrame = canvasFrameId ?
+                    await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null : null;
                 
-                if (contextFrame && OPENAI_API_KEY) {
+                if (contextFrame && canvasFrame && OPENAI_API_KEY) {
                     console.log('⚡ Starting quickstyle agent (async)...');
                     const contextJSON = serializeFrame(contextFrame);
+                    const canvasJSON = serializeFrame(canvasFrame);
                     
                     // Run async without blocking
                     suggestQuickStyle(
@@ -894,6 +912,7 @@ figma.on('documentchange', async () => {
                             height: addition.size.height,
                         },
                         contextJSON,
+                        canvasJSON,
                         OPENAI_API_KEY
                     ).then(async (suggestion) => {
                         console.log('=== QUICKSTYLE SUGGESTION ===');
@@ -927,10 +946,14 @@ figma.on('documentchange', async () => {
                     });
                 }
                 
-                // Analyze intent (runs in parallel with quickstyle)
-                console.log('🤔 Starting intent analysis for addition...');
-                await performIntentAnalysis(userAction);
-                console.log('✅ Intent analysis complete for addition');
+                // Conditionally run full inference suite based on quick mode
+                if (!quickMode) {
+                    console.log('🧠 Quick mode OFF: Starting full inference suite for addition...');
+                    await performIntentAnalysis(userAction);
+                    console.log('✅ Full inference suite complete for addition');
+                } else {
+                    console.log('🚀 Quick mode ON: Skipping full inference suite (quickstyle only)');
+                }
                 
                 // Update state for next time
                 previousCanvasState = currentState;
@@ -948,10 +971,14 @@ figma.on('documentchange', async () => {
                     delta: movement.delta,
                 };
                 
-                // Analyze intent
-                console.log('🤔 Starting intent analysis for movement...');
-                await performIntentAnalysis(userAction);
-                console.log('✅ Intent analysis complete for movement');
+                // Conditionally run full inference suite based on quick mode
+                if (!quickMode) {
+                    console.log('🧠 Quick mode OFF: Starting full inference suite for movement...');
+                    await performIntentAnalysis(userAction);
+                    console.log('✅ Full inference suite complete for movement');
+                } else {
+                    console.log('🚀 Quick mode ON: Skipping full inference suite (no action for movements in quick mode)');
+                }
                 
                 // Update state after changes
                 previousCanvasState = captureCanvasState(canvasFrame);
