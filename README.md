@@ -4,37 +4,35 @@ Below are the steps to get your plugin running. You can also find instructions a
 
 This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+## Using Bun (Recommended)
 
-  https://nodejs.org/en/download/
+Bun is a fast all-in-one JavaScript runtime & toolkit. To use Bun with this plugin:
 
-Next, install TypeScript using the command:
+1. Install Bun if you haven't already:
 
-  npm install -g typescript
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+   Or visit https://bun.sh for other installation methods.
 
-  npm install --save-dev @figma/plugin-typings
+2. Install dependencies:
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+   ```bash
+   bun install
+   ```
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+3. Build the plugin:
 
-For more information, visit https://www.typescriptlang.org/
+   ```bash
+   bun run build
+   ```
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+4. Or run in watch mode for development:
 
-We recommend writing TypeScript code using Visual Studio code:
+   ```bash
+   bun run watch
+   ```
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+That's it! Bun will automatically compile TypeScript to JavaScript and regenerate files when you save.
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
