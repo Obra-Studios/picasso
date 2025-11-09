@@ -60,10 +60,13 @@ let additionalContextTimeout: ReturnType<typeof setTimeout> | null = null;
                 contextFrameId = frame.id;
                 // Initialize context hash
                 previousContextHash = await getFrameHash(frame as FrameNode);
-                // Load stored description if available
+                // Load stored description if available (cached)
                 const savedDescription = await figma.clientStorage.getAsync('context_description');
                 if (savedDescription) {
                     storedContextDescription = savedDescription as string;
+                    console.log('✅ Loaded cached context description from storage');
+                } else {
+                    console.log('⚠️ No cached context description found');
                 }
                 // Load stored component library if available
                 const savedComponentLibrary = await figma.clientStorage.getAsync('component_library');
@@ -80,9 +83,11 @@ let additionalContextTimeout: ReturnType<typeof setTimeout> | null = null;
                     frameId: contextFrameId,
                     frameName: frame.name,
                 });
-                // Generate context description if API key is available
+                // Regenerate context description in background if API key is available
                 if (OPENAI_API_KEY) {
+                    console.log('🔄 Regenerating context description in background...');
                     await generateAndStoreContextDescription(frame as FrameNode, OPENAI_API_KEY);
+                    console.log('✅ Context description regenerated and saved');
                 }
             }
         } catch (e) {
@@ -803,9 +808,10 @@ async function generateAndStoreContextDescription(frame: FrameNode, apiKey: stri
             frameImageBase64 || undefined
         );
         
-        // Store the description
+        // Store the description in memory and localStorage
         storedContextDescription = description;
         await figma.clientStorage.setAsync('context_description', description);
+        console.log('💾 Context description saved to localStorage');
         
         // Print to console
         console.log('=== CONTEXT DESCRIPTION ===');
