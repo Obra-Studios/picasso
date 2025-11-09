@@ -97,5 +97,5 @@ Actions: [
 Metadata: {
   "timestamp": 1762653247218,
   "model": "gpt-4o-2024-08-06",
-  "intent": "Create a login form in the Content Area with an email input field and a login button below it, properly spaced and aligned"
+  "intent": "Create a login form in Frame 1 with an email input field and a login button below it, properly spaced and aligned"
 }
