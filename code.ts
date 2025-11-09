@@ -1183,9 +1183,9 @@ figma.on('documentchange', async () => {
                 
                 // Conditionally run full inference suite based on quick mode
                 if (!quickMode) {
-                    console.log('🧠 Quick mode OFF: Starting full inference suite for addition...');
-                    await performIntentAnalysis(userAction);
-                    console.log('✅ Full inference suite complete for addition');
+                    console.log('🧠 Quick mode OFF: Starting component analysis for addition...');
+                    await performComponentAnalysis(userAction);
+                    console.log(':white_check_mark: Component analysis complete for addition');
                 } else {
                     console.log('🚀 Quick mode ON: Skipping full inference suite (quickstyle only)');
                 }
@@ -1209,8 +1209,8 @@ figma.on('documentchange', async () => {
                 // Conditionally run full inference suite based on quick mode
                 if (!quickMode) {
                     console.log('🧠 Quick mode OFF: Starting full inference suite for movement...');
-                    await performIntentAnalysis(userAction);
-                    console.log('✅ Full inference suite complete for movement');
+                    await performComponentAnalysis(userAction);
+                    console.log(':white_check_mark: Intent analysis complete for movement');
                 } else {
                     console.log('🚀 Quick mode ON: Skipping full inference suite (no action for movements in quick mode)');
                 }
