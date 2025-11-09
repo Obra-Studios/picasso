@@ -11,3 +11,4 @@ code.js
 # Config with API keys
 config.ts
 config.js
+.venv/
