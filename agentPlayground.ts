@@ -3,11 +3,14 @@
 // Prompts configuration - can be edited to customize AI behavior
 // Note: These prompts should be kept in sync with prompts.json
 const prompts = {
+    figmaCoordinateSystemPrompt: "CRITICAL: FIGMA COORDINATE SYSTEM CONTEXT\n\nFigma uses a coordinate system with important characteristics that differ from conventional mathematical coordinate systems:\n\n1. Y-AXIS IS REVERSED:\n   - y=0 is at the TOP of the frame/document\n   - Higher y values mean LOWER on the screen (closer to the bottom)\n   - Lower y values mean HIGHER on the screen (closer to the top)\n   - Example: A shape at y=180 is VISUALLY ABOVE a shape at y=248, even though 180 < 248\n   - When describing positions, always explicitly state \"top\", \"bottom\", \"left\", \"right\" based on visual appearance\n   - When identifying shapes, always clarify visual position (top/bottom) to avoid confusion\n\n2. COORDINATES MEASURE TOP-LEFT CORNER:\n   - All x, y coordinates in Figma represent the TOP-LEFT corner of the object's bounding box\n   - This is NOT the center of the object\n   - To position an object at a specific center point, you must calculate: x = centerX - (width / 2), y = centerY - (height / 2)\n   - Example: To center a 100x50 rectangle at (200, 300), set x = 200 - 50 = 150, y = 300 - 25 = 275\n   - When working with center coordinates (centerX, centerY), always account for the object's width and height\n\n3. COORDINATE RELATIVITY:\n   - Coordinates are relative to the parent container (frame or group)\n   - The frame's top-left corner is at (0, 0)\n   - Shapes within groups have coordinates relative to their group's top-left corner, not the frame\n   - When positioning shapes, ensure coordinates are relative to the appropriate parent container\n\n4. VISUAL POSITIONING:\n   - Always think in terms of visual appearance, not just numerical values\n   - Use descriptive terms (top, bottom, left, right) alongside coordinates\n   - Remember: smaller y = visually higher, larger y = visually lower",
     systemPrompt: "You are a design assistant that helps complete designs in Figma. Given a description of existing shapes (rectangles, circles, ellipses, polygons, stars, lines, vectors) and a user's prompt, you should generate instructions for creating additional shapes to complete the design. CRITICAL: Pay close attention to the spatial positioning of existing shapes. Use the center coordinates (centerX, centerY) and bounds information to position new shapes relative to existing ones. Ensure all new shapes are positioned within the frame bounds and in logical positions relative to the existing design. Respond with a JSON array of shape creation instructions.",
     vectorDescriptionPrompt: "Describe the following vector in detail, including its shape, position, size, and any visual characteristics:",
-    semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. CRITICAL: Include specific pixel positions, coordinates, spatial relationships, AND hierarchical structure.\n\nHIERARCHY AWARENESS:\n- The structure preserves the tree-like hierarchy of the design (groups, frames, containers)\n- Shapes may be nested within groups or other containers\n- Use the 'relativeBounds' coordinates (not 'bounds') when describing positions - these are relative to the parent container (group/frame)\n- The frame's top-left corner is at (0, 0)\n- Shapes within groups have coordinates relative to their group, not the frame\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to parent container)\n- Center coordinates from relativeBounds (centerX, centerY relative to parent)\n- Dimensions (width x height in pixels)\n- Which group or container it belongs to (if nested)\n- Spatial relationships between shapes with specific pixel distances\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 4-5 sentences:\n\n{domRepresentation}",
+    semanticDescriptionPrompt: "Based on the following DOM-like representation of shapes (rectangles, circles, polygons, stars, lines, vectors, etc.), provide a clear, concise description of what this design looks like. Include specific pixel positions, coordinates, spatial relationships, AND hierarchical structure.\n\nCRITICAL: When describing positions, you MUST understand Figma's coordinate system:\n- y=0 is at the TOP, higher y values are LOWER on screen\n- A shape with y=180 is VISUALLY ABOVE a shape with y=248 (even though 180 < 248)\n- Always state visual position (top/bottom) explicitly when describing shapes\n- Example: \"The top ellipse at y=180\" or \"The bottom ellipse at y=248\"\n\nHIERARCHY AWARENESS:\n- The structure preserves the tree-like hierarchy of the design (groups, frames, containers)\n- Shapes may be nested within groups or other containers\n- Use the 'relativeBounds' coordinates (not 'bounds') when describing positions - these are relative to the parent container (group/frame)\n- The frame's top-left corner is at (0, 0)\n- Shapes within groups have coordinates relative to their group, not the frame\n\nFor each shape, mention:\n- Exact pixel positions using relativeBounds (x, y coordinates relative to parent container) - remember these are TOP-LEFT corner coordinates\n- Visual position (top/bottom/left/right) to clarify despite the flipped y-axis\n- Center coordinates from relativeBounds (centerX, centerY relative to parent)\n- Dimensions (width x height in pixels)\n- Which group or container it belongs to (if nested)\n- Spatial relationships between shapes with specific pixel distances and visual directions\n- Frame dimensions and how shapes are positioned within the frame\n\nUse specific numbers from the relativeBounds data. Keep it to 4-5 sentences:\n\n{domRepresentation}",
     screenshotInterpretationPrompt: "IMPORTANT: You have been provided with a screenshot of the frame. Please interpret this screenshot and interpolate between the visual geometries you see in the screenshot and the exact values provided in the DOM representation above. Use the screenshot to understand the visual appearance, spatial relationships, and design intent, while using the DOM representation for precise numerical values, coordinates, and structural information. Combine both sources of information to provide an accurate and comprehensive description.",
-    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT & HIERARCHY:\n- The existing shape description is: {vectorDescription}\n- The DOM representation preserves the hierarchical tree structure (groups, frames, containers)\n- IMPORTANT: Respect the existing hierarchy when positioning new shapes\n- Shapes may be nested within groups - if you're adding shapes that relate to grouped shapes, consider placing them in the same group\n- Use the relativeBounds coordinates when positioning new shapes - these are relative to the parent container (group or frame)\n- The frame's top-left corner is at (0, 0) - coordinates at the frame level are relative to this\n- Shapes within groups have coordinates relative to their group's top-left corner\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as the target container (frame or group)\n- Position new shapes in a way that makes visual sense relative to existing shapes, respecting their hierarchical relationships\n- If shapes are grouped together, new related shapes should likely be placed in the same group or at the same hierarchy level\n\nDOM representation: {domRepresentation}\n\nCRITICAL JSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions (e.g., \"240.5 - 10\") - calculate the values yourself and use the final number\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON array that can be parsed directly\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the appropriate container (frame or group) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes, respecting the hierarchical structure."
+    completionPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", generate instructions for creating additional shapes.\n\nSPATIAL CONTEXT & HIERARCHY:\n- The existing shape description is: {vectorDescription}\n- The DOM representation preserves the hierarchical tree structure (groups, frames, containers)\n- IMPORTANT: Respect the existing hierarchy when positioning new shapes\n- Shapes may be nested within groups - if you're adding shapes that relate to grouped shapes, consider placing them in the same group\n- Use the relativeBounds coordinates when positioning new shapes - these are relative to the parent container (group or frame)\n- The frame's top-left corner is at (0, 0) - coordinates at the frame level are relative to this\n- Shapes within groups have coordinates relative to their group's top-left corner\n- Frame dimensions are provided - ensure all new shapes are positioned within these bounds (0 to frame.width for x, 0 to frame.height for y)\n- Use the relativeBounds center coordinates (centerX, centerY) of existing shapes to position new shapes logically relative to them\n- The x, y coordinates you provide should be the top-left corner of the shape, using the same coordinate system as the target container (frame or group)\n- Position new shapes in a way that makes visual sense relative to existing shapes, respecting their hierarchical relationships\n- If shapes are grouped together, new related shapes should likely be placed in the same group or at the same hierarchy level\n\nDOM representation: {domRepresentation}\n\nCRITICAL JSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions (e.g., \"240.5 - 10\") - calculate the values yourself and use the final number\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON array that can be parsed directly\n\nRespond with a JSON array where each object has: type (circle, rectangle, ellipse, polygon, star, line, vector, or arrow), x, y, width, height (if applicable), pointCount (for polygon/star), innerRadius (for star), fills (color as RGB 0-1), strokes (color as RGB 0-1), strokeWeight, and any path data if it's a vector path. IMPORTANT: Use coordinates relative to the appropriate container (frame or group) - ensure x and y coordinates place shapes within the frame bounds (0 to frame width/height) and in logical positions relative to existing shapes, respecting the hierarchical structure.",
+    planningPrompt: "Given the existing shape description and the user's request to \"{userPrompt}\", create a detailed plan in plain English describing exactly what needs to be done.\n\nSPATIAL CONTEXT & HIERARCHY:\n- The existing shape description is: {vectorDescription}\n- The DOM representation preserves the hierarchical tree structure (groups, frames, containers)\n- IMPORTANT: Respect the existing hierarchy when planning modifications\n- Shapes may be nested within groups - consider the hierarchy when planning where to add or modify shapes\n- Use the relativeBounds coordinates when planning positions - these are relative to the parent container (group or frame)\n- The frame's top-left corner is at (0, 0)\n- Frame dimensions are provided - ensure all planned shapes are within these bounds\n- Remember: x, y coordinates represent the TOP-LEFT corner of objects, not the center\n- To center an object at (centerX, centerY), calculate: x = centerX - (width / 2), y = centerY - (height / 2)\n\nDOM representation: {domRepresentation}\n\nYour plan should:\n1. Clearly state whether each action is ADD (new shape) or MODIFY (existing shape)\n2. For ADD operations: Specify the exact type (circle, rectangle, ellipse, polygon, star, line, vector, arrow), position (x, y coordinates relative to parent container - these are TOP-LEFT corner coordinates), size (width, height in pixels), colors (fill RGB 0-1, stroke RGB 0-1), stroke weight, and any other geometric properties\n3. For MODIFY operations: Identify the shape to modify by BOTH visual description (e.g., \"the top pair of circles\", \"the bottom-left rectangle\") AND coordinates, then specify exactly what properties to change (position, size, color, stroke, etc.) with exact new values\n4. Include exact numerical values for all properties (no expressions, no ranges, no approximations)\n5. Specify which container (frame or group) each shape belongs to\n6. Describe spatial relationships with exact pixel distances and visual directions (top/bottom/left/right)\n7. Be specific about colors using RGB values (0-1 range)\n8. When identifying shapes, always clarify visual position (top/bottom) to avoid confusion with the flipped y-axis\n9. When positioning shapes, remember that coordinates are for the top-left corner - if you need to center something, calculate the top-left position from the desired center\n\nRespond with a clear, structured plan in plain English. Use exact numbers from the DOM representation. Organize the plan by operation type (ADD operations first, then MODIFY operations).",
+    executionPrompt: "Based on the following detailed plan, generate a JSON structure that specifies exactly which Figma primitives need to be added or modified.\n\nPLAN:\n{plan}\n\nEXISTING DOM REPRESENTATION:\n{domRepresentation}\n\nJSON FORMAT REQUIREMENTS:\n- Respond with ONLY valid JSON - no comments, no explanations, no markdown code blocks\n- Do NOT include comments (// or /* */) in the JSON\n- Do NOT include arithmetic expressions - use calculated numbers only\n- All numeric values must be actual numbers, not expressions\n- The response must be a valid JSON object with an \"operations\" array\n\nJSON STRUCTURE:\n{\n  \"operations\": [\n    {\n      \"action\": \"add\" | \"modify\",\n      \"type\": \"circle\" | \"rectangle\" | \"ellipse\" | \"polygon\" | \"star\" | \"line\" | \"vector\" | \"arrow\" (required for add, optional for modify),\n      \"targetId\": \"string\" (required for modify - reference to existing shape),\n      \"targetDescription\": \"string\" (alternative for modify - description to identify shape),\n      \"x\": number (top-left x coordinate relative to parent container),\n      \"y\": number (top-left y coordinate relative to parent container),\n      \"width\": number (if applicable),\n      \"height\": number (if applicable),\n      \"radius\": number (for circles),\n      \"pointCount\": number (for polygon/star),\n      \"innerRadius\": number (for star),\n      \"fills\": [{ \"type\": \"SOLID\", \"color\": { \"r\": number, \"g\": number, \"b\": number }, \"opacity\": number }],\n      \"strokes\": [{ \"type\": \"SOLID\", \"color\": { \"r\": number, \"g\": number, \"b\": number }, \"opacity\": number }],\n      \"strokeWeight\": number,\n      \"data\": \"string\" (for vector paths),\n      \"cornerRadius\": number (for rectangles),\n      \"parentContainer\": \"frame\" | \"group\" (optional, defaults to frame)\n    }\n  ]\n}\n\nFor MODIFY operations, only include the properties that should be changed. Omit properties that should remain unchanged.\n\nIMPORTANT: Use the exact numerical values from the plan. All coordinates are relative to the parent container (frame or group)."
 };
 
 // Types for OpenAI API
@@ -38,6 +41,38 @@ interface VectorInstruction {
     }>;
     strokeWeight?: number;
     data?: string; // For vector paths
+}
+
+interface ExecutionOperation {
+    action: 'add' | 'modify';
+    type?: 'circle' | 'rectangle' | 'ellipse' | 'vector' | 'line' | 'polygon' | 'star' | 'arrow';
+    targetId?: string; // For modify - reference to existing shape by ID
+    targetDescription?: string; // For modify - alternative way to identify shape
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    radius?: number;
+    pointCount?: number;
+    innerRadius?: number;
+    fills?: Array<{
+        type: 'SOLID';
+        color: { r: number; g: number; b: number };
+        opacity?: number;
+    }>;
+    strokes?: Array<{
+        type: 'SOLID';
+        color: { r: number; g: number; b: number };
+        opacity?: number;
+    }>;
+    strokeWeight?: number;
+    data?: string; // For vector paths
+    cornerRadius?: number; // For rectangles
+    parentContainer?: 'frame' | 'group';
+}
+
+interface ExecutionInstructions {
+    operations: ExecutionOperation[];
 }
 
 // Get DOM-like representation of any shape node
@@ -458,8 +493,15 @@ async function callOpenAI(
     userPrompt: string,
     onDebug?: (request: object, response: object) => void,
     imageBase64?: string | null,
-    temperature?: number
+    temperature?: number,
+    includeCoordinateContext: boolean = true
 ): Promise<string> {
+    // Prepend Figma coordinate system context to user prompt if requested
+    let finalUserPrompt = userPrompt;
+    if (includeCoordinateContext) {
+        finalUserPrompt = prompts.figmaCoordinateSystemPrompt + "\n\n" + userPrompt;
+    }
+
     // Format user message - if image is provided, use vision API format
     let userMessage: any;
     if (imageBase64) {
@@ -470,7 +512,7 @@ async function callOpenAI(
             content: [
                 {
                     type: 'text',
-                    text: userPrompt
+                    text: finalUserPrompt
                 },
                 {
                     type: 'image_url',
@@ -481,7 +523,7 @@ async function callOpenAI(
             ]
         };
     } else {
-        userMessage = { role: 'user', content: userPrompt };
+        userMessage = { role: 'user', content: finalUserPrompt };
     }
 
     const requestBody = {
@@ -913,6 +955,293 @@ function parseAndCreateVectors(response: string, parentFrame?: FrameNode): void 
     }
 }
 
+// Find a shape node by ID or description
+function findShapeByIdOrDescription(
+    targetId: string | undefined,
+    targetDescription: string | undefined,
+    availableShapes: SceneNode[]
+): SceneNode | null {
+    if (targetId) {
+        // Try to find by ID first
+        for (const shape of availableShapes) {
+            if (shape.id === targetId) {
+                return shape;
+            }
+        }
+    }
+
+    if (targetDescription) {
+        // Try to find by description (match name or type)
+        const descLower = targetDescription.toLowerCase();
+        for (const shape of availableShapes) {
+            const nameMatch = shape.name && shape.name.toLowerCase().includes(descLower);
+            const typeMatch = shape.type.toLowerCase().includes(descLower);
+            if (nameMatch || typeMatch) {
+                return shape;
+            }
+        }
+    }
+
+    return null;
+}
+
+// Execute operations (both add and modify)
+function executeOperations(
+    instructions: ExecutionInstructions,
+    parentFrame: FrameNode | null,
+    availableShapes: SceneNode[]
+): SceneNode[] {
+    const targetParent = parentFrame || figma.currentPage;
+    const createdNodes: SceneNode[] = [];
+    const modifiedNodes: SceneNode[] = [];
+
+    for (const operation of instructions.operations) {
+        try {
+            if (operation.action === 'add') {
+                // ADD operation - create new shape
+                if (!operation.type) {
+                    console.warn('ADD operation missing type:', operation);
+                    continue;
+                }
+
+                const normalizedType = operation.type.toLowerCase();
+                let node: SceneNode;
+
+                switch (normalizedType) {
+                    case 'circle':
+                        node = figma.createEllipse();
+                        if (operation.radius !== undefined) {
+                            node.resize(operation.radius * 2, operation.radius * 2);
+                        } else if (operation.width !== undefined && operation.height !== undefined) {
+                            node.resize(operation.width, operation.height);
+                        }
+                        break;
+
+                    case 'ellipse':
+                        node = figma.createEllipse();
+                        if (operation.width !== undefined && operation.height !== undefined) {
+                            node.resize(operation.width, operation.height);
+                        }
+                        break;
+
+                    case 'rectangle':
+                        node = figma.createRectangle();
+                        if (operation.width !== undefined && operation.height !== undefined) {
+                            node.resize(operation.width, operation.height);
+                        }
+                        if (operation.cornerRadius !== undefined) {
+                            (node as RectangleNode).cornerRadius = operation.cornerRadius;
+                        }
+                        break;
+
+                    case 'vector':
+                        node = figma.createVector();
+                        if (operation.data) {
+                            (node as VectorNode).vectorPaths = [{
+                                windingRule: 'NONZERO',
+                                data: operation.data
+                            }];
+                        }
+                        break;
+
+                    case 'line':
+                        node = figma.createLine();
+                        if (operation.width !== undefined) {
+                            node.resize(operation.width, 0);
+                        }
+                        break;
+
+                    case 'polygon':
+                        node = figma.createPolygon();
+                        if (operation.pointCount !== undefined) {
+                            (node as PolygonNode).pointCount = operation.pointCount;
+                        }
+                        if (operation.width !== undefined && operation.height !== undefined) {
+                            node.resize(operation.width, operation.height);
+                        }
+                        break;
+
+                    case 'star':
+                        node = figma.createStar();
+                        if (operation.pointCount !== undefined) {
+                            (node as StarNode).pointCount = operation.pointCount;
+                        }
+                        if (operation.innerRadius !== undefined) {
+                            (node as StarNode).innerRadius = operation.innerRadius;
+                        }
+                        if (operation.width !== undefined && operation.height !== undefined) {
+                            node.resize(operation.width, operation.height);
+                        }
+                        break;
+
+                    case 'arrow':
+                        node = figma.createLine();
+                        if (operation.width !== undefined) {
+                            node.resize(operation.width, 0);
+                        }
+                        break;
+
+                    default:
+                        console.warn(`Unknown shape type for ADD: ${operation.type}`);
+                        continue;
+                }
+
+                // Set position
+                if (operation.x !== undefined && operation.y !== undefined) {
+                    node.x = operation.x;
+                    node.y = operation.y;
+                }
+
+                // Set fills
+                if (operation.fills && operation.fills.length > 0) {
+                    const normalizedFills = operation.fills.map((fill) => ({
+                        type: 'SOLID' as const,
+                        color: fill.color,
+                        opacity: fill.opacity !== undefined ? fill.opacity : 1
+                    }));
+                    node.fills = normalizedFills;
+                }
+
+                // Set strokes
+                if (operation.strokes && operation.strokes.length > 0) {
+                    const normalizedStrokes = operation.strokes.map((stroke) => ({
+                        type: 'SOLID' as const,
+                        color: stroke.color,
+                        opacity: stroke.opacity !== undefined ? stroke.opacity : 1
+                    }));
+                    node.strokes = normalizedStrokes;
+                }
+                if (operation.strokeWeight !== undefined) {
+                    node.strokeWeight = operation.strokeWeight;
+                }
+
+                targetParent.appendChild(node);
+                createdNodes.push(node);
+            } else if (operation.action === 'modify') {
+                // MODIFY operation - update existing shape
+                const targetNode = findShapeByIdOrDescription(
+                    operation.targetId,
+                    operation.targetDescription,
+                    availableShapes
+                );
+
+                if (!targetNode) {
+                    console.warn(`Could not find shape to modify: ${operation.targetId || operation.targetDescription}`);
+                    continue;
+                }
+
+                // Update position
+                if (operation.x !== undefined) {
+                    targetNode.x = operation.x;
+                }
+                if (operation.y !== undefined) {
+                    targetNode.y = operation.y;
+                }
+
+                // Update size (only for nodes that support resize)
+                if (operation.width !== undefined && operation.height !== undefined) {
+                    if ('resize' in targetNode && typeof targetNode.resize === 'function') {
+                        targetNode.resize(operation.width, operation.height);
+                    }
+                }
+
+                // Update fills (only for nodes that support fills)
+                if (operation.fills && operation.fills.length > 0 && 'fills' in targetNode) {
+                    const normalizedFills = operation.fills.map((fill) => ({
+                        type: 'SOLID' as const,
+                        color: fill.color,
+                        opacity: fill.opacity !== undefined ? fill.opacity : 1
+                    }));
+                    targetNode.fills = normalizedFills;
+                }
+
+                // Update strokes (only for nodes that support strokes)
+                if (operation.strokes && operation.strokes.length > 0 && 'strokes' in targetNode) {
+                    const normalizedStrokes = operation.strokes.map((stroke) => ({
+                        type: 'SOLID' as const,
+                        color: stroke.color,
+                        opacity: stroke.opacity !== undefined ? stroke.opacity : 1
+                    }));
+                    targetNode.strokes = normalizedStrokes;
+                }
+                if (operation.strokeWeight !== undefined && 'strokeWeight' in targetNode) {
+                    targetNode.strokeWeight = operation.strokeWeight;
+                }
+
+                // Update type-specific properties
+                if (targetNode.type === 'RECTANGLE' && operation.cornerRadius !== undefined) {
+                    (targetNode as RectangleNode).cornerRadius = operation.cornerRadius;
+                }
+                if (targetNode.type === 'POLYGON' && operation.pointCount !== undefined) {
+                    (targetNode as PolygonNode).pointCount = operation.pointCount;
+                }
+                if (targetNode.type === 'STAR') {
+                    if (operation.pointCount !== undefined) {
+                        (targetNode as StarNode).pointCount = operation.pointCount;
+                    }
+                    if (operation.innerRadius !== undefined) {
+                        (targetNode as StarNode).innerRadius = operation.innerRadius;
+                    }
+                }
+                if (targetNode.type === 'VECTOR' && operation.data) {
+                    (targetNode as VectorNode).vectorPaths = [{
+                        windingRule: 'NONZERO',
+                        data: operation.data
+                    }];
+                }
+
+                modifiedNodes.push(targetNode);
+            }
+        } catch (error) {
+            console.error('Error executing operation:', error, operation);
+        }
+    }
+
+    const allAffectedNodes = [...createdNodes, ...modifiedNodes];
+    if (allAffectedNodes.length > 0) {
+        figma.currentPage.selection = allAffectedNodes;
+        figma.viewport.scrollAndZoomIntoView(allAffectedNodes);
+        const addCount = createdNodes.length;
+        const modifyCount = modifiedNodes.length;
+        if (addCount > 0 && modifyCount > 0) {
+            figma.notify(`Added ${addCount} shape(s) and modified ${modifyCount} shape(s)`);
+        } else if (addCount > 0) {
+            figma.notify(`Added ${addCount} shape(s)`);
+        } else if (modifyCount > 0) {
+            figma.notify(`Modified ${modifyCount} shape(s)`);
+        }
+    } else {
+        figma.notify('No operations were executed');
+    }
+
+    return allAffectedNodes;
+}
+
+// Parse execution instructions from JSON response
+function parseExecutionInstructions(response: string): ExecutionInstructions {
+    // Try to extract JSON from the response (it might be wrapped in markdown code blocks)
+    let jsonString = response.trim();
+    if (jsonString.startsWith('```json')) {
+        jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    } else if (jsonString.startsWith('```')) {
+        jsonString = jsonString.replace(/```\n?/g, '').trim();
+    }
+
+    // Remove single-line comments (// ...)
+    jsonString = jsonString.replace(/\/\/.*$/gm, '');
+
+    // Remove multi-line comments (/* ... */)
+    jsonString = jsonString.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    const parsed = JSON.parse(jsonString);
+
+    if (!parsed.operations || !Array.isArray(parsed.operations)) {
+        throw new Error('Response must have an "operations" array');
+    }
+
+    return parsed as ExecutionInstructions;
+}
+
 // Load UI HTML
 const uiHtml = `
 <!DOCTYPE html>
@@ -1201,6 +1530,45 @@ const uiHtml = `
       object-fit: contain;
       display: block;
     }
+    .plan-section {
+      margin-top: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .plan-section .description-box {
+      background: #f0f8ff;
+      border-color: #18a0fb;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .json-section {
+      margin-top: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .json-box {
+      width: 100%;
+      min-height: 150px;
+      max-height: 300px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+      background: #f8f8f8;
+      color: #333;
+      resize: vertical;
+      box-sizing: border-box;
+      white-space: pre;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+    .json-box:focus {
+      outline: none;
+      border-color: #18a0fb;
+    }
   </style>
 </head>
 <body>
@@ -1244,6 +1612,20 @@ const uiHtml = `
   <h2>Design Prompt</h2>
   <label for="prompt">What should be added to complete the design?</label>
   <textarea id="prompt" placeholder="e.g., draw a smiley face, add two eyes and a mouth"></textarea>
+  
+  <div class="plan-section" id="planSection" style="display: none;">
+    <div class="description-header">
+      <h3>Execution Plan</h3>
+    </div>
+    <div class="description-box" id="plan">No plan generated yet.</div>
+  </div>
+  
+  <div class="json-section" id="jsonSection" style="display: none;">
+    <div class="description-header">
+      <h3>JSON Operations</h3>
+    </div>
+    <textarea class="json-box" id="jsonOperations" readonly>No JSON generated yet.</textarea>
+  </div>
   
   <div class="button-group">
     <button class="primary" id="generate">Generate</button>
@@ -1423,6 +1805,44 @@ const uiHtml = `
         }
         
         // Logs are now saved to the server automatically
+      } else if (msg.type === 'planning-started') {
+        const planSection = document.getElementById('planSection');
+        const planBox = document.getElementById('plan');
+        if (planSection) planSection.style.display = 'block';
+        if (planBox) {
+          planBox.textContent = 'Generating plan...';
+          planBox.classList.add('loading');
+        }
+        // Disable generate button during planning
+        const generateBtn = document.getElementById('generate');
+        if (generateBtn) generateBtn.disabled = true;
+      } else if (msg.type === 'plan-generated') {
+        const planBox = document.getElementById('plan');
+        const planSection = document.getElementById('planSection');
+        if (planSection) planSection.style.display = 'block';
+        if (planBox) {
+          planBox.textContent = msg.plan || 'No plan provided';
+          planBox.classList.remove('loading');
+        }
+        // Re-enable generate button (though it should already be disabled)
+        const generateBtn = document.getElementById('generate');
+        if (generateBtn) generateBtn.disabled = false;
+      } else if (msg.type === 'json-generated') {
+        const jsonBox = document.getElementById('jsonOperations');
+        const jsonSection = document.getElementById('jsonSection');
+        if (jsonSection) jsonSection.style.display = 'block';
+        if (jsonBox) {
+          jsonBox.value = msg.json || 'No JSON provided';
+        }
+      } else if (msg.type === 'generation-error') {
+        const planBox = document.getElementById('plan');
+        if (planBox) {
+          planBox.textContent = 'Error: ' + (msg.error || 'Unknown error');
+          planBox.classList.remove('loading');
+        }
+        // Re-enable generate button on error
+        const generateBtn = document.getElementById('generate');
+        if (generateBtn) generateBtn.disabled = false;
       }
     };
 
@@ -1838,7 +2258,7 @@ const uiHtml = `
                     await figma.clientStorage.setAsync('openai-api-key', msg.apiKey);
                     await figma.clientStorage.setAsync('selected-frame-id', msg.frameId);
 
-                    figma.notify('Generating design with AI...');
+                    figma.notify('Planning design changes...');
 
                     // Re-find vectors to get latest state
                     const result = await findVectorsOnFrame(msg.frameId);
@@ -1856,27 +2276,27 @@ const uiHtml = `
                     currentDomRep = getShapesDOMRepresentation(currentVectors, currentFrame);
                     const latestVectorDescriptions = currentVectors.map(describeShape).join('\n');
 
-                    // Build the completion prompt with both description and DOM representation
-                    const domString = JSON.stringify(currentDomRep, null, 2);
-                    const completionPrompt = prompts.completionPrompt
-                        .replace('{userPrompt}', msg.prompt)
-                        .replace('{vectorDescription}', currentDescription || latestVectorDescriptions)
-                        .replace('{domRepresentation}', domString);
-
-                    console.log('Completion prompt:', completionPrompt);
-
                     // Get temperature from storage
                     const temperature = await figma.clientStorage.getAsync('temperature');
                     const tempValue = temperature !== undefined ? temperature : 0.7;
 
-                    // Call OpenAI API with debug callback
-                    const response = await callOpenAI(
+                    // PHASE 1: PLANNING - Generate detailed plan in plain English
+                    const domString = JSON.stringify(currentDomRep, null, 2);
+                    const planningPrompt = prompts.planningPrompt
+                        .replace('{userPrompt}', msg.prompt)
+                        .replace('{vectorDescription}', currentDescription || latestVectorDescriptions)
+                        .replace('{domRepresentation}', domString);
+
+                    console.log('Planning prompt:', planningPrompt);
+
+                    figma.ui.postMessage({ type: 'planning-started' });
+
+                    const plan = await callOpenAI(
                         msg.apiKey,
-                        prompts.systemPrompt,
-                        completionPrompt,
+                        "You are a design planning assistant. Create detailed, precise plans for design modifications with exact numerical values.",
+                        planningPrompt,
                         (request, response) => {
                             try {
-                                // Sanitize data to ensure it's serializable
                                 const sanitizedRequest = JSON.parse(JSON.stringify(request));
                                 const sanitizedResponse = JSON.parse(JSON.stringify(response));
                                 figma.ui.postMessage({
@@ -1886,31 +2306,66 @@ const uiHtml = `
                                 });
                             } catch (debugError) {
                                 console.error('Error sending debug message:', debugError);
-                                // Try sending a simplified version
-                                try {
-                                    const req = request as any;
-                                    const res = response as any;
-                                    figma.ui.postMessage({
-                                        type: 'api-debug',
-                                        request: { url: req.url || '', method: req.method || '' },
-                                        response: { status: res.status || 0, statusText: res.statusText || '' }
-                                    });
-                                } catch (fallbackError) {
-                                    console.error('Error sending fallback debug message:', fallbackError);
-                                }
                             }
                         },
                         null,
                         tempValue
                     );
 
-                    console.log('OpenAI response:', response);
+                    console.log('Generated plan:', plan);
 
-                    // Use the selected frame
-                    const parentFrame = currentFrame || undefined;
+                    // Send plan to UI for display
+                    figma.ui.postMessage({
+                        type: 'plan-generated',
+                        plan: plan
+                    });
 
-                    // Parse and create vectors
-                    parseAndCreateVectors(response, parentFrame);
+                    figma.notify('Plan generated. Generating execution instructions...');
+
+                    // PHASE 2: EXECUTION - Generate JSON instructions from plan
+                    const executionPrompt = prompts.executionPrompt
+                        .replace('{plan}', plan)
+                        .replace('{domRepresentation}', domString);
+
+                    console.log('Execution prompt:', executionPrompt);
+
+                    const executionResponse = await callOpenAI(
+                        msg.apiKey,
+                        "You are a design execution assistant. Convert detailed plans into precise JSON instructions for Figma primitives.",
+                        executionPrompt,
+                        (request, response) => {
+                            try {
+                                const sanitizedRequest = JSON.parse(JSON.stringify(request));
+                                const sanitizedResponse = JSON.parse(JSON.stringify(response));
+                                figma.ui.postMessage({
+                                    type: 'api-debug',
+                                    request: sanitizedRequest,
+                                    response: sanitizedResponse
+                                });
+                            } catch (debugError) {
+                                console.error('Error sending debug message:', debugError);
+                            }
+                        },
+                        null,
+                        tempValue
+                    );
+
+                    console.log('Execution response:', executionResponse);
+
+                    // Parse and execute operations
+                    const executionInstructions = parseExecutionInstructions(executionResponse);
+
+                    // Send JSON to UI for display
+                    figma.ui.postMessage({
+                        type: 'json-generated',
+                        json: JSON.stringify(executionInstructions, null, 2)
+                    });
+
+                    const affectedNodes = executeOperations(
+                        executionInstructions,
+                        currentFrame,
+                        currentVectors
+                    );
 
                     // Take after screenshot
                     const afterScreenshot = currentFrame ? await exportFrameAsImage(currentFrame) : null;
@@ -1931,6 +2386,10 @@ const uiHtml = `
                 } catch (error) {
                     console.error('Error generating design:', error);
                     figma.notify(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    figma.ui.postMessage({
+                        type: 'generation-error',
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    });
                 }
             }
         };
