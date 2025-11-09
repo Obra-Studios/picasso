@@ -6,6 +6,7 @@
 import { detectConstraints, isConstraintSatisfied } from './constraints';
 import { serializeFrame } from './frame-serialization';
 import { generateContextDescription } from './context-agent';
+import { analyzeIntent, UserAction } from './intent-agent';
 import { config } from './config';
 
 figma.showUI(__html__, { width: 400, height: 500 });
@@ -77,6 +78,9 @@ let additionalContextTimeout: ReturnType<typeof setTimeout> | null = null;
                 canvasFrameId = frame.id;
                 // Initialize canvas hash for change detection
                 previousCanvasHash = await getFrameHash(frame as FrameNode);
+                // Initialize canvas state for change detection
+                previousCanvasState = captureCanvasState(frame as FrameNode);
+                console.log(`✅ Initialized canvas state with ${previousCanvasState.objects.length} objects`);
                 figma.ui.postMessage({
                     type: 'canvas-selected',
                     frameId: canvasFrameId,
@@ -138,12 +142,14 @@ interface LLMResponse {
 }
 
 
-function captureCanvasState(): CanvasState {
+function captureCanvasState(frame?: FrameNode): CanvasState {
     const objects: CanvasObject[] = [];
     
-    // Get only top-level nodes on the current page (no children)
-    for (const node of figma.currentPage.children) {
-        // Include all top-level objects (frames, groups, and individual shapes)
+    // Get children from the specified frame, or top-level nodes on the current page
+    const nodesToProcess = frame ? frame.children : figma.currentPage.children;
+    
+    for (const node of nodesToProcess) {
+        // Include all objects (frames, groups, and individual shapes)
         if ('x' in node && 'y' in node && 'width' in node && 'height' in node) {
             objects.push({
                 id: node.id,
@@ -205,6 +211,34 @@ function detectMovement(before: CanvasState, after: CanvasState): MovementInfo |
     return null;
 }
 
+interface AddInfo {
+    objectId: string;
+    objectName: string;
+    objectType: string;
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+}
+
+function detectAddition(before: CanvasState, after: CanvasState): AddInfo | null {
+    // Find new objects (objects in after but not in before)
+    for (const afterObj of after.objects) {
+        const beforeObj = before.objects.find(obj => obj.id === afterObj.id);
+        
+        if (!beforeObj) {
+            // This is a new object
+            return {
+                objectId: afterObj.id,
+                objectName: afterObj.name,
+                objectType: afterObj.type,
+                position: { x: afterObj.x, y: afterObj.y },
+                size: { width: afterObj.width, height: afterObj.height },
+            };
+        }
+    }
+    
+    return null;
+}
+
 
 // Export a specific frame as a base64 image
 async function exportFrameAsImage(frame: FrameNode): Promise<string | null> {
@@ -222,6 +256,91 @@ async function exportFrameAsImage(frame: FrameNode): Promise<string | null> {
     } catch (e) {
         console.log('Error exporting frame as image:', e);
         return null;
+    }
+}
+
+// Perform intent analysis for user action
+async function performIntentAnalysis(
+    action: UserAction
+): Promise<void> {
+    try {
+        if (!OPENAI_API_KEY) {
+            console.log('No API key available, skipping intent analysis');
+            return;
+        }
+        
+        // Get canvas frame
+        const canvasFrame = canvasFrameId ? 
+            await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null : null;
+        
+        if (!canvasFrame) {
+            console.log('No canvas frame selected, skipping intent analysis');
+            return;
+        }
+        
+        // Get context frame
+        const contextFrame = contextFrameId ? 
+            await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null : null;
+        
+        if (!contextFrame) {
+            console.log('No context frame selected, skipping intent analysis');
+            return;
+        }
+        
+        // Serialize frames
+        const canvasJSON = serializeFrame(canvasFrame);
+        const contextJSON = serializeFrame(contextFrame);
+        
+        // Get screenshots
+        const canvasImage = await exportFrameAsImage(canvasFrame);
+        const contextImage = await exportFrameAsImage(contextFrame);
+        
+        // Show analyzing message
+        figma.ui.postMessage({
+            type: 'processing',
+            message: '🤔 Analyzing your intent...',
+        });
+        
+        // Analyze intent
+        const intentAnalysis = await analyzeIntent(
+            action,
+            canvasJSON,
+            contextJSON,
+            additionalContext,
+            canvasImage || undefined,
+            contextImage || undefined
+        );
+        
+        // Log to console
+        console.log('=== INTENT ANALYSIS ===');
+        console.log(`Action: ${action.type}`);
+        console.log(`Intent: ${intentAnalysis.intent}`);
+        console.log(`Confidence: ${intentAnalysis.confidence}`);
+        if (intentAnalysis.suggestedNextSteps) {
+            console.log('Suggested next steps:');
+            intentAnalysis.suggestedNextSteps.forEach((step, i) => {
+                console.log(`  ${i + 1}. ${step}`);
+            });
+        }
+        console.log('=======================');
+        
+        // Send to UI
+        figma.ui.postMessage({
+            type: 'intent-analysis',
+            intent: intentAnalysis.intent,
+            confidence: intentAnalysis.confidence,
+            suggestedNextSteps: intentAnalysis.suggestedNextSteps,
+            actionType: action.type,
+        });
+        
+        // Show notification with confidence indicator
+        const confidenceEmoji = intentAnalysis.confidence === 'high' ? '✨' : 
+                               intentAnalysis.confidence === 'medium' ? '💡' : '🤔';
+        figma.notify(`${confidenceEmoji} Intent: ${intentAnalysis.intent}`);
+        
+    } catch (e) {
+        console.log('Error analyzing intent:', e);
+        figma.notify('⚠️ Could not analyze intent');
     }
 }
 
@@ -1377,12 +1496,14 @@ figma.ui.onmessage = async (msg) => {
         // Save to storage
         await figma.clientStorage.setAsync('canvas_frame_id', canvasFrameId);
         
-        // Initialize canvas hash for change detection
+        // Initialize canvas hash and state for change detection
         try {
             const canvasFrame = selection[0] as FrameNode;
             previousCanvasHash = await getFrameHash(canvasFrame);
+            previousCanvasState = captureCanvasState(canvasFrame);
+            console.log(`✅ Initialized canvas state with ${previousCanvasState.objects.length} objects`);
         } catch (e) {
-            console.log('Error initializing canvas hash:', e);
+            console.log('Error initializing canvas hash/state:', e);
         }
         
         figma.ui.postMessage({
@@ -1555,32 +1676,71 @@ figma.on('documentchange', async () => {
             isProcessing = true;
             console.log(`Processing change for ${selectedElement.type} element`);
             
-            // Show processing status in UI
-            figma.ui.postMessage({
-                type: 'processing',
-                message: 'Analyzing movement...',
-            });
+            // Capture current state and detect movement or addition
+            console.log('📸 Capturing canvas state...');
+            const currentState = captureCanvasState(canvasFrame);
+            console.log(`📸 Captured ${currentState.objects.length} objects`);
             
-            // Capture current state and detect movement
-            const currentState = captureCanvasState();
-            const movement = previousCanvasState ? 
+            // Check for additions FIRST (more specific than movements)
+            console.log('🔍 Checking for additions and movements...');
+            const addition = previousCanvasState ? 
+                detectAddition(previousCanvasState, currentState) : null;
+            const movement = previousCanvasState && !addition ? 
                 detectMovement(previousCanvasState, currentState) : null;
+            console.log(`🔍 Addition: ${addition ? 'YES' : 'NO'}, Movement: ${movement ? 'YES' : 'NO'}`);
             
-            if (movement) {
-                // Use constraint-based pipeline
-                await arrangeWithConstraints(movement, currentState);
+            if (addition) {
+                // User added a new element
+                console.log(`🆕 Detected addition: ${addition.objectName} (${addition.objectType})`);
+                
+                const userAction: UserAction = {
+                    type: 'add',
+                    elementId: addition.objectId,
+                    elementName: addition.objectName,
+                    elementType: addition.objectType,
+                    position: addition.position,
+                    size: addition.size,
+                };
+                
+                // Analyze intent
+                console.log('🤔 Starting intent analysis for addition...');
+                await performIntentAnalysis(userAction);
+                console.log('✅ Intent analysis complete for addition');
+                
+                // Update state for next time
+                previousCanvasState = currentState;
+            } else if (movement) {
+                // User moved an element
+                console.log(`📦 Detected movement: ${movement.objectName} from (${movement.from.x}, ${movement.from.y}) to (${movement.to.x}, ${movement.to.y})`);
+                
+                const userAction: UserAction = {
+                    type: 'move',
+                    elementId: movement.objectId,
+                    elementName: movement.objectName,
+                    elementType: currentState.objects.find(obj => obj.id === movement.objectId)?.type || 'UNKNOWN',
+                    from: movement.from,
+                    to: movement.to,
+                    delta: movement.delta,
+                };
+                
+                // Analyze intent
+                console.log('🤔 Starting intent analysis for movement...');
+                await performIntentAnalysis(userAction);
+                console.log('✅ Intent analysis complete for movement');
                 
                 // Update state after changes
-                previousCanvasState = captureCanvasState();
+                previousCanvasState = captureCanvasState(canvasFrame);
             } else {
-                // No movement detected, but hash changed - might be a new element
+                // No movement or addition detected, but hash changed
+                console.log('⚠️ Hash changed but no movement or addition detected');
                 // Initialize state for next time
                 previousCanvasState = currentState;
             }
             
             isProcessing = false;
+            console.log('✅ Processing complete, isProcessing set to false');
         } catch (e) {
-            console.log('Error processing document change:', e);
+            console.log('❌ Error processing document change:', e);
             isProcessing = false;
         }
     }, 500); // Wait 0.5 second after last change
