@@ -30,6 +30,7 @@ let canvasChangeTimeout: ReturnType<typeof setTimeout> | null = null;
 const recentlyProcessed = new Set<string>();
 let isProcessing = false;
 let isApplyingChanges = false; // Lock to prevent detecting our own changes as user actions
+let quickMode = true; // Quick mode: only run quickstyle agent (faster). When disabled, runs full inference suite.
 
 // Context frame hash tracking
 let previousContextHash: string | null = null;
@@ -301,8 +302,8 @@ async function performIntentAnalysis(
         const contextJSON = serializeFrame(contextFrame);
         
         // Get screenshots
-        const canvasImage = await exportFrameAsImage(canvasFrame);
-        const contextImage = await exportFrameAsImage(contextFrame);
+        // const canvasImage = await exportFrameAsImage(canvasFrame);
+        // const contextImage = await exportFrameAsImage(contextFrame);
         
         // Show analyzing message
         figma.ui.postMessage({
@@ -316,8 +317,8 @@ async function performIntentAnalysis(
             canvasJSON,
             contextJSON,
             additionalContext,
-            canvasImage || undefined,
-            contextImage || undefined
+            // canvasImage || undefined,
+            // contextImage || undefined
         );
         
         // Log to console
@@ -914,6 +915,20 @@ figma.ui.onmessage = async (msg) => {
             frameId: canvasFrameId,
             frameName: selection[0].name,
         });
+    } else if (msg.type === 'start-tracking') {
+        // Enable quick mode (only quickstyle agent)
+        quickMode = true;
+        console.log('🚀 Quick mode enabled: will only run quickstyle agent');
+        figma.ui.postMessage({
+            type: 'tracking-started',
+        });
+    } else if (msg.type === 'stop-tracking') {
+        // Disable quick mode (run full inference suite)
+        quickMode = false;
+        console.log('🧠 Quick mode disabled: will run full inference suite');
+        figma.ui.postMessage({
+            type: 'tracking-stopped',
+        });
     } else if (msg.type === 'save-additional-context') {
         additionalContext = msg.context || null;
         await figma.clientStorage.setAsync('additional_context', additionalContext || '');
@@ -1109,10 +1124,71 @@ figma.on('documentchange', async () => {
                     size: addition.size,
                 };
                 
-                // NEW: Use component-based workflow
-                console.log('🎯 Starting component analysis for addition...');
-                await performComponentAnalysis(userAction);
-                console.log('✅ Component analysis complete for addition');
+                // Run quickstyle asynchronously (don't await - runs in parallel)
+                const contextFrame = contextFrameId ? 
+                    await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null : null;
+                const canvasFrame = canvasFrameId ?
+                    await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null : null;
+                
+                if (contextFrame && canvasFrame && OPENAI_API_KEY) {
+                    console.log('⚡ Starting quickstyle agent (async)...');
+                    const contextJSON = serializeFrame(contextFrame);
+                    const canvasJSON = serializeFrame(canvasFrame);
+                    
+                    // Run async without blocking
+                    suggestQuickStyle(
+                        {
+                            id: addition.objectId,
+                            name: addition.objectName,
+                            type: addition.objectType,
+                            x: addition.position.x,
+                            y: addition.position.y,
+                            width: addition.size.width,
+                            height: addition.size.height,
+                        },
+                        contextJSON,
+                        canvasJSON,
+                        OPENAI_API_KEY
+                    ).then(async (suggestion) => {
+                        console.log('=== QUICKSTYLE SUGGESTION ===');
+                        console.log(`Matched: ${suggestion.reasoning}`);
+                        console.log(`Confidence: ${suggestion.confidence}`);
+                        console.log('Applying styles...');
+                        
+                        // Engage lock to prevent re-triggering
+                        isApplyingChanges = true;
+                        console.log('🔒 Quickstyle lock engaged');
+                        
+                        try {
+                            const result = await applyQuickStyle(addition.objectId, suggestion);
+                            
+                            if (result.success) {
+                                console.log(`✅ Quickstyle applied: ${result.applied.join(', ')}`);
+                                figma.notify(`⚡ Quick-styled: ${result.applied.join(', ')}`);
+                            } else {
+                                console.log('❌ Quickstyle failed to apply');
+                            }
+                        } finally {
+                            // Release lock after a short delay
+                            setTimeout(() => {
+                                isApplyingChanges = false;
+                                console.log('🔓 Quickstyle lock released');
+                            }, 300);
+                        }
+                        console.log('=============================');
+                    }).catch((error) => {
+                        console.log('⚠️ Quickstyle error:', error);
+                    });
+                }
+                
+                // Conditionally run full inference suite based on quick mode
+                if (!quickMode) {
+                    console.log('🧠 Quick mode OFF: Starting full inference suite for addition...');
+                    await performIntentAnalysis(userAction);
+                    console.log('✅ Full inference suite complete for addition');
+                } else {
+                    console.log('🚀 Quick mode ON: Skipping full inference suite (quickstyle only)');
+                }
                 
                 // Update state for next time
                 previousCanvasState = currentState;
@@ -1130,10 +1206,14 @@ figma.on('documentchange', async () => {
                     delta: movement.delta,
                 };
                 
-                // NEW: Use component-based workflow
-                console.log('🎯 Starting component analysis for movement...');
-                await performComponentAnalysis(userAction);
-                console.log('✅ Intent analysis complete for movement');
+                // Conditionally run full inference suite based on quick mode
+                if (!quickMode) {
+                    console.log('🧠 Quick mode OFF: Starting full inference suite for movement...');
+                    await performIntentAnalysis(userAction);
+                    console.log('✅ Full inference suite complete for movement');
+                } else {
+                    console.log('🚀 Quick mode ON: Skipping full inference suite (no action for movements in quick mode)');
+                }
                 
                 // Update state after changes
                 previousCanvasState = captureCanvasState(canvasFrame);

@@ -50,9 +50,10 @@ export async function suggestQuickStyle(
         height: number;
     },
     contextJSON: Record<string, unknown>,
+    canvasJSON: Record<string, unknown>,
     apiKey: string
 ): Promise<QuickStyleSuggestion> {
-    const prompt = `You are a quick styling agent. A user just added a new element to their canvas. Your task is to suggest styling that matches similar elements in the context frame.
+    const prompt = `You are a quick styling agent. A user just added a new element to their canvas. Your task is to suggest styling that matches similar elements in the context frame, while being aware of what already exists on the canvas.
 
 **NEWLY ADDED ELEMENT:**
 Type: ${addedElement.type}
@@ -62,25 +63,33 @@ Size: ${addedElement.width}×${addedElement.height}
 **CONTEXT FRAME (reference design with existing elements):**
 ${JSON.stringify(contextJSON, null, 2)}
 
+**CURRENT CANVAS FRAME (what the user is building):**
+${JSON.stringify(canvasJSON, null, 2)}
+
 **YOUR TASK:**
-1. Find the MOST SIMILAR element in the context frame based on:
+1. ANALYZE the current canvas to understand what the user is building:
+   - What elements already exist? (e.g., 2 input fields, 1 label)
+   - What might this new element be? (e.g., if there are already inputs, this rectangle might be a button)
+   - Consider the CONTEXT of what's already been added to infer the new element's purpose
+
+2. Find the MOST SIMILAR element in the context frame based on:
    - Element type (e.g., TEXT matches TEXT, RECTANGLE matches RECTANGLE)
    - Element name (e.g., "button" matches other buttons, "input" matches inputs)
    - Element size (similar dimensions suggest similar purpose)
 
-2. Extract styling properties from the most similar element:
+3. Extract styling properties from the most similar element:
    - **Fills**: Copy the fill colors (array of {type, color: {r, g, b}, opacity})
    - **Strokes**: Copy stroke colors and strokeWeight
    - **Corner Radius**: For rectangles, copy cornerRadius
    - **Fonts**: For text, copy fontSize, fontFamily, fontWeight
 
-3. Return ONLY the styling properties that are relevant to this element type:
+4. Return ONLY the styling properties that are relevant to this element type:
    - Use empty array [] for fills/strokes if not applicable
    - Use null for fontSize, fontFamily, fontWeight if not a text element
    - Use null for cornerRadius if not applicable
    - Use null for strokeWeight if no strokes
 
-4. Provide reasoning explaining which element you matched and why
+5. Provide reasoning explaining which element you matched and why (mention what you observed on the canvas)
 
 **IMPORTANT:**
 - Colors are in 0-1 range (r: 0.5 = 128 in 0-255 range)
@@ -88,15 +97,20 @@ ${JSON.stringify(contextJSON, null, 2)}
 - Use null for number/string properties that don't apply to this element type
 - Be conservative: only suggest styles you're confident about
 - Confidence should be 'high' if there's a clear match, 'medium' if it's a good guess, 'low' if uncertain
+- **CONTEXT-AWARE STYLING**: If the canvas already has similar elements to what's in the context, infer what this new element should be
 
 **EXAMPLES:**
-- Added element: RECTANGLE named "submit-button" 100×40
-  Match: RECTANGLE "login-button" in context with similar size
-  → Copy its fills (primary color), cornerRadius (8), strokes
+- Canvas has: 2 input fields with light backgrounds
+  Added element: RECTANGLE 100×40
+  Context has: Form with inputs (light bg) + submit button (blue bg)
+  → Match to BUTTON in context (not input), copy button's blue fill, cornerRadius
+  Reasoning: "Canvas already has input fields, so this rectangle is likely the submit button"
   
-- Added element: TEXT named "Email" 14px
-  Match: TEXT "Username" in context
-  → Copy fontSize (14), fontFamily ("Inter"), fontWeight (400)
+- Canvas has: 1 heading text
+  Added element: TEXT named "Email"
+  Context has: Form with heading + label texts
+  → Match to LABEL text in context
+  Reasoning: "Canvas has heading, so this text is likely a label"
 
 Return your suggestion in the response format.`;
 
