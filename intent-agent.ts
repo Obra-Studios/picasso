@@ -334,26 +334,26 @@ Examples:
     ];
     
     // Add canvas image if available
-    if (canvasImageBase64) {
-        userContent.push({
-            type: 'image_url',
-            image_url: {
-                url: `data:image/png;base64,${canvasImageBase64}`,
-                detail: 'high'
-            }
-        });
-    }
+    // if (canvasImageBase64) {
+    //     userContent.push({
+    //         type: 'image_url',
+    //         image_url: {
+    //             url: `data:image/png;base64,${canvasImageBase64}`,
+    //             detail: 'high'
+    //         }
+    //     });
+    // }
     
     // Add context frame image if available
-    if (contextImageBase64) {
-        userContent.push({
-            type: 'image_url',
-            image_url: {
-                url: `data:image/png;base64,${contextImageBase64}`,
-                detail: 'high'
-            }
-        });
-    }
+    // if (contextImageBase64) {
+    //     userContent.push({
+    //         type: 'image_url',
+    //         image_url: {
+    //             url: `data:image/png;base64,${contextImageBase64}`,
+    //             detail: 'high'
+    //         }
+    //     });
+    // }
     
     messages.push({
         role: 'user',

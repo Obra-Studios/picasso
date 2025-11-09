@@ -286,8 +286,8 @@ async function performIntentAnalysis(
         const contextJSON = serializeFrame(contextFrame);
         
         // Get screenshots
-        const canvasImage = await exportFrameAsImage(canvasFrame);
-        const contextImage = await exportFrameAsImage(contextFrame);
+        // const canvasImage = await exportFrameAsImage(canvasFrame);
+        // const contextImage = await exportFrameAsImage(contextFrame);
         
         // Show analyzing message
         figma.ui.postMessage({
@@ -301,8 +301,8 @@ async function performIntentAnalysis(
             canvasJSON,
             contextJSON,
             additionalContext,
-            canvasImage || undefined,
-            contextImage || undefined
+            // canvasImage || undefined,
+            // contextImage || undefined
         );
         
         // Log to console
