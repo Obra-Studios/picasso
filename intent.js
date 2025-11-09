@@ -144,7 +144,10 @@ Return your analysis in the specified JSON format.`;
         const data = yield response.json();
         const content = ((_e = (_d = data.choices[0]) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.content) || '{}';
         const parsed = JSON.parse(content);
-        return Object.assign(Object.assign({}, parsed), { constraintsToSatisfy: diff.violated, scope });
+        return Object.assign({}, parsed, {
+            constraintsToSatisfy: diff.violated,
+            scope
+        });
     });
 }
 function buildConstraintContext(diff, objects) {

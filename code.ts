@@ -3,19 +3,103 @@
 // Architecture: Constraint-Based Multi-Stage Pipeline
 // ============================================================================
 
-import { detectConstraints, Constraint, isConstraintSatisfied } from './constraints';
+import { detectConstraints, isConstraintSatisfied } from './constraints';
+import { serializeFrame } from './frame-serialization';
+import { generateContextDescription } from './context-agent';
+import { config } from './config';
 
-figma.showUI(__html__, { width: 350, height: 400 });
+figma.showUI(__html__, { width: 400, height: 500 });
 
-// Get API key from environment variable or plugin storage
-// For Figma plugins, you should store this securely in plugin settings
-const OPENAI_API_KEY = ''; // TODO: Load from secure storage
+// Get API key from config file (gitignored)
+const OPENAI_API_KEY = config.OPENAI_API_KEY;
 
-let isTracking = false;
 let isSyncing = false;
-let trackingInterval: number | null = null;
 let previousCanvasState: CanvasState | null = null;
-let previousConstraints: Constraint[] = [];
+
+// Hash-based change detection
+let previousCanvasHash: string | null = null;
+let canvasChangeTimeout: ReturnType<typeof setTimeout> | null = null;
+const recentlyProcessed = new Set<string>();
+let isProcessing = false;
+
+// Context frame hash tracking
+let previousContextHash: string | null = null;
+let contextChangeTimeout: ReturnType<typeof setTimeout> | null = null;
+let storedContextDescription: string | null = null;
+
+// Frame selection state
+let contextFrameId: string | null = null;
+let canvasFrameId: string | null = null;
+
+// Additional context text
+let additionalContext: string | null = null;
+let additionalContextTimeout: ReturnType<typeof setTimeout> | null = null;
+
+// Load saved frame selections from clientStorage
+(async () => {
+    // Load context frame
+    const savedContextFrameId = await figma.clientStorage.getAsync('context_frame_id');
+    if (savedContextFrameId) {
+        try {
+            const frame = await figma.getNodeByIdAsync(savedContextFrameId as string);
+            if (frame && frame.type === 'FRAME') {
+                contextFrameId = frame.id;
+                // Initialize context hash
+                previousContextHash = await getFrameHash(frame as FrameNode);
+                // Load stored description if available
+                const savedDescription = await figma.clientStorage.getAsync('context_description');
+                if (savedDescription) {
+                    storedContextDescription = savedDescription as string;
+                }
+                figma.ui.postMessage({
+                    type: 'context-selected',
+                    frameId: contextFrameId,
+                    frameName: frame.name,
+                });
+                // Generate context description if API key is available
+                if (OPENAI_API_KEY) {
+                    await generateAndStoreContextDescription(frame as FrameNode, OPENAI_API_KEY);
+                }
+            }
+        } catch (e) {
+            console.log('Could not load context frame:', e);
+            // Frame might have been deleted, clear it from storage
+            await figma.clientStorage.deleteAsync('context_frame_id');
+        }
+    }
+    
+    // Load canvas frame
+    const savedCanvasFrameId = await figma.clientStorage.getAsync('canvas_frame_id');
+    if (savedCanvasFrameId) {
+        try {
+            const frame = await figma.getNodeByIdAsync(savedCanvasFrameId as string);
+            if (frame && frame.type === 'FRAME') {
+                canvasFrameId = frame.id;
+                // Initialize canvas hash for change detection
+                previousCanvasHash = await getFrameHash(frame as FrameNode);
+                figma.ui.postMessage({
+                    type: 'canvas-selected',
+                    frameId: canvasFrameId,
+                    frameName: frame.name,
+                });
+            }
+        } catch (e) {
+            console.log('Could not load canvas frame:', e);
+            // Frame might have been deleted, clear it from storage
+            await figma.clientStorage.deleteAsync('canvas_frame_id');
+        }
+    }
+    
+    // Load additional context
+    const savedAdditionalContext = await figma.clientStorage.getAsync('additional_context');
+    if (savedAdditionalContext) {
+        additionalContext = savedAdditionalContext as string;
+        figma.ui.postMessage({
+            type: 'additional-context-loaded',
+            context: additionalContext,
+        });
+    }
+})();
 
 interface CanvasObject {
     id: string;
@@ -79,6 +163,22 @@ function captureCanvasState(): CanvasState {
     };
 }
 
+// Generate a hash of frame content to detect changes
+async function getFrameHash(frame: FrameNode): Promise<string> {
+    const json = serializeFrame(frame);
+    const jsonString = JSON.stringify(json);
+    // Create a robust hash that includes:
+    // - Number of children
+    // - Frame dimensions
+    // - A hash of the JSON content
+    let hash = 0;
+    for (let i = 0; i < jsonString.length; i++) {
+        const char = jsonString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return `${frame.children.length}_${Math.round(frame.width)}_${Math.round(frame.height)}_${hash}`;
+}
 
 function detectMovement(before: CanvasState, after: CanvasState): MovementInfo | null {
     // Find objects that moved
@@ -106,26 +206,66 @@ function detectMovement(before: CanvasState, after: CanvasState): MovementInfo |
 }
 
 
-async function captureCanvasScreenshot(): Promise<string | null> {
+// Export a specific frame as a base64 image
+async function exportFrameAsImage(frame: FrameNode): Promise<string | null> {
     try {
-        // Get all nodes on the current page
-        const nodes = figma.currentPage.children;
-        
-        if (nodes.length === 0) return null;
-        
-        // Export the entire page directly
-        const imageBytes = await figma.currentPage.exportAsync({
+        // Export the frame as PNG
+        const imageBytes = await frame.exportAsync({
             format: 'PNG',
-            constraint: { type: 'SCALE', value: 1 } // 1x resolution to keep size manageable
+            constraint: { type: 'SCALE', value: 2 }, // 2x scale for better quality
         });
         
-        // Convert to base64
+        // Convert to base64 using Figma's built-in function
         const base64 = figma.base64Encode(imageBytes);
         
         return base64;
-    } catch (error) {
-        console.error('Failed to capture screenshot:', error);
+    } catch (e) {
+        console.log('Error exporting frame as image:', e);
         return null;
+    }
+}
+
+// Generate and store context description
+async function generateAndStoreContextDescription(frame: FrameNode, apiKey: string): Promise<void> {
+    try {
+        if (!apiKey) {
+            console.log('No API key available, skipping context description generation');
+            return;
+        }
+        
+        console.log('Generating context description for frame:', frame.name);
+        
+        // Serialize the frame to JSON
+        const frameJSON = serializeFrame(frame);
+        
+        // Export frame as image
+        const frameImageBase64 = await exportFrameAsImage(frame);
+        
+        // Generate context description using the context agent
+        const description = await generateContextDescription(
+            additionalContext,
+            frameJSON,
+            apiKey,
+            frameImageBase64 || undefined
+        );
+        
+        // Store the description
+        storedContextDescription = description;
+        await figma.clientStorage.setAsync('context_description', description);
+        
+        // Print to console
+        console.log('=== CONTEXT DESCRIPTION ===');
+        console.log(description);
+        console.log('===========================');
+        
+        // Update hash
+        const currentHash = await getFrameHash(frame);
+        previousContextHash = currentHash;
+        await figma.clientStorage.setAsync('context_frame_hash', currentHash);
+        
+    } catch (e) {
+        console.log('Error generating context description:', e);
+        figma.notify('Could not generate context description');
     }
 }
 
@@ -147,7 +287,15 @@ async function extractUserIntent(
     movement: MovementInfo
 ): Promise<UserIntent> {
     const movedObject = canvasState.objects.find(obj => obj.id === movement.objectId);
-    const screenshot = await captureCanvasScreenshot();
+    
+    // Get screenshot from stored canvas frame
+    let screenshot: string | null = null;
+    if (canvasFrameId) {
+        const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+        if (canvasFrame) {
+            screenshot = await exportFrameAsImage(canvasFrame);
+        }
+    }
     
     const prompt = `You are an expert UI/UX intent analyzer. A user just moved an object on a canvas. Your job is to:
 1. Extract the user's intent
@@ -324,7 +472,14 @@ async function evaluateArrangement(
     userIntent: UserIntent,
     iterationNumber: number
 ): Promise<ArrangementEvaluation> {
-    const screenshot = await captureCanvasScreenshot();
+    // Get screenshot from stored canvas frame
+    let screenshot: string | null = null;
+    if (canvasFrameId) {
+        const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+        if (canvasFrame) {
+            screenshot = await exportFrameAsImage(canvasFrame);
+        }
+    }
     
     const prompt = `You are an expert UI/UX arrangement validator. You have been given a SPECIFIC USER INTENT that MUST be satisfied.
 
@@ -589,8 +744,14 @@ async function interpretAndArrange(
 ): Promise<LLMResponse> {
     const movedObject = canvasState.objects.find(obj => obj.id === movement.objectId);
     
-    // Capture screenshot of the canvas
-    const screenshot = await captureCanvasScreenshot();
+    // Get screenshot from stored canvas frame
+    let screenshot: string | null = null;
+    if (canvasFrameId) {
+        const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+        if (canvasFrame) {
+            screenshot = await exportFrameAsImage(canvasFrame);
+        }
+    }
     
     const prompt = `You are an expert UI/UX design assistant. A user just moved an object on a canvas, and you need to interpret their intent and suggest how to arrange ALL other objects accordingly.
 
@@ -755,7 +916,14 @@ interface ValidationResponse {
 }
 
 async function validateAlignment(canvasState: CanvasState, iterationNumber: number): Promise<ValidationResponse> {
-    const screenshot = await captureCanvasScreenshot();
+    // Get screenshot from stored canvas frame
+    let screenshot: string | null = null;
+    if (canvasFrameId) {
+        const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+        if (canvasFrame) {
+            screenshot = await exportFrameAsImage(canvasFrame);
+        }
+    }
     
     const prompt = `You are an expert UI/UX design validator. Analyze the current layout and determine if all elements are perfectly aligned.
 
@@ -1002,107 +1170,6 @@ async function applyLayoutActionsWithValidation(actions: LayoutAction[], fixedOb
     }
 }
 
-
-let lastKnownState: CanvasState | null = null;
-let hasMovedSinceLastCheck = false;
-
-async function startTracking() {
-    if (isTracking) return;
-    
-    // Capture initial state
-    previousCanvasState = captureCanvasState();
-    lastKnownState = previousCanvasState;
-    hasMovedSinceLastCheck = false;
-    isSyncing = false;
-    
-    isTracking = true;
-    figma.ui.postMessage({ type: 'tracking-started' });
-    
-    // Poll for changes every 300ms
-    trackingInterval = setInterval(async () => {
-        if (!isTracking) {
-            if (trackingInterval) {
-                clearInterval(trackingInterval);
-                trackingInterval = null;
-            }
-            return;
-        }
-        
-        const currentState = captureCanvasState();
-        
-        // Detect if anything moved
-        const movement = lastKnownState ? detectMovement(lastKnownState, currentState) : null;
-        
-        if (movement) {
-            // Something is moving
-            hasMovedSinceLastCheck = true;
-            lastKnownState = currentState;
-        } else if (hasMovedSinceLastCheck && !isSyncing) {
-            // Movement stopped, trigger LLM
-            hasMovedSinceLastCheck = false;
-            isSyncing = true;
-            
-            // Find the movement that occurred
-            const finalMovement = previousCanvasState ? 
-                detectMovement(previousCanvasState, currentState) : null;
-            
-            if (finalMovement) {
-                figma.ui.postMessage({
-                    type: 'processing',
-                    message: `Analyzing movement of "${finalMovement.objectName}"...`,
-                });
-                
-                try {
-                    // AGENT 1: Extract user intent
-                    figma.ui.postMessage({
-                        type: 'intent-extraction',
-                        message: 'Extracting user intent...',
-                    });
-                    
-                    const userIntent = await extractUserIntent(currentState, finalMovement);
-                    
-                    figma.ui.postMessage({
-                        type: 'intent-extracted',
-                        intent: userIntent.description,
-                        pattern: userIntent.targetPattern,
-                        objectsToMoveCount: userIntent.objectsToMove.length,
-                        objectsToKeepFixedCount: userIntent.objectsToKeepFixed.length,
-                        fixedReasoning: userIntent.fixedObjectsReasoning,
-                    });
-                    
-                    // AGENT 2: Arrange until intent is satisfied
-                    await arrangeUntilIntentSatisfied(userIntent);
-                    
-                    // Update state after changes
-                    previousCanvasState = captureCanvasState();
-                    lastKnownState = previousCanvasState;
-                    
-                    figma.notify(`✨ ${userIntent.description}`);
-                } catch (error) {
-                    figma.ui.postMessage({
-                        type: 'error',
-                        message: error instanceof Error ? error.message : 'Failed to process layout',
-                    });
-                } finally {
-                    isSyncing = false;
-                }
-            } else {
-                isSyncing = false;
-            }
-        }
-    }, 300) as unknown as number;
-}
-
-function stopTracking() {
-    isTracking = false;
-    if (trackingInterval) {
-        clearInterval(trackingInterval);
-        trackingInterval = null;
-    }
-    figma.ui.postMessage({ type: 'tracking-stopped' });
-    figma.notify('Tracking stopped');
-}
-
 // ============================================================================
 // CONSTRAINT-BASED ARCHITECTURE
 // Multi-Stage Pipeline: Constraints → Quick Solve → Intent → LLM Refinement
@@ -1194,8 +1261,7 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
                         message: `✨ Layout perfected in ${iteration} iteration${iteration > 1 ? 's' : ''}!`
                     });
                     
-                    // Update constraints for next time
-                    previousConstraints = currentConstraints;
+                    // Constraints are detected on-demand, no need to store
                     return;
                 } else if (!llmApproved && validation.issues.length > 0) {
                     figma.ui.postMessage({ 
@@ -1220,9 +1286,9 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
             });
         }
         
-        // Update constraints
+        // Update state
         const finalState = captureCanvasState();
-        previousConstraints = detectConstraints(finalState.objects);
+        // Constraints are detected on-demand, no need to store
         
     } catch (error: any) {
         console.error('Arrangement error:', error);
@@ -1233,71 +1299,289 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
     }
 }
 
-async function startTrackingEnhanced() {
-    if (isTracking) return;
-    
-    // Capture initial state and constraints
-    previousCanvasState = captureCanvasState();
-    previousConstraints = detectConstraints(previousCanvasState.objects);
-    let lastKnownState = previousCanvasState;
-    let hasMovedSinceLastCheck = false;
-    
-    isTracking = true;
-    figma.ui.postMessage({ 
-        type: 'tracking-started',
-        message: `Tracking started (${previousConstraints.length} constraints detected)` 
-    });
-    
-    // Poll for changes every 300ms
-    trackingInterval = setInterval(async () => {
-        if (!isTracking) {
-            if (trackingInterval) {
-                clearInterval(trackingInterval);
-                trackingInterval = null;
-            }
-            return;
-        }
-        
-        const currentState = captureCanvasState();
-        
-        // Detect if anything moved
-        const movement = lastKnownState ? detectMovement(lastKnownState, currentState) : null;
-        
-        if (movement) {
-            // Something is moving
-            hasMovedSinceLastCheck = true;
-            lastKnownState = currentState;
-        } else if (hasMovedSinceLastCheck && !isSyncing) {
-            // Movement stopped, trigger constraint-based pipeline
-            hasMovedSinceLastCheck = false;
-            isSyncing = true;
-            
-            // Find the movement that occurred
-            const finalMovement = previousCanvasState ? 
-                detectMovement(previousCanvasState, currentState) : null;
-            
-            if (finalMovement) {
-                figma.ui.postMessage({
-                    type: 'processing',
-                    message: `Analyzing movement of "${finalMovement.objectName}"...`,
-                });
-                
-                // Use constraint-based pipeline
-                await arrangeWithConstraints(finalMovement, currentState);
-                
-                // Update state
-                previousCanvasState = captureCanvasState();
-                isSyncing = false;
-            }
-        }
-    }, 300);
-}
 
 
 figma.ui.onmessage = async (msg) => {
-    if (msg.type === 'start-tracking') {
-        await startTrackingEnhanced();
-    } else if (msg.type === 'stop-tracking') {
-        stopTracking();
+    if (msg.type === 'select-context') {
+        const selection = figma.currentPage.selection;
+        console.log('Selection:', selection);
+        console.log('Selection length:', selection.length);
+        
+        if (selection.length === 0) {
+            console.log('No selection found');
+            figma.ui.postMessage({
+                type: 'error',
+                message: 'Please select a frame to use as context',
+            });
+            return;
+        }
+        
+        console.log('Selected node type:', selection[0].type);
+        if (selection[0].type !== 'FRAME') {
+            figma.ui.postMessage({
+                type: 'error',
+                message: 'Please select a frame to use as context',
+            });
+            return;
+        }
+        
+        contextFrameId = selection[0].id;
+        console.log('Context frame selected:', contextFrameId, selection[0].name);
+        
+        // Save to storage
+        await figma.clientStorage.setAsync('context_frame_id', contextFrameId);
+        
+        // Initialize context hash
+        try {
+            const contextFrame = selection[0] as FrameNode;
+            previousContextHash = await getFrameHash(contextFrame);
+        } catch (e) {
+            console.log('Error initializing context hash:', e);
+        }
+        
+        figma.ui.postMessage({
+            type: 'context-selected',
+            frameId: contextFrameId,
+            frameName: selection[0].name,
+        });
+        
+        // Generate context description if API key is available
+        if (OPENAI_API_KEY) {
+            await generateAndStoreContextDescription(selection[0] as FrameNode, OPENAI_API_KEY);
+        }
+    } else if (msg.type === 'select-canvas') {
+        const selection = figma.currentPage.selection;
+        console.log('Canvas selection:', selection);
+        
+        if (selection.length === 0) {
+            console.log('No selection found for canvas');
+            figma.ui.postMessage({
+                type: 'error',
+                message: 'Please select a frame to use as canvas',
+            });
+            return;
+        }
+        
+        if (selection[0].type !== 'FRAME') {
+            console.log('Canvas selection is not a FRAME, it is:', selection[0].type);
+            figma.ui.postMessage({
+                type: 'error',
+                message: 'Please select a frame to use as canvas',
+            });
+            return;
+        }
+        
+        canvasFrameId = selection[0].id;
+        console.log('Canvas frame selected:', canvasFrameId, selection[0].name);
+        
+        // Save to storage
+        await figma.clientStorage.setAsync('canvas_frame_id', canvasFrameId);
+        
+        // Initialize canvas hash for change detection
+        try {
+            const canvasFrame = selection[0] as FrameNode;
+            previousCanvasHash = await getFrameHash(canvasFrame);
+        } catch (e) {
+            console.log('Error initializing canvas hash:', e);
+        }
+        
+        figma.ui.postMessage({
+            type: 'canvas-selected',
+            frameId: canvasFrameId,
+            frameName: selection[0].name,
+        });
+    } else if (msg.type === 'save-additional-context') {
+        additionalContext = msg.context || null;
+        await figma.clientStorage.setAsync('additional_context', additionalContext || '');
+        
+        // Debounce regeneration of context description
+        if (additionalContextTimeout) {
+            clearTimeout(additionalContextTimeout);
+        }
+        
+        additionalContextTimeout = setTimeout(async () => {
+            if (!OPENAI_API_KEY || !contextFrameId) return;
+            
+            try {
+                const contextFrame = await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null;
+                if (!contextFrame) return;
+                
+                console.log('🔄 Additional context modified, regenerating description');
+                figma.notify('🔄 Additional context changed - regenerating description...');
+                await generateAndStoreContextDescription(contextFrame, OPENAI_API_KEY);
+                figma.notify('✅ Context description updated!');
+            } catch (e) {
+                console.log('Error regenerating context description:', e);
+                figma.notify('⚠️ Failed to update context description');
+            }
+        }, 2000); // Wait 2 seconds after last change
+    } else if (msg.type === 'get-additional-context') {
+        figma.ui.postMessage({
+            type: 'additional-context-loaded',
+            context: additionalContext || '',
+        });
     }
 };
+
+// Load all pages (required for documentchange handler)
+figma.loadAllPagesAsync();
+
+// Listen for document changes to detect context frame modifications
+figma.on('documentchange', async () => {
+    if (!contextFrameId || !OPENAI_API_KEY) {
+        return;
+    }
+    
+    // Check if context frame was modified
+    try {
+        const contextFrame = await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null;
+        if (contextFrame) {
+            // Debounce to avoid too many checks
+            if (contextChangeTimeout) {
+                clearTimeout(contextChangeTimeout);
+            }
+            
+            contextChangeTimeout = setTimeout(async () => {
+                if (!OPENAI_API_KEY || !contextFrameId) return;
+                
+                try {
+                    const currentFrame = await figma.getNodeByIdAsync(contextFrameId) as FrameNode | null;
+                    if (!currentFrame) return;
+                    
+                    const currentHash = await getFrameHash(currentFrame);
+                    
+                    if (previousContextHash === null) {
+                        // First time, just store the hash
+                        previousContextHash = currentHash;
+                        return;
+                    }
+                    
+                    // If hash changed, regenerate description
+                    if (previousContextHash !== currentHash) {
+                        console.log('🔄 Context frame modified, regenerating description');
+                        figma.notify('🔄 Context frame changed - regenerating description...');
+                        await generateAndStoreContextDescription(currentFrame, OPENAI_API_KEY);
+                        figma.notify('✅ Context description updated!');
+                    }
+                } catch (e) {
+                    console.log('Error checking context frame:', e);
+                }
+            }, 2000); // Wait 2 seconds after last change
+        }
+    } catch (e) {
+        // Context frame might have been deleted
+        console.log('Error checking context frame:', e);
+    }
+});
+
+// Listen for document changes to detect canvas frame modifications (event-driven hash-based)
+figma.on('documentchange', async () => {
+    if (!canvasFrameId || isProcessing || isSyncing) {
+        return;
+    }
+    
+    // Debounce changes
+    if (canvasChangeTimeout) {
+        clearTimeout(canvasChangeTimeout);
+    }
+    
+    canvasChangeTimeout = setTimeout(async () => {
+        try {
+            if (!canvasFrameId || isProcessing || isSyncing) {
+                return;
+            }
+            
+            const canvasFrame = await figma.getNodeByIdAsync(canvasFrameId) as FrameNode | null;
+            
+            if (!canvasFrame) {
+                return;
+            }
+            
+            // Check if selection is within canvas frame (early exit if not)
+            const selection = figma.currentPage.selection;
+            if (selection.length === 0) {
+                return;
+            }
+            
+            // Check if selection is within canvas frame
+            let selectedElement: SceneNode | null = null;
+            for (const node of selection) {
+                // Check if node is within canvas frame
+                let current: BaseNode | null = node;
+                while (current) {
+                    if (current.id === canvasFrame.id) {
+                        selectedElement = node;
+                        break;
+                    }
+                    current = current.parent;
+                }
+                if (selectedElement) break;
+            }
+            
+            // If selection is not in canvas frame, skip entirely
+            if (!selectedElement) {
+                return;
+            }
+            
+            // Skip if we recently processed this element
+            if (recentlyProcessed.has(selectedElement.id)) {
+                return;
+            }
+            
+            // Check if canvas frame content actually changed
+            const currentHash = await getFrameHash(canvasFrame);
+            if (previousCanvasHash === null) {
+                // First time, just store the hash
+                previousCanvasHash = currentHash;
+                return;
+            }
+            
+            if (previousCanvasHash === currentHash) {
+                // No changes detected, skip
+                console.log('Canvas frame hash unchanged, skipping');
+                return;
+            }
+            
+            console.log('Canvas frame hash changed, processing change');
+            
+            // Update hash for next check
+            previousCanvasHash = currentHash;
+            
+            // Mark as processed
+            recentlyProcessed.add(selectedElement.id);
+            // Clear after 5 seconds to allow re-processing if needed
+            setTimeout(() => recentlyProcessed.delete(selectedElement.id), 5000);
+            
+            isProcessing = true;
+            console.log(`Processing change for ${selectedElement.type} element`);
+            
+            // Show processing status in UI
+            figma.ui.postMessage({
+                type: 'processing',
+                message: 'Analyzing movement...',
+            });
+            
+            // Capture current state and detect movement
+            const currentState = captureCanvasState();
+            const movement = previousCanvasState ? 
+                detectMovement(previousCanvasState, currentState) : null;
+            
+            if (movement) {
+                // Use constraint-based pipeline
+                await arrangeWithConstraints(movement, currentState);
+                
+                // Update state after changes
+                previousCanvasState = captureCanvasState();
+            } else {
+                // No movement detected, but hash changed - might be a new element
+                // Initialize state for next time
+                previousCanvasState = currentState;
+            }
+            
+            isProcessing = false;
+        } catch (e) {
+            console.log('Error processing document change:', e);
+            isProcessing = false;
+        }
+    }, 500); // Wait 0.5 second after last change
+});

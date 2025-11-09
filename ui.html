@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <style>
         * {
@@ -7,7 +8,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #FFF9F0;
@@ -17,16 +18,17 @@
             align-items: center;
             min-height: 100vh;
         }
-        
+
         .logo-container {
             margin-bottom: 24px;
         }
-        
+
         .logo {
             width: 80px;
             height: 80px;
+            display: block;
         }
-        
+
         h1 {
             font-size: 18px;
             font-weight: 600;
@@ -34,7 +36,7 @@
             margin-bottom: 8px;
             text-align: center;
         }
-        
+
         .subtitle {
             font-size: 12px;
             color: #666;
@@ -43,12 +45,12 @@
             line-height: 1.5;
             max-width: 280px;
         }
-        
+
         .button-container {
             width: 100%;
             max-width: 280px;
         }
-        
+
         button {
             width: 100%;
             padding: 14px 20px;
@@ -62,24 +64,24 @@
             transition: all 0.2s ease;
             margin-bottom: 12px;
         }
-        
+
         button:hover {
             background: #333;
             transform: translateY(-1px);
         }
-        
+
         button:active {
             transform: translateY(0);
         }
-        
+
         .stop-button {
             background: #d4380d;
         }
-        
+
         .stop-button:hover {
             background: #ad2102;
         }
-        
+
         .status {
             width: 100%;
             max-width: 280px;
@@ -89,29 +91,29 @@
             border-radius: 8px;
             margin-top: 8px;
             line-height: 1.5;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             display: none;
         }
-        
+
         .status.visible {
             display: block;
         }
-        
+
         .status.processing {
             color: #1a1a1a;
             border-left: 3px solid #faad14;
         }
-        
+
         .status.success {
             color: #237804;
             border-left: 3px solid #52c41a;
         }
-        
+
         .status.error {
             color: #cf1322;
             border-left: 3px solid #f5222d;
         }
-        
+
         .interpretation {
             width: 100%;
             max-width: 280px;
@@ -119,14 +121,14 @@
             padding: 16px;
             background: #fff;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             display: none;
         }
-        
+
         .interpretation.visible {
             display: block;
         }
-        
+
         .interpretation-title {
             font-size: 11px;
             font-weight: 600;
@@ -135,14 +137,14 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .interpretation-text {
             font-size: 12px;
             color: #333;
             line-height: 1.6;
             margin-bottom: 8px;
         }
-        
+
         .actions-count {
             font-size: 10px;
             color: #999;
@@ -150,24 +152,88 @@
         }
     </style>
 </head>
+
 <body>
     <div class="logo-container">
-        <img src="/picasso-logo-v1.png" alt="Picasso" class="logo">
+        <svg id="Layer_3" data-name="Layer 3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465.99 637.66"
+            class="logo">
+            <defs>
+                <style>
+                    .cls-1 {
+                        fill: #57b8c1;
+                    }
+
+                    .cls-2 {
+                        fill: #f1e912;
+                    }
+
+                    .cls-3 {
+                        fill: #fee600;
+                    }
+
+                    .cls-4 {
+                        fill: #fff;
+                    }
+
+                    .cls-5 {
+                        fill: #1f7741;
+                    }
+
+                    .cls-6 {
+                        fill: #0a0c0b;
+                    }
+                </style>
+            </defs>
+            <path class="cls-2"
+                d="M47.77,161.36s140.53-32.23,191.28-35.88c47.99-3.45,148.18,9.99,186.16,50.57,5.86,6.26,26.77-45,26.77-45l-106.06-47.66-26.74-68.92-58.63,26.74-57.65-23.13-42.02-.98-63.25,86.24-80.03-5.06,30.16,63.07Z" />
+            <path class="cls-1"
+                d="M320.63,443.31c43.39,0,15.15-293.91-121.36-329.75C-22.21,55.41-17.57,421.61,48.83,536.5c66.4,114.89,153.71,107.65,207.74,93.19,43.22-11.57-3.32-137.43-8.33-186.38-1.06-10.35,30.97,0,72.38,0Z" />
+            <path class="cls-3"
+                d="M266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27Z" />
+            <path class="cls-6"
+                d="M270.57,564.48c-14.09,2.46-61.57,10.37-72.29,4.86-10.43-5.36-7.48-25.33-12.89-30.56-1.72-1.67-37.98-13.23-45.05-16.4-39.8-17.82-100.67-62.38-123.52-99.76-6.14-10.05-9.19-14.38-4-25.97,4.18-9.32,25.78-31.26,26.06-39.45.35-9.99-21.73-65.05-26.06-79.43C10.26,269.23-.71,235.89.04,229.59c.93-7.81,22.69-20.73,29.77-25.75,4.18-2.97,32.94-20.21,32.93-22.48-3.85-5.14-11.65-8.42-15.95-12.49-11.87-11.23-23.25-24.45-29.82-39.61-4.49-10.35-17.31-42.71,3.29-43.32l77.31,10.81C113.43,62.37,144.5-4.07,190.89,1.3c17.09,1.98,62.31,28.09,71.11,27.69,16.8-.78,44.21-47.3,65.93-20.86,10.26,12.48,25.75,70.67,28.96,72.94,2.34,1.65,24.04,2.91,29.76,4.21,19.59,4.44,43.09,19.62,58.22,32.7,7.39,6.39,23.79,18.37,18.97,28.9-4.82,10.52-41.97,38.25-43.43,46.56l38.73,119.6c-13.29,24.28-36.87,42.45-52.24,65.63l-17.21,152.62c-1.8,4.41-4.26,5.1-8.21,6.77-22.68,9.6-84.76,21.89-110.91,26.45ZM266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27ZM247.6,111.92c-1.28-1.27-31.24,2.6-35.97,3-40.61,3.47-73.97,5.21-114.89,2-9.05-.71-62.65-10.33-64.93-7.99-6.19,6.34,20.85,37.09,25.97,41.95,3.54,3.37,20.83,18.55,24.48,18.58,7.77.08,41.1-27.79,53.47-26.18,4.18.54,65.52,39.36,71.62,44.34,10.02,8.18,15.39,23.6-1.51,20.54-14.89-2.7-63.85-43.08-74.52-42.28-6.61.5-48.98,27.13-57.47,32.54-6.3,4.01-49.31,32.27-50.51,35.41-1.95,5.11,26.69,102.19,31.5,104.81,1.25.68,2.45-.37,3.48-.89,16.33-8.19,50.32-56.46,69.43-67.43,4.68-2.68,13.53-3.1,14.78,3.17-.54,3.98-1.67,7.78-7.21,14.17-8.66,9.99-13.44,14.72-18.62,20.56-13.99,13.69-81.85,81.12-84.68,95.19-1.29,6.4,7.73,15.57,11.79,20.68,28.02,35.29,76.06,69.3,117.89,85.91,3.21,1.27,17.75,8.35,18.87,4.92l-40.88-168.22h19.98c7.64,33.86,17.55,67.27,25.97,100.9,6.47,25.8,10.98,52.2,17.98,77.92.97,3.56,4.89,22.09,5.92,23.3,2.71,3.19,40.35.81,42.45-1.19,1.24-1.18.49-15.9.58-19.11.77-26.89-5.16-32.23,12.99-53.95,2.03-2.43,15.72-12.71,13.57-16.03-1.59-2.44-27.98-8.43-32.55-9.95-15.65-5.17-43.12-7.38-26.48-28.98,1.95-2.53,23.32-21.97,24.98-21.97h39.96c2.36,0,1.55-21.01,1.53-23.51-.27-56.45-7.75-116.54-6.08-172.74.18-6.11.15-13.99,3.04-19.53,6.02-11.54,29.05-18.52,41.43-17.95,27.1,1.26,78.81,36.96,54.44,67.37-20.59,25.7-66.9,11.85-66.9-15.95v-28.47c-15.84,2.06-11.79,15.39-11.99,26.97-1.28,74.43,10.14,152.94,6.99,226.78-1.12,26.24-4.31,22.19-19.98,40.96-4.14,4.96-11.78,9.42-14.2,16.27-3.08,8.7-.96,13.65-.78,21.7.02,1-.04,2,0,3v17.98l98.68-22.22,17.49-147.84,48.75-62.22-39.84-119.61c.43-9.68,43.14-42.61,42.68-47.08-42.86-52.64-112.11-41.19-171.23-31.6-2.25,2.44-2.22,41.27-2.52,47.93-2.84,63.98-3.7,128.09-6.21,192.09-1.45,11.04-45.24,7.29-48.33,3.81-2.99-3.38-2.69-12.54,1.19-14.98,5.69-3.58,25.78,2.32,28.37-4.6-.75-59.98,6.86-122.13,6.05-181.77l-.04-40.52ZM335,185.88c-1.42.45-1.02,26.49-.51,29.47,3.02,17.76,30,10.19,31.58-.46,1.32-8.9-27.16-30.25-31.06-29.01ZM287.06,415.63h-31.97c-1.99,0-10.5,8.58-13.02,9.96l.57,2.5,46.4,11.54-1.98-24Z" />
+            <path
+                d="M147.82,199.3c-15.29.37-36.02,9.95-44.64,22.99-15.76,23.84,31.49,41.85,50.78,40.6,13.21-.85,35.56-11.56,43.03-22.67,14.71-21.89-30.8-41.36-49.17-40.92Z" />
+            <path class="cls-5" d="M287.06,415.63h-31.97c-1.99,0-10.5,8.58-13.02,9.96l.57,2.5,46.4,11.54-1.98-24Z" />
+            <path class="cls-4"
+                d="M159.14,211.08c-7.12-.71-11.5,2.51-16.25,8.06-8.68,10.15,6.42,21.27,15.44,21.8,6.18.36,17.17-3.32,21.27-8.04,8.08-9.31-11.92-20.96-20.46-21.82Z" />
+        </svg>
     </div>
-    
+
     <h1>Picasso</h1>
     <p class="subtitle">Move any object and watch AI arrange the rest</p>
-    
+
     <div class="button-container">
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Frames</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <button id="select-context" style="flex: 1; padding: 8px 12px; font-size: 11px; margin-bottom: 0;">Context</button>
+                <button id="select-canvas" style="flex: 1; padding: 8px 12px; font-size: 11px; margin-bottom: 0;">Canvas</button>
+            </div>
+            <div style="display: flex; gap: 8px; font-size: 10px; color: #666;">
+                <div style="flex: 1;" id="context-status">No context</div>
+                <div style="flex: 1;" id="canvas-status">No canvas</div>
+            </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Additional Context</div>
+            <textarea 
+                id="additional-context" 
+                placeholder="Enter any additional context or instructions for the AI..."
+                style="width: 100%; padding: 8px; font-size: 11px; font-family: 'Inter', sans-serif; border: 1px solid #e0e0e0; border-radius: 4px; resize: vertical; min-height: 60px; box-sizing: border-box;"
+            ></textarea>
+        </div>
         <button id="start-tracking">Start AI Tracking</button>
         <button id="stop-tracking" class="stop-button" style="display: none;">Stop Tracking</button>
     </div>
-    
+
     <div id="status" class="status"></div>
     <div id="interpretation" class="interpretation"></div>
 
     <script>
         let isTracking = false;
+        let contextFrameId = null;
+        let canvasFrameId = null;
 
         document.getElementById('start-tracking').onclick = () => {
             parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
@@ -177,12 +243,45 @@
             parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
         };
 
+        document.getElementById('select-context').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-context' } }, '*');
+        };
+
+        document.getElementById('select-canvas').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-canvas' } }, '*');
+        };
+
+        // Save additional context when changed
+        const additionalContextInput = document.getElementById('additional-context');
+        additionalContextInput.addEventListener('input', (e) => {
+            const context = e.target.value.trim();
+            parent.postMessage({ 
+                pluginMessage: { 
+                    type: 'save-additional-context',
+                    context: context
+                } 
+            }, '*');
+        });
+
+        // Request saved additional context on load
+        parent.postMessage({ pluginMessage: { type: 'get-additional-context' } }, '*');
+
         window.onmessage = (event) => {
             const msg = event.data.pluginMessage;
             const statusEl = document.getElementById('status');
             const interpretationEl = document.getElementById('interpretation');
             
-            if (msg.type === 'tracking-started') {
+            if (msg.type === 'context-selected') {
+                contextFrameId = msg.frameId;
+                document.getElementById('context-status').textContent = msg.frameName || 'Selected';
+            } else if (msg.type === 'canvas-selected') {
+                canvasFrameId = msg.frameId;
+                document.getElementById('canvas-status').textContent = msg.frameName || 'Selected';
+            } else if (msg.type === 'additional-context-loaded') {
+                if (msg.context) {
+                    additionalContextInput.value = msg.context;
+                }
+            } else if (msg.type === 'tracking-started') {
                 isTracking = true;
                 updateButtons();
                 statusEl.className = 'status visible success';
@@ -279,7 +378,7 @@
                 }
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: 'image/png' });
-                
+
                 // Create download link
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -289,7 +388,7 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                
+
                 console.log('Screenshot saved:', filename);
             } catch (error) {
                 console.error('Failed to save screenshot:', error);
@@ -299,7 +398,7 @@
         function updateButtons() {
             const startButton = document.getElementById('start-tracking');
             const stopButton = document.getElementById('stop-tracking');
-            
+
             if (isTracking) {
                 startButton.style.display = 'none';
                 stopButton.style.display = 'block';
@@ -312,4 +411,5 @@
         updateButtons();
     </script>
 </body>
+
 </html>

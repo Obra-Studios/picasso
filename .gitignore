@@ -7,3 +7,8 @@ out/
 dist/
 code.js
 .env
+
+# Config with API keys
+config.ts
+config.js
+.venv/
