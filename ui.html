@@ -17,6 +17,7 @@
             flex-direction: column;
             align-items: flex-start;
             min-height: 100vh;
+            overflow-y: auto;
         }
 
         .logo-container {
@@ -446,6 +447,11 @@
         </div>
     </div>
 
+    <div class="input-group">
+        <label class="input-label" for="api-key">OpenAI API Key</label>
+        <input type="password" id="api-key" placeholder="sk-..." />
+    </div>
+
     <div class="button-container">
         <div style="margin-bottom: 8px;">
             <div class="selector-row" style="margin-bottom:6px;">
@@ -701,9 +707,87 @@
             } else if (msg.type === 'error') {
                 statusEl.className = 'status visible error';
                 statusEl.textContent = '⚠️ ' + msg.message;
+            } else if (msg.type === 'execution-started') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = '🔄 Parsing and executing actions...';
+                interpretationEl.className = 'interpretation';
+                const apiCallsEl = document.getElementById('api-calls');
+                apiCallsEl.className = 'api-calls-box';
+                apiCallsEl.innerHTML = '';
+            } else if (msg.type === 'execution-progress') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = msg.message;
+            } else if (msg.type === 'execution-complete') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = `✅ Execution complete! Created: ${msg.created}, Modified: ${msg.modified}`;
+
+                // Display API calls
+                const apiCallsEl = document.getElementById('api-calls');
+                if (msg.apiCalls && msg.apiCalls.length > 0) {
+                    apiCallsEl.className = 'api-calls-box visible';
+                    apiCallsEl.innerHTML = `
+                        <div class="api-calls-title">API Calls</div>
+                        ${msg.apiCalls.map((apiCall, index) => {
+                        const isSuccess = apiCall.response.status >= 200 && apiCall.response.status < 300;
+                        const requestBodyStr = JSON.stringify(apiCall.request.body, null, 2);
+                        const responseBodyStr = JSON.stringify(apiCall.response.body, null, 2);
+                        const timestamp = new Date(apiCall.timestamp).toLocaleTimeString();
+
+                        return `
+                                <div class="api-call-item">
+                                    <div class="api-call-method">${apiCall.request.method} ${apiCall.request.url}</div>
+                                    <div class="api-call-url">${timestamp}</div>
+                                    <span class="api-call-status ${isSuccess ? 'success' : 'error'}">
+                                        ${apiCall.response.status} ${apiCall.response.statusText}
+                                    </span>
+                                    <div class="api-call-section">
+                                        <div class="api-call-section-title">Request</div>
+                                        <div class="api-call-content">${escapeHtml(requestBodyStr)}</div>
+                                    </div>
+                                    <div class="api-call-section">
+                                        <div class="api-call-section-title">Response</div>
+                                        <div class="api-call-content">${escapeHtml(responseBodyStr)}</div>
+                                    </div>
+                                </div>
+                            `;
+                    }).join('')}
+                    `;
+                } else {
+                    apiCallsEl.className = 'api-calls-box';
+                }
+
+                if (msg.errors && msg.errors.length > 0) {
+                    statusEl.textContent += ` (${msg.errors.length} error(s))`;
+                    interpretationEl.className = 'interpretation visible';
+                    interpretationEl.innerHTML = `
+                        <div class="interpretation-title">Execution Errors</div>
+                        <div class="interpretation-text" style="font-size: 10px;">
+                            ${msg.errors.map(e => `• ${e}`).join('<br>')}
+                        </div>
+                    `;
+                } else {
+                    interpretationEl.className = 'interpretation visible';
+                    interpretationEl.innerHTML = `
+                        <div class="interpretation-title">Execution Summary</div>
+                        <div class="interpretation-text">${msg.summary || 'Actions executed successfully'}</div>
+                        <div class="actions-count">Created: ${msg.created} • Modified: ${msg.modified}</div>
+                    `;
+                }
             } else if (msg.type === 'save-screenshot') {
                 // Save screenshot to downloads folder
                 saveScreenshot(msg.screenshot, msg.filename);
+            } else if (msg.type === 'api-key-loaded') {
+                // Load API key from plugin storage
+                if (msg.apiKey) {
+                    document.getElementById('api-key').value = msg.apiKey;
+                    apiKey = msg.apiKey;
+                }
+            } else if (msg.type === 'action-description-loaded') {
+                // Load action description from plugin storage
+                const actionDescriptionEl = document.getElementById('action-description');
+                if (actionDescriptionEl && msg.description) {
+                    actionDescriptionEl.value = msg.description;
+                }
             }
             // Append a compact, human-readable event to the event stream with more context
             try {

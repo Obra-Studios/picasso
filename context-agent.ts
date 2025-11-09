@@ -12,7 +12,7 @@ export async function generateContextDescription(
         : '';
 
     const imageNote = frameImageBase64 
-        ? '\n\nNOTE: You are also provided with a visual screenshot of the frame to help you better understand the layout and visual appearance.'
+        ? '\n\nNOTE: You are also provided with a visual screenshot of the frame to help you better understand the layout and visual appearance. If there are any images in the frame, describe them in the composition and meaning section.'
         : '';
 
     const prompt = `Analyze this Figma design frame. First, identify WHAT the design represents (e.g., "a smiley face", "a button with text", "a card layout", "a navigation bar"). Then describe the visual style.${imageNote}
