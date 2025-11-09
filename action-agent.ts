@@ -304,15 +304,21 @@ export interface ActionAgentOutput {
  * @param context - Static context from context agent
  * @param domState - Current DOM state
  * @param intent - User intent from intent agent
- * @param apiKey - OpenAI API key
+ * @param apiKey - Optional OpenAI API key (defaults to OPENAI_API_KEY env var)
  * @returns Actions and constraints to execute
  */
 export async function generateActions(
   context: Context,
   domState: DOMState,
   intent: Intent,
-  apiKey: string
+  apiKey?: string
 ): Promise<ActionAgentOutput> {
+  // Get API key from parameter or environment variable (Bun automatically loads .env)
+  const key = apiKey || (typeof Bun !== 'undefined' ? Bun.env.OPENAI_API_KEY : undefined);
+  
+  if (!key) {
+    throw new Error('OpenAI API key is required. Set OPENAI_API_KEY in .env file or pass it as a parameter.');
+  }
   const prompt = buildActionPrompt(context, domState, intent);
   const schema = getActionSchema();
   
@@ -320,7 +326,7 @@ export async function generateActions(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${key}`,
     },
     body: JSON.stringify({
       model: 'gpt-4o-2024-08-06',
@@ -347,11 +353,11 @@ export async function generateActions(
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json() as any;
     throw new Error(`Action generation failed: ${error.error?.message || 'Unknown error'}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   const content = data.choices[0]?.message?.content;
   
   if (!content) {

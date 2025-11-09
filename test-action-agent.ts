@@ -138,15 +138,13 @@ async function testActionAgent() {
   console.log('\n⚙️  Generating actions...\n');
   
   try {
-    // Get API key from environment or command line argument
-    // (preferred) set OPENAI_API_KEY in your environment, or pass it as the first arg
-    const apiKey = "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";
+    // API key will be automatically loaded from .env file by Bun
+    // No need to pass it explicitly unless you want to override
     
     const result = await generateActions(
       dummyContext,
       dummyDOMState,
-      dummyIntent,
-      apiKey
+      dummyIntent
     );
     
     console.log('✅ Action generation successful!\n');

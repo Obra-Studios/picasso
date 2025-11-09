@@ -301,11 +301,11 @@ Be specific and precise. The arrangement agent will ONLY move objects in "object
     });
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as any;
         throw new Error(error.error?.message || 'Intent extraction error');
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const content = data.choices[0]?.message?.content || '{"description":"","targetPattern":"","alignmentType":"none","spacingRequirement":"","affectedObjects":[]}';
     
     return JSON.parse(content);
@@ -494,11 +494,11 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
     });
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as any;
         throw new Error(error.error?.message || 'Arrangement evaluation error');
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const content = data.choices[0]?.message?.content || '{"intentSatisfied":true,"issues":[],"corrections":[]}';
     
     return JSON.parse(content);
@@ -737,11 +737,11 @@ Respond with your interpretation and specific position changes for other objects
     });
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as any;
         throw new Error(error.error?.message || 'LLM API error');
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const content = data.choices[0]?.message?.content || '{"interpretation":"","actions":[]}';
     
     return JSON.parse(content);
@@ -886,11 +886,11 @@ Mark isAligned as true ONLY if the layout is PERFECT with no alignment issues wh
     });
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as any;
         throw new Error(error.error?.message || 'Validation API error');
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const content = data.choices[0]?.message?.content || '{"isAligned":true,"issues":[],"suggestions":[]}';
     
     return JSON.parse(content);
