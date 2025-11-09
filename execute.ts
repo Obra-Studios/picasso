@@ -3,7 +3,7 @@
 // Executes structured JSON operations in Figma
 // ============================================================================
 
-import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan, parseExecutionPlan } from './operations';
+import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan, parseExecutionPlan } from './execution';
 
 /**
  * Executes the plan by creating/modifying objects in Figma
@@ -289,127 +289,47 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
 
                         const fontStyle = weightToStyle(fontWeight);
 
-                        // Load font - ensure at least one font is loaded before creating text node
+                        // Load font with fallbacks
                         let loadedFontFamily = 'Inter';
                         let loadedFontStyle = 'Regular';
-                        let fontLoaded = false;
 
-                        // Try to load the specified font
                         try {
-                            const fontToLoad = { family: fontFamily, style: fontStyle };
-                            await figma.loadFontAsync(fontToLoad);
+                            await figma.loadFontAsync({ family: fontFamily, style: fontStyle });
                             loadedFontFamily = fontFamily;
                             loadedFontStyle = fontStyle;
-                            fontLoaded = true;
-                        } catch (fontError) {
-                            // Try to load with Regular style if specific style fails
+                        } catch {
                             try {
                                 await figma.loadFontAsync({ family: fontFamily, style: 'Regular' });
                                 loadedFontFamily = fontFamily;
                                 loadedFontStyle = 'Regular';
-                                fontLoaded = true;
-                            } catch (fallbackError) {
-                                // Use Inter as fallback if specified font fails
+                            } catch {
                                 try {
                                     await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
                                     loadedFontFamily = 'Inter';
                                     loadedFontStyle = 'Regular';
-                                    fontLoaded = true;
-                                } catch (finalError) {
-                                    // Last resort: try different Inter style names
-                                    const interStyles = ['Regular', 'Normal', 'Book'];
-                                    for (const style of interStyles) {
-                                        try {
-                                            await figma.loadFontAsync({ family: 'Inter', style: style });
-                                            loadedFontFamily = 'Inter';
-                                            loadedFontStyle = style;
-                                            fontLoaded = true;
-                                            break;
-                                        } catch (styleError) {
-                                            continue;
-                                        }
-                                    }
-
-                                    if (!fontLoaded) {
-                                        results.errors.push(`Failed to load font: ${fontFamily} ${fontStyle}. Cannot create text.`);
-                                        continue; // Skip this operation
-                                    }
+                                } catch {
+                                    results.errors.push(`Failed to load font: ${fontFamily} ${fontStyle}. Cannot create text.`);
+                                    continue;
                                 }
                             }
                         }
 
-                        // Double-check: verify font is actually loaded
-                        if (fontLoaded) {
-                            try {
-                                await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                            } catch (verifyError) {
-                                results.errors.push(`Font verification failed: ${loadedFontFamily} ${loadedFontStyle}. Error: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`);
-                                continue; // Skip this operation
-                            }
-                        }
-
-                        // Only create text node after font is loaded
-                        if (!fontLoaded) {
-                            results.errors.push(`Cannot create text without loaded font. Skipping text operation.`);
-                            continue;
-                        }
-
-                        // CRITICAL: Load the font one more time RIGHT BEFORE creating the text node
-                        try {
-                            await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                        } catch (finalLoadError) {
-                            results.errors.push(`Failed to load font ${loadedFontFamily} ${loadedFontStyle} before creating text node. Error: ${finalLoadError instanceof Error ? finalLoadError.message : String(finalLoadError)}`);
-                            continue;
-                        }
-
-                        // Now create the text node (font is loaded and will be used automatically)
+                        // Create text node and set font
                         newNode = figma.createText();
                         const textNode = newNode as TextNode;
+                        textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
 
-                        // CRITICAL: Explicitly set the font on the text node to ensure it uses the loaded font
-                        try {
-                            await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                            textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                        } catch (fontNameError) {
-                            results.errors.push(`Warning: Could not set fontName on text node: ${fontNameError instanceof Error ? fontNameError.message : String(fontNameError)}`);
-                        }
-
-                        // CRITICAL ORDER: 
-                        // 1. Set characters FIRST (this activates the loaded font)
-                        // 2. Then set fontSize (font must be active)
-                        // 3. Then set other properties
+                        // Set text content
                         const textToSet = (operation.textContent && operation.textContent.trim() !== '')
                             ? operation.textContent
                             : 'Text';
 
-                        // Set characters first - this will use the font we just set
                         try {
                             textNode.characters = textToSet;
-                        } catch (charError) {
-                            // If setting characters fails, try reloading the font and retrying
-                            try {
-                                await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                                textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                                textNode.characters = textToSet;
-                            } catch (retryError) {
-                                results.errors.push(`Failed to set text characters. Font may not be loaded. Error: ${charError instanceof Error ? charError.message : String(charError)}`);
-                                continue;
-                            }
-                        }
-
-                        // Now set font size (after characters are set, font should be active)
-                        try {
                             textNode.fontSize = fontSize;
-                        } catch (sizeError) {
-                            results.errors.push(`Failed to set font size. Font "${loadedFontFamily} ${loadedFontStyle}" may not be properly loaded. Error: ${sizeError instanceof Error ? sizeError.message : String(sizeError)}`);
-                            // Try to reload font and retry
-                            try {
-                                await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                                textNode.fontSize = fontSize;
-                            } catch (retryError) {
-                                results.errors.push(`Font reload failed. Cannot set fontSize.`);
-                                continue;
-                            }
+                        } catch (error) {
+                            results.errors.push(`Failed to set text content: ${error instanceof Error ? error.message : String(error)}`);
+                            continue;
                         }
 
                         // Set text alignment (default to LEFT if empty or invalid)
@@ -885,119 +805,56 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                     }
 
                     // Load the font before any text operations
-                    let fontLoaded = false;
                     try {
                         await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                        fontLoaded = true;
-                    } catch (fontError) {
-                        // Try fallback to Regular style
+                    } catch {
                         try {
                             await figma.loadFontAsync({ family: loadedFontFamily, style: 'Regular' });
                             loadedFontStyle = 'Regular';
-                            fontLoaded = true;
-                        } catch (fallbackError) {
-                            // Try Inter as final fallback
+                        } catch {
                             try {
                                 await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
                                 loadedFontFamily = 'Inter';
                                 loadedFontStyle = 'Regular';
-                                fontLoaded = true;
-                            } catch (finalError) {
-                                results.errors.push(`Warning: Failed to load font: ${loadedFontFamily} ${loadedFontStyle}. Will attempt text update anyway. Error: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
+                            } catch {
+                                results.errors.push(`Warning: Failed to load font. Will attempt text update anyway.`);
                             }
                         }
                     }
 
-                    // Set font name to ensure it's active (only if font was successfully loaded)
-                    if (fontLoaded) {
-                        try {
-                            textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                        } catch (fontNameError) {
-                            // Continue anyway - font should be loaded
-                        }
-                    } else {
-                        // Try to get and use existing font if available
-                        try {
-                            const existingFont = textNode.fontName;
-                            if (typeof existingFont === 'object' && 'family' in existingFont && 'style' in existingFont) {
-                                // Use existing font - it should already be loaded
-                                loadedFontFamily = existingFont.family;
-                                loadedFontStyle = existingFont.style;
-                            }
-                        } catch {
-                            // If we can't get existing font, we'll try anyway
-                        }
+                    // Set font name
+                    try {
+                        textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
+                    } catch {
+                        // Continue anyway - font should be loaded
                     }
 
-                    // Update text content (font must be loaded first)
+                    // Update text content
                     if (operation.textContent !== undefined && operation.textContent !== null && operation.textContent.trim() !== '') {
                         try {
-                            // Ensure font is loaded before setting characters
-                            if (!fontLoaded) {
-                                // Try one more time to load the font
-                                try {
-                                    await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                                    textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                                    fontLoaded = true;
-                                } catch {
-                                    // If still fails, try with existing font or Inter
-                                    try {
-                                        const existingFont = textNode.fontName;
-                                        if (typeof existingFont === 'object' && 'family' in existingFont && 'style' in existingFont) {
-                                            await figma.loadFontAsync({ family: existingFont.family, style: existingFont.style });
-                                            loadedFontFamily = existingFont.family;
-                                            loadedFontStyle = existingFont.style;
-                                        } else {
-                                            await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
-                                            loadedFontFamily = 'Inter';
-                                            loadedFontStyle = 'Regular';
-                                        }
-                                        textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                                        fontLoaded = true;
-                                    } catch {
-                                        // Last resort - try to set anyway
-                                    }
-                                }
-                            }
-
                             textNode.characters = operation.textContent;
-                        } catch (charError) {
-                            // Try reloading font and retrying
-                            try {
-                                await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                                textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                                textNode.characters = operation.textContent;
-                            } catch (retryError) {
-                                const errorMsg = `Failed to update text content for "${targetNode.name}": ${charError instanceof Error ? charError.message : String(charError)}`;
-                                results.errors.push(errorMsg);
-                            }
+                        } catch (error) {
+                            results.errors.push(`Failed to update text content for "${targetNode.name}": ${error instanceof Error ? error.message : String(error)}`);
                         }
                     }
 
-                    // Update font size (font must be loaded first)
+                    // Update font size
                     if (operation.fontSize !== undefined && operation.fontSize > 0) {
                         try {
                             textNode.fontSize = operation.fontSize;
-                        } catch (sizeError) {
-                            results.errors.push(`Failed to update font size: ${sizeError instanceof Error ? sizeError.message : String(sizeError)}`);
+                        } catch (error) {
+                            results.errors.push(`Failed to update font size: ${error instanceof Error ? error.message : String(error)}`);
                         }
                     }
 
-                    // Update text alignment (font must be loaded first)
+                    // Update text alignment
                     if (operation.textAlign) {
                         const validAlignments = ['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED'];
                         if (validAlignments.indexOf(operation.textAlign) !== -1) {
                             try {
                                 textNode.textAlignHorizontal = operation.textAlign;
-                            } catch (alignError) {
-                                // Try reloading font and retrying
-                                try {
-                                    await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
-                                    textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
-                                    textNode.textAlignHorizontal = operation.textAlign;
-                                } catch (retryError) {
-                                    results.errors.push(`Failed to update text alignment: ${alignError instanceof Error ? alignError.message : String(alignError)}`);
-                                }
+                            } catch (error) {
+                                results.errors.push(`Failed to update text alignment: ${error instanceof Error ? error.message : String(error)}`);
                             }
                         }
                     }
