@@ -97,15 +97,7 @@ The user has provided constraint-based actions (similar to CSS constraints) that
 - Container relationships
 - Any other properties needed
 
-${canvasFrame ? `**CANVAS FRAME:**
-All new objects will be created inside the canvas frame: "${canvasFrame.name}"
 
-IMPORTANT: Express ALL coordinates (x, y) as RELATIVE to the canvas frame's coordinate system:
-- x=0, y=0 is the TOP-LEFT corner of the canvas frame
-- If an object should be 50px from the left and 100px from the top of the frame, use x=50, y=100
-- If positioning relative to another element, calculate the position within the frame coordinate system
-- DO NOT use absolute page coordinates - use frame-relative coordinates
-` : ''}
 ${contextData ? `**CONTEXT DESIGN PATTERNS:**
 The following context provides the design system and styling patterns to follow when creating new objects.
 Use these patterns to determine colors, sizes, fonts, spacing, and other styling properties.
@@ -153,6 +145,19 @@ When analyzing actions, detect if a text box is needed based on:
 8. Calculate positions based on spacing constraints relative to other objects
 9. **DETECT TEXT BOX REQUIREMENTS**: If an action or intent suggests a text box is needed, explicitly describe creating both the box and the text inside it
 
+**CRITICAL - POSITIONING BASED ON CONSTRAINTS:**
+A. **PARENT-CHILD (Position Constraint with containerId):**
+   - When action has position constraint with containerId, element goes INSIDE that container
+   - Calculate coordinates RELATIVE to the container's (0,0) origin, not the canvas
+   - Apply padding from container edges
+   - Example: Container at canvas (100, 200), padding {top: 16, left: 24} → element at (24, 16) relative to container
+   
+B. **SIBLING (Spacing + Alignment Constraints):**
+   - When action has spacing constraint with referenceId, element is positioned NEXT TO the reference element
+   - Calculate position based on reference element's position + size + spacing distance
+   - Apply alignment constraint to ensure proper horizontal/vertical alignment
+   - Example: Reference button at (50, 100) size 100×40, spacing vertical 12, align left → new element at (50, 152)
+
 **IMPORTANT:**
 - All coordinates are in Figma's coordinate system (top-left origin, y increases downward)
 - x, y coordinates represent the TOP-LEFT corner of the object, not the center
@@ -161,6 +166,7 @@ When analyzing actions, detect if a text box is needed based on:
 - Be specific and precise - calculate exact values, don't use ranges or approximations
 - For spacing constraints, calculate the exact position based on the reference object's position and size
 - **For text boxes**: Always describe creating the container first, then the text element with its content, padding, alignment, and styling
+- IMPORTANT: All coordinates are relative to the canvas frame's origin. Disregard the canvas frame's position on the page.
 
 **OUTPUT FORMAT:**
 Return a clear, structured natural language description. For each action, specify:
@@ -252,15 +258,21 @@ export async function parseNaturalLanguageOperations(
 
 The user has provided natural language descriptions of design operations with exact calculated values. Your task is to convert this into a structured JSON format that specifies exactly what objects to ADD or MODIFY.
 
-${canvasFrame ? `**CANVAS FRAME:**
-All new objects will be created inside the canvas frame: "${canvasFrame.name}"
-(Note: The code will automatically set the container, so you can omit the container field or set it to any value)
-
 IMPORTANT: Ensure ALL coordinates (x, y) are RELATIVE to the canvas frame's coordinate system:
-- x=0, y=0 is the TOP-LEFT corner of the canvas frame, not the page
-- If positioning relative to another element, calculate coordinates relative to the frame origin
-- DO NOT use absolute page coordinates
-` : ''}
+- x=0, y=0 is the TOP-LEFT corner of the canvas frame
+
+CRITICAL - POSITIONING RULES:
+1. **PARENT-CHILD Positioning**: If natural language says element goes "inside" a container:
+   - Coordinates (x, y) are RELATIVE to that container's coordinate, not the canvas
+   - Example: "Create button at (10, 20) inside card at position (20, 30)" → button at (30, 50) relative to canvas
+   
+2. **SIBLING Positioning**: If natural language says element goes "next to" or "below/above" another:
+   - Coordinates are RELATIVE to the canvas frame origin
+   - Ensure proper alignment (same x for vertical stack, same y for horizontal row)
+   - Example: "Create button2 below button1 at (50, 152)" → button2 x=50, y=152 relative to canvas
+
+CRITICAL: If positioning relative to another element, calculate coordinates relative to the frame origin by adding the position of its parent.
+
 ${contextData ? `**CONTEXT DESIGN PATTERNS:**
 Use these design patterns to determine precise styling for new objects.
 
