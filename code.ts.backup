@@ -3,14 +3,19 @@
 // Architecture: Constraint-Based Multi-Stage Pipeline
 // ============================================================================
 
-import { detectConstraints, computeConstraintDiff, Constraint, isConstraintSatisfied } from './constraints';
-import { quickSolve } from './solver';
+import { 
+    detectConstraints, 
+    computeConstraintDiff, 
+    Constraint,
+    ConstraintDiff,
+    CanvasObject as ConstraintCanvasObject
+} from './constraints';
+import { quickSolve, LayoutAdjustment, Solution } from './solver';
+import { extractUserIntent, UserIntent } from './intent';
 
 figma.showUI(__html__, { width: 350, height: 400 });
 
-// Get API key from environment variable or plugin storage
-// For Figma plugins, you should store this securely in plugin settings
-const OPENAI_API_KEY = ''; // TODO: Load from secure storage
+const OPENAI_API_KEY = ''; // REMOVED - Store securely
 
 let isTracking = false;
 let isSyncing = false;
@@ -139,7 +144,6 @@ interface UserIntent {
     objectsToMove: string[];
     objectsToKeepFixed: string[];
     fixedObjectsReasoning: string;
-    constraintsToSatisfy?: any[]; // Target constraints that should be met
 }
 
 // AGENT 1: Intent Extraction Agent
@@ -1104,200 +1108,10 @@ function stopTracking() {
     figma.notify('Tracking stopped');
 }
 
-// ============================================================================
-// CONSTRAINT-BASED ARCHITECTURE
-// Multi-Stage Pipeline: Constraints → Quick Solve → Intent → LLM Refinement
-// ============================================================================
-
-async function arrangeWithConstraints(movement: MovementInfo, canvasState: CanvasState): Promise<void> {
-    try {
-        // STAGE 1: LLM extracts intent and defines target constraints
-        figma.ui.postMessage({ type: 'processing', message: '🤖 Analyzing user intent and desired layout...' });
-        
-        const intent = await extractUserIntent(canvasState, movement);
-        
-        figma.ui.postMessage({
-            type: 'intent-result',
-            intent: {
-                description: intent.description,
-                targetPattern: intent.targetPattern,
-                objectsToMove: intent.objectsToMove.length,
-                objectsToKeepFixed: intent.objectsToKeepFixed.length
-            }
-        });
-        
-        // STAGE 2: Iterative refinement until constraints are met
-        const MAX_ITERATIONS = 10;
-        let iteration = 0;
-        let allConstraintsMet = false;
-        let llmApproved = false;
-        
-        while (iteration < MAX_ITERATIONS && !llmApproved) {
-            iteration++;
-            
-            figma.ui.postMessage({ 
-                type: 'processing', 
-                message: `🔄 Iteration ${iteration}/${MAX_ITERATIONS}: Arranging objects...` 
-            });
-            
-            // Get current state
-            const currentState = captureCanvasState();
-            
-            // Ask LLM to generate arrangement
-            const llmResponse = await interpretAndArrange(currentState, movement);
-            
-            // Apply the arrangement
-            if (llmResponse.actions.length > 0) {
-                await applyLayoutActions(llmResponse.actions);
-                
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `📐 Applied ${llmResponse.actions.length} adjustments` 
-                });
-            }
-            
-            // STAGE 3: Check if target constraints are satisfied
-            const stateAfterArrangement = captureCanvasState();
-            const currentConstraints = detectConstraints(stateAfterArrangement.objects);
-            
-            // Check if intent-defined constraints are met
-            if (intent.constraintsToSatisfy && intent.constraintsToSatisfy.length > 0) {
-                const objectsMap = new Map(stateAfterArrangement.objects.map(obj => [obj.id, obj]));
-                const satisfiedCount = intent.constraintsToSatisfy.filter(c => 
-                    isConstraintSatisfied(c, objectsMap)
-                ).length;
-                
-                allConstraintsMet = satisfiedCount === intent.constraintsToSatisfy.length;
-                
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `✓ Constraints: ${satisfiedCount}/${intent.constraintsToSatisfy.length} satisfied` 
-                });
-            } else {
-                allConstraintsMet = true; // No specific constraints to check
-            }
-            
-            // STAGE 4: LLM validates the result (skip some iterations for speed)
-            const shouldValidate = allConstraintsMet || iteration % 2 === 0 || iteration >= MAX_ITERATIONS;
-            
-            if (shouldValidate) {
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `🔍 Validating arrangement quality...` 
-                });
-                
-                const validation = await evaluateArrangement(stateAfterArrangement, intent, iteration);
-                llmApproved = validation.intentSatisfied;
-                
-                if (llmApproved && allConstraintsMet) {
-                    figma.ui.postMessage({
-                        type: 'success',
-                        message: `✨ Layout perfected in ${iteration} iteration${iteration > 1 ? 's' : ''}!`
-                    });
-                    
-                    // Update constraints for next time
-                    previousConstraints = currentConstraints;
-                    return;
-                } else if (!llmApproved && validation.issues.length > 0) {
-                    figma.ui.postMessage({ 
-                        type: 'processing', 
-                        message: `⚠️ Issues: ${validation.issues.slice(0, 2).join(', ')}${validation.issues.length > 2 ? '...' : ''}` 
-                    });
-                }
-            } else {
-                // Skip validation, just continue iterating
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `⏭️ Skipping validation (iteration ${iteration})` 
-                });
-            }
-        }
-        
-        // Max iterations reached
-        if (iteration >= MAX_ITERATIONS) {
-            figma.ui.postMessage({
-                type: 'success',
-                message: `⚠️ Layout adjusted (reached ${MAX_ITERATIONS} iterations limit)`
-            });
-        }
-        
-        // Update constraints
-        const finalState = captureCanvasState();
-        previousConstraints = detectConstraints(finalState.objects);
-        
-    } catch (error: any) {
-        console.error('Arrangement error:', error);
-        figma.ui.postMessage({
-            type: 'error',
-            message: `Error: ${error && error.message ? error.message : 'Unknown error'}`
-        });
-    }
-}
-
-async function startTrackingEnhanced() {
-    if (isTracking) return;
-    
-    // Capture initial state and constraints
-    previousCanvasState = captureCanvasState();
-    previousConstraints = detectConstraints(previousCanvasState.objects);
-    let lastKnownState = previousCanvasState;
-    let hasMovedSinceLastCheck = false;
-    
-    isTracking = true;
-    figma.ui.postMessage({ 
-        type: 'tracking-started',
-        message: `Tracking started (${previousConstraints.length} constraints detected)` 
-    });
-    
-    // Poll for changes every 300ms
-    trackingInterval = setInterval(async () => {
-        if (!isTracking) {
-            if (trackingInterval) {
-                clearInterval(trackingInterval);
-                trackingInterval = null;
-            }
-            return;
-        }
-        
-        const currentState = captureCanvasState();
-        
-        // Detect if anything moved
-        const movement = lastKnownState ? detectMovement(lastKnownState, currentState) : null;
-        
-        if (movement) {
-            // Something is moving
-            hasMovedSinceLastCheck = true;
-            lastKnownState = currentState;
-        } else if (hasMovedSinceLastCheck && !isSyncing) {
-            // Movement stopped, trigger constraint-based pipeline
-            hasMovedSinceLastCheck = false;
-            isSyncing = true;
-            
-            // Find the movement that occurred
-            const finalMovement = previousCanvasState ? 
-                detectMovement(previousCanvasState, currentState) : null;
-            
-            if (finalMovement) {
-                figma.ui.postMessage({
-                    type: 'processing',
-                    message: `Analyzing movement of "${finalMovement.objectName}"...`,
-                });
-                
-                // Use constraint-based pipeline
-                await arrangeWithConstraints(finalMovement, currentState);
-                
-                // Update state
-                previousCanvasState = captureCanvasState();
-                isSyncing = false;
-            }
-        }
-    }, 300);
-}
-
 
 figma.ui.onmessage = async (msg) => {
     if (msg.type === 'start-tracking') {
-        await startTrackingEnhanced();
+        await startTracking();
     } else if (msg.type === 'stop-tracking') {
         stopTracking();
     }
