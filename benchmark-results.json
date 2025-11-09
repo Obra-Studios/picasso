@@ -1,0 +1,2700 @@
+{
+  "metadata": {
+    "generatedAt": "2025-11-09T08:28:25.955Z",
+    "totalResults": 165,
+    "lastUpdate": "2025-11-09T08:28:25.955Z"
+  },
+  "results": [
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 2070.2690000000002,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2068.5225419999997
+      ],
+      "totalApiTimeMs": 2068.5225419999997,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669238658
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 1806.0515419999997,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1805.8309169999998
+      ],
+      "totalApiTimeMs": 1805.8309169999998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669240970
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1569.0935409999993,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1563.0831669999998
+      ],
+      "totalApiTimeMs": 1563.0831669999998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669243043
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 5030.492458999999,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5029.887083
+      ],
+      "totalApiTimeMs": 5029.887083,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669248076
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 5511.841457999999,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5498.4857919999995
+      ],
+      "totalApiTimeMs": 5498.4857919999995,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669254093
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 4946.130582999998,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4945.584999999999
+      ],
+      "totalApiTimeMs": 4945.584999999999,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669259546
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 9846.520958000001,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5622.616875,
+        4208.462708000003
+      ],
+      "totalApiTimeMs": 9831.079583000002,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669269396
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 9475.564791000004,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5212.427208000001,
+        4245.6685
+      ],
+      "totalApiTimeMs": 9458.095708,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669279375
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 18613.645708000004,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        13997.986749999996,
+        4584.910083999996
+      ],
+      "totalApiTimeMs": 18582.896833999992,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669298494
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 1802.37025,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1801.2197919999962
+      ],
+      "totalApiTimeMs": 1801.2197919999962,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669300300
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 1534.3145000000004,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1517.5498330000046
+      ],
+      "totalApiTimeMs": 1517.5498330000046,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669302339
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1930.0910000000003,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1926.0838749999966
+      ],
+      "totalApiTimeMs": 1926.0838749999966,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669304772
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 235.46404099999927,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 30000, Requested 3318. Please try again in 6.636s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669305011
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 105.82204099999217,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 29706, Requested 3318. Please try again in 6.048s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669305622
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 89.12183299999742,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 30000, Requested 3318. Please try again in 6.636s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669306215
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 87.34666700000525,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 30000, Requested 1124. Please try again in 2.248s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669306305
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 95.94887500000186,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 30000, Requested 1124. Please try again in 2.248s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669306903
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 166.30179100000532,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 29917, Requested 1124. Please try again in 2.082s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669307575
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 1614.6993750000001,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1595.599541
+      ],
+      "totalApiTimeMs": 1595.599541,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669462945
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 1718.3629579999997,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1717.6855839999998
+      ],
+      "totalApiTimeMs": 1717.6855839999998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669465167
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1765.806791,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1751.3846250000006
+      ],
+      "totalApiTimeMs": 1751.3846250000006,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762669467438
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 5007.749333,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5007.39125
+      ],
+      "totalApiTimeMs": 5007.39125,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669472448
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 4268.978958,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4258.400207999999
+      ],
+      "totalApiTimeMs": 4258.400207999999,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669477220
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 4663.346541999999,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4661.833458000001
+      ],
+      "totalApiTimeMs": 4661.833458000001,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669482388
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 4644.6497500000005,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2231.444292,
+        2406.613583000002
+      ],
+      "totalApiTimeMs": 4638.057875000002,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 2,
+      "timestamp": 1762669487035
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 6401.524957999998,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        1996.5494169999984,
+        4403.970374999997
+      ],
+      "totalApiTimeMs": 6400.5197919999955,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762669493942
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 108.41370800000004,
+      "apiCallCount": 0,
+      "apiCallTimes": [],
+      "totalApiTimeMs": 0,
+      "success": false,
+      "errors": [
+        "Rate limit reached for gpt-4o in organization org-weEcNHdTzQywgo35gAmImlh2 on tokens per min (TPM): Limit 30000, Used 29557, Requested 1124. Please try again in 1.362s. Visit https://platform.openai.com/account/rate-limits to learn more."
+      ],
+      "planOperationsCount": 0,
+      "timestamp": 1762669494556
+    },
+    {
+      "version": "v5",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 1880.846584,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1873.7885840000001
+      ],
+      "totalApiTimeMs": 1873.7885840000001,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762671460587
+    },
+    {
+      "version": "v5",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 1768.814042,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1768.4048749999984
+      ],
+      "totalApiTimeMs": 1768.4048749999984,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762671472360
+    },
+    {
+      "version": "v5",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1818.0122499999998,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1817.6260000000002
+      ],
+      "totalApiTimeMs": 1817.6260000000002,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762671484184
+    },
+    {
+      "version": "v5",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 4848.933625000005,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4848.560416
+      ],
+      "totalApiTimeMs": 4848.560416,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671499036
+    },
+    {
+      "version": "v5",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 4676.383458000004,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4675.956084000005
+      ],
+      "totalApiTimeMs": 4675.956084000005,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671513715
+    },
+    {
+      "version": "v5",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 5010.461750000002,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5010.105875000001
+      ],
+      "totalApiTimeMs": 5010.105875000001,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671528731
+    },
+    {
+      "version": "v5",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 21943.00983299999,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5908.333958000003,
+        6029.294666000002
+      ],
+      "totalApiTimeMs": 11937.628624000004,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671560678
+    },
+    {
+      "version": "v5",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 20102.814084000012,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5736.428749999992,
+        4356.942459000013
+      ],
+      "totalApiTimeMs": 10093.371209000004,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671590784
+    },
+    {
+      "version": "v5",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 30386.853084000002,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        13412.20087500001,
+        6972.619999999995
+      ],
+      "totalApiTimeMs": 20384.820875000005,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671631174
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 2851.560708,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2845.167333
+      ],
+      "totalApiTimeMs": 2845.167333,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762671865180
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 1761.5232919999999,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1756.3889579999995
+      ],
+      "totalApiTimeMs": 1756.3889579999995,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762671876944
+    },
+    {
+      "version": "v2",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1924.9205829999992,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1924.086916999997
+      ],
+      "totalApiTimeMs": 1924.086916999997,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762671888872
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 5835.0401249999995,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5832.114332999998
+      ],
+      "totalApiTimeMs": 5832.114332999998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671904711
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 7407.495458999998,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        7397.742790999997
+      ],
+      "totalApiTimeMs": 7397.742790999997,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671922121
+    },
+    {
+      "version": "v2",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 5488.244582999992,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5487.8816249999945
+      ],
+      "totalApiTimeMs": 5487.8816249999945,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671937613
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 17570.49004199999,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2284.273125000007,
+        5282.894916000005
+      ],
+      "totalApiTimeMs": 7567.168041000012,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671965187
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 16902.960875000004,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2073.215584000005,
+        4820.085791999998
+      ],
+      "totalApiTimeMs": 6893.301376000003,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762671992095
+    },
+    {
+      "version": "v2",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 19072.15954200001,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        3491.6220840000024,
+        5578.355083000002
+      ],
+      "totalApiTimeMs": 9069.977167000005,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762672021172
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 1771.27375,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1769.992167
+      ],
+      "totalApiTimeMs": 1769.992167,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762672872371
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 2418.5990420000016,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2418.1919159999998
+      ],
+      "totalApiTimeMs": 2418.1919159999998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762672894794
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 2367.8587079999998,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2359.030584
+      ],
+      "totalApiTimeMs": 2359.030584,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762672917165
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 1704.461666999996,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1703.9053330000024
+      ],
+      "totalApiTimeMs": 1703.9053330000024,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762672938873
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 2022.4587919999904,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2022.0210829999996
+      ],
+      "totalApiTimeMs": 2022.0210829999996,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762672960898
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 2503.1507920000004,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2502.6927920000016
+      ],
+      "totalApiTimeMs": 2502.6927920000016,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762672983405
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 1679.1695839999884,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1670.584416000027
+      ],
+      "totalApiTimeMs": 1670.584416000027,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673005089
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 1534.2068750000035,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1533.9110409999848
+      ],
+      "totalApiTimeMs": 1533.9110409999848,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673026626
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 1603.7141249999986,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1603.2490830000024
+      ],
+      "totalApiTimeMs": 1603.2490830000024,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673048235
+    },
+    {
+      "version": "v1",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 1869.9796659999993,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1862.7767079999903
+      ],
+      "totalApiTimeMs": 1862.7767079999903,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673070108
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 4983.566332999995,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4977.112250000006
+      ],
+      "totalApiTimeMs": 4977.112250000006,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673095095
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 4612.833458000008,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4612.397208000009
+      ],
+      "totalApiTimeMs": 4612.397208000009,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673119711
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 6279.752999999968,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        6245.108209000027
+      ],
+      "totalApiTimeMs": 6245.108209000027,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673145994
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 5422.3431669999845,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5421.605541000026
+      ],
+      "totalApiTimeMs": 5421.605541000026,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673171422
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 4715.350417000009,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4701.541208000039
+      ],
+      "totalApiTimeMs": 4701.541208000039,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673196141
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 4821.512249999971,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4807.342582999961
+      ],
+      "totalApiTimeMs": 4807.342582999961,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673220968
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 5339.399374999979,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5320.705124999979
+      ],
+      "totalApiTimeMs": 5320.705124999979,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673246313
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 4542.432708000008,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4540.75195799995
+      ],
+      "totalApiTimeMs": 4540.75195799995,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673270862
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 5334.771750000014,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5326.756791999971
+      ],
+      "totalApiTimeMs": 5326.756791999971,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673296201
+    },
+    {
+      "version": "v1",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 5028.324291999976,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5027.647834000003
+      ],
+      "totalApiTimeMs": 5027.647834000003,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673321233
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 44691.415125,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        19626.062166999967,
+        5060.656458000012
+      ],
+      "totalApiTimeMs": 24686.71862499998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673385928
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 31562.817207999993,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        6025.627833000035,
+        5520.943417000002
+      ],
+      "totalApiTimeMs": 11546.571250000037,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673437496
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 29740.71641699993,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5556.918249999988,
+        4173.01787500002
+      ],
+      "totalApiTimeMs": 9729.936125000007,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673487242
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 4,
+      "totalTimeMs": 30000.346791999997,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5986.221542000072,
+        4010.854958000011
+      ],
+      "totalApiTimeMs": 9997.076500000083,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673537248
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 5,
+      "totalTimeMs": 31654.303707999992,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        4722.3911249999655,
+        6928.954416000051
+      ],
+      "totalApiTimeMs": 11651.345541000017,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673588906
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 6,
+      "totalTimeMs": 33034.8735000001,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        7448.794665999943,
+        5551.320459000068
+      ],
+      "totalApiTimeMs": 13000.115125000011,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673641945
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 7,
+      "totalTimeMs": 33252.12975000008,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        8573.241374999983,
+        4659.506500000018
+      ],
+      "totalApiTimeMs": 13232.747875000001,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673695200
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 8,
+      "totalTimeMs": 30436.038208000013,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5593.24433399993,
+        4835.068415999995
+      ],
+      "totalApiTimeMs": 10428.312749999925,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673745641
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 9,
+      "totalTimeMs": 32258.633208999992,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        6605.521333000041,
+        5639.485499999952
+      ],
+      "totalApiTimeMs": 12245.006832999992,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673797904
+    },
+    {
+      "version": "v1",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 10,
+      "totalTimeMs": 29967.808542000013,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5496.463125000009,
+        4468.949166000006
+      ],
+      "totalApiTimeMs": 9965.412291000015,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762673847876
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 1908.9842089999001,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1907.9296249999898
+      ],
+      "totalApiTimeMs": 1907.9296249999898,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673869791
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 2110.464166999911,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2110.1547080000164
+      ],
+      "totalApiTimeMs": 2110.1547080000164,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673891908
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1672.701999999932,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1664.8041669999948
+      ],
+      "totalApiTimeMs": 1664.8041669999948,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673913585
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 1900.9443749999627,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1892.0104580000043
+      ],
+      "totalApiTimeMs": 1892.0104580000043,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673935490
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 2059.2670420000795,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2058.7687080001924
+      ],
+      "totalApiTimeMs": 2058.7687080001924,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673957554
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 1724.861875000177,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1724.314458000008
+      ],
+      "totalApiTimeMs": 1724.314458000008,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762673979284
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 3620.823459000094,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        3620.4297090000473
+      ],
+      "totalApiTimeMs": 3620.4297090000473,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674002911
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 2115.6253329999745,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2115.305041000014
+      ],
+      "totalApiTimeMs": 2115.305041000014,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674025031
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 1604.9394170001615,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1604.704917000141
+      ],
+      "totalApiTimeMs": 1604.704917000141,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674046637
+    },
+    {
+      "version": "v6",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 2418.246999999974,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2417.9217500002123
+      ],
+      "totalApiTimeMs": 2417.9217500002123,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674069060
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 4605.993000000017,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4601.025832999963
+      ],
+      "totalApiTimeMs": 4601.025832999963,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674093670
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 4896.440167000052,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4885.430791999912
+      ],
+      "totalApiTimeMs": 4885.430791999912,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674118571
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 5124.891791000031,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5107.7800409998745
+      ],
+      "totalApiTimeMs": 5107.7800409998745,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674143701
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 6732.606709000189,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        6732.2166669999715
+      ],
+      "totalApiTimeMs": 6732.2166669999715,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674170438
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 5598.139500000048,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5589.247124999994
+      ],
+      "totalApiTimeMs": 5589.247124999994,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674196041
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 5902.109332999913,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5901.568208999932
+      ],
+      "totalApiTimeMs": 5901.568208999932,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674221947
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 4264.529583999887,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4263.698249999899
+      ],
+      "totalApiTimeMs": 4263.698249999899,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674246216
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 4466.579333000118,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4449.3724169998895
+      ],
+      "totalApiTimeMs": 4449.3724169998895,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674270687
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 4543.6268329999875,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4535.660874999827
+      ],
+      "totalApiTimeMs": 4535.660874999827,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674295234
+    },
+    {
+      "version": "v6",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 4703.116208999883,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4702.66650000005
+      ],
+      "totalApiTimeMs": 4702.66650000005,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674319944
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 43546.229458000045,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        19523.330832999898,
+        4013.5452080001123
+      ],
+      "totalApiTimeMs": 23536.87604100001,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674383512
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 39532.044375000056,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        14237.595541999908,
+        5246.694833000191
+      ],
+      "totalApiTimeMs": 19484.2903750001,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674443049
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 32887.313417,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        7539.5350830000825,
+        5346.126291000051
+      ],
+      "totalApiTimeMs": 12885.661374000134,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674495942
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 4,
+      "totalTimeMs": 30887.86012499989,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5964.252332999837,
+        4909.3597079999745
+      ],
+      "totalApiTimeMs": 10873.612040999811,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674546833
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 5,
+      "totalTimeMs": 29393.31929200003,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5273.567832999863,
+        4101.7170829998795
+      ],
+      "totalApiTimeMs": 9375.284915999742,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674596230
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 6,
+      "totalTimeMs": 33050.87629200006,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        8127.760375000071,
+        4918.675791999791
+      ],
+      "totalApiTimeMs": 13046.436166999862,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674649284
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 7,
+      "totalTimeMs": 36450.42100000009,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        11426.4030830001,
+        5001.9351669999305
+      ],
+      "totalApiTimeMs": 16428.33825000003,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674705738
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 8,
+      "totalTimeMs": 39848.5969169999,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        15582.709709000075,
+        4253.434916000115
+      ],
+      "totalApiTimeMs": 19836.14462500019,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674765590
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 9,
+      "totalTimeMs": 39923.264292000094,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        14428.329707999947,
+        5491.7672500000335
+      ],
+      "totalApiTimeMs": 19920.09695799998,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674825519
+    },
+    {
+      "version": "v6",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 10,
+      "totalTimeMs": 31576.953875000123,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        6713.15304200002,
+        4834.657041999977
+      ],
+      "totalApiTimeMs": 11547.810083999997,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762674877101
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 2037.077582999831,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2035.963791999966
+      ],
+      "totalApiTimeMs": 2035.963791999966,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674899143
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 2011.4395839998033,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2011.1067080001812
+      ],
+      "totalApiTimeMs": 2011.1067080001812,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674921158
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1602.8373330000322,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1601.8624999998137
+      ],
+      "totalApiTimeMs": 1601.8624999998137,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674942764
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 1755.3580420000944,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1744.6543749999255
+      ],
+      "totalApiTimeMs": 1744.6543749999255,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674964524
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 2173.195458999835,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2172.0502920001745
+      ],
+      "totalApiTimeMs": 2172.0502920001745,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762674986702
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 2519.8624999998137,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2518.555499999784
+      ],
+      "totalApiTimeMs": 2518.555499999784,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675009227
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 2314.4567499998957,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2313.2691659997217
+      ],
+      "totalApiTimeMs": 2313.2691659997217,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675031546
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 2109.7637920002453,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2088.7017500000075
+      ],
+      "totalApiTimeMs": 2088.7017500000075,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675053660
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 1778.6131660002284,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1756.3412910001352
+      ],
+      "totalApiTimeMs": 1756.3412910001352,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675075442
+    },
+    {
+      "version": "v7",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 2191.0888749998994,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2189.854416999966
+      ],
+      "totalApiTimeMs": 2189.854416999966,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675097638
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 4839.317042000126,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4838.136333000381
+      ],
+      "totalApiTimeMs": 4838.136333000381,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675122481
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 4398.808999999892,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4389.517874999903
+      ],
+      "totalApiTimeMs": 4389.517874999903,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675146886
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 5560.702458000276,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5559.888750000391
+      ],
+      "totalApiTimeMs": 5559.888750000391,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675172450
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 5500.508958999999,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5495.311083000153
+      ],
+      "totalApiTimeMs": 5495.311083000153,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675197956
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 6611.755415999796,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        6610.029333000071
+      ],
+      "totalApiTimeMs": 6610.029333000071,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675224574
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 7132.16479099961,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        7131.084459000267
+      ],
+      "totalApiTimeMs": 7131.084459000267,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675251710
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 5591.741624999791,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5575.280125000048
+      ],
+      "totalApiTimeMs": 5575.280125000048,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675277306
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 5289.814083000179,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5288.4723330000415
+      ],
+      "totalApiTimeMs": 5288.4723330000415,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675302601
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 5791.463583000004,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5789.781540999655
+      ],
+      "totalApiTimeMs": 5789.781540999655,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675328395
+    },
+    {
+      "version": "v7",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 5258.878500000108,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5257.856374999974
+      ],
+      "totalApiTimeMs": 5257.856374999974,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675353659
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 31749.144333000295,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        3580.8141250000335,
+        8164.852042000275
+      ],
+      "totalApiTimeMs": 11745.666167000309,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675405413
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 30766.78912499966,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2418.297625000123,
+        8324.079291999806
+      ],
+      "totalApiTimeMs": 10742.376916999929,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675456187
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 26196.958083000034,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2643.356625000015,
+        3541.704749999568
+      ],
+      "totalApiTimeMs": 6185.061374999583,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 2,
+      "timestamp": 1762675502388
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 4,
+      "totalTimeMs": 27553.638125000056,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        1495.6333329998888,
+        6044.635459000245
+      ],
+      "totalApiTimeMs": 7540.2687920001335,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675549946
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 5,
+      "totalTimeMs": 25285.547666999977,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2105.6156249996275,
+        3160.865665999707
+      ],
+      "totalApiTimeMs": 5266.481290999334,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 2,
+      "timestamp": 1762675595236
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 6,
+      "totalTimeMs": 24877.63170899963,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        1850.0854170001112,
+        3011.450875000097
+      ],
+      "totalApiTimeMs": 4861.536292000208,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 2,
+      "timestamp": 1762675640118
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 7,
+      "totalTimeMs": 27813.411874999758,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        2661.7509590000845,
+        5139.223166000098
+      ],
+      "totalApiTimeMs": 7800.9741250001825,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675687936
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 8,
+      "totalTimeMs": 24850.06341599999,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        1710.6300840000622,
+        3123.7250839998014
+      ],
+      "totalApiTimeMs": 4834.355167999864,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 2,
+      "timestamp": 1762675732790
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 9,
+      "totalTimeMs": 43096.580874999985,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        17166.064458000008,
+        5918.0530000003055
+      ],
+      "totalApiTimeMs": 23084.117458000313,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675795891
+    },
+    {
+      "version": "v7",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 10,
+      "totalTimeMs": 29015.46375000011,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        1987.2272499999963,
+        7024.104083000217
+      ],
+      "totalApiTimeMs": 9011.331333000213,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762675844913
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 2334.289124999661,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2327.8166249999776
+      ],
+      "totalApiTimeMs": 2327.8166249999776,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675867251
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 2104.888125000056,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2103.592792000156
+      ],
+      "totalApiTimeMs": 2103.592792000156,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675889360
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 1704.3471670001745,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1702.7816670001484
+      ],
+      "totalApiTimeMs": 1702.7816670001484,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675911070
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 2214.743333000224,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2213.456583000254
+      ],
+      "totalApiTimeMs": 2213.456583000254,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675933289
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 5390.51958299987,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5389.243708000053
+      ],
+      "totalApiTimeMs": 5389.243708000053,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675958685
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 1704.851874999702,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1703.4664580002427
+      ],
+      "totalApiTimeMs": 1703.4664580002427,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762675980394
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 1803.876292000059,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1802.7809170000255
+      ],
+      "totalApiTimeMs": 1802.7809170000255,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762676002203
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 1755.4827090003528,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1737.2147079999559
+      ],
+      "totalApiTimeMs": 1737.2147079999559,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762676023963
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 1867.2882919996046,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        1856.8557500001043
+      ],
+      "totalApiTimeMs": 1856.8557500001043,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762676045835
+    },
+    {
+      "version": "v8",
+      "testCase": "simple-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 2720.699459000025,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        2719.484916999936
+      ],
+      "totalApiTimeMs": 2719.484916999936,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 1,
+      "timestamp": 1762676068561
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 1,
+      "totalTimeMs": 4158.016125000082,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4140.3309160000645
+      ],
+      "totalApiTimeMs": 4140.3309160000645,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676092722
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 2,
+      "totalTimeMs": 75132.61137500033,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        75130.95862499997
+      ],
+      "totalApiTimeMs": 75130.95862499997,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676187860
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 3,
+      "totalTimeMs": 4877.800667000003,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4876.609749999829
+      ],
+      "totalApiTimeMs": 4876.609749999829,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676212743
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 4,
+      "totalTimeMs": 4199.159540999681,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4192.168000000063
+      ],
+      "totalApiTimeMs": 4192.168000000063,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676236947
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 5,
+      "totalTimeMs": 4009.4187920000404,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4008.3017919999547
+      ],
+      "totalApiTimeMs": 4008.3017919999547,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676260962
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 6,
+      "totalTimeMs": 4584.698333999608,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4583.157666000072
+      ],
+      "totalApiTimeMs": 4583.157666000072,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676285551
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 7,
+      "totalTimeMs": 3912.9159170002677,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        3892.4882080000825
+      ],
+      "totalApiTimeMs": 3892.4882080000825,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676309469
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 8,
+      "totalTimeMs": 5267.826375000179,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        5266.564541999716
+      ],
+      "totalApiTimeMs": 5266.564541999716,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676334741
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 9,
+      "totalTimeMs": 10360.42249999987,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        10349.865958000068
+      ],
+      "totalApiTimeMs": 10349.865958000068,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676365107
+    },
+    {
+      "version": "v8",
+      "testCase": "complex-natural-language",
+      "inputType": "naturalLanguage",
+      "iteration": 10,
+      "totalTimeMs": 4785.840749999974,
+      "apiCallCount": 1,
+      "apiCallTimes": [
+        4785.125374999829
+      ],
+      "totalApiTimeMs": 4785.125374999829,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676389896
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 1,
+      "totalTimeMs": 30779.41816599993,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5013.008291999809,
+        5734.5494160000235
+      ],
+      "totalApiTimeMs": 10747.557707999833,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676440681
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 2,
+      "totalTimeMs": 31096.36208300013,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        6557.702041000128,
+        4534.87962500006
+      ],
+      "totalApiTimeMs": 11092.581666000187,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676491784
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 3,
+      "totalTimeMs": 29051.81291700015,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5445.746292000171,
+        3590.7281250003725
+      ],
+      "totalApiTimeMs": 9036.474417000543,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676540841
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 4,
+      "totalTimeMs": 30368.69304100005,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5514.755291000009,
+        4849.068750000093
+      ],
+      "totalApiTimeMs": 10363.824041000102,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676591217
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 5,
+      "totalTimeMs": 31131.960791000165,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        6837.673249999993,
+        4135.265749999788
+      ],
+      "totalApiTimeMs": 10972.93899999978,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676642354
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 6,
+      "totalTimeMs": 38502.80258300016,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        13232.4920409997,
+        5255.844582999591
+      ],
+      "totalApiTimeMs": 18488.33662399929,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676700862
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 7,
+      "totalTimeMs": 30759.236416999716,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5036.977791999932,
+        5699.936500000302
+      ],
+      "totalApiTimeMs": 10736.914292000234,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676751626
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 8,
+      "totalTimeMs": 30460.274375000037,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        6059.53891699994,
+        4396.112625000067
+      ],
+      "totalApiTimeMs": 10455.651542000007,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676802092
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 9,
+      "totalTimeMs": 33685.53416700009,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        9537.581583000254,
+        4123.817958999891
+      ],
+      "totalApiTimeMs": 13661.399542000145,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676855783
+    },
+    {
+      "version": "v8",
+      "testCase": "constraint-based-form",
+      "inputType": "constraintBased",
+      "iteration": 10,
+      "totalTimeMs": 30163.036083000246,
+      "apiCallCount": 2,
+      "apiCallTimes": [
+        5304.015916999895,
+        4843.233208000194
+      ],
+      "totalApiTimeMs": 10147.24912500009,
+      "success": true,
+      "errors": [],
+      "planOperationsCount": 4,
+      "timestamp": 1762676905951
+    }
+  ]
+}

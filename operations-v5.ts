@@ -1,7 +1,8 @@
 // ============================================================================
-// OPERATIONS V1
+// OPERATIONS V5
 // Converts constraint-based actions into structured JSON operations
-// Uses: gpt-4o-2024-08-06 with temperature 0.2
+// Uses: gpt-4o-2024-08-06 with temperature 0 (deterministic, faster inference)
+// Same as operations.ts (v1) but with temperature set to 0 for speed comparison
 // ============================================================================
 
 import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan } from './execution';
@@ -158,7 +159,7 @@ Format your response as a clear, numbered list of operations with all specific v
                 content: prompt
             }
         ],
-        temperature: 0.2, // V1: Standard temperature for balanced creativity and determinism
+        temperature: 0, // V5: Temperature set to 0 for deterministic, faster inference (vs v1's 0.2)
     };
 
     const requestHeaders = {
@@ -699,7 +700,7 @@ Be precise and extract all operations from the natural language description.`;
                 schema: schema
             }
         },
-        temperature: 0.2, // V1: Standard temperature for balanced creativity and determinism
+        temperature: 0, // V5: Temperature set to 0 for deterministic, faster inference (vs v1's 0.2)
     };
 
     const requestHeaders = {

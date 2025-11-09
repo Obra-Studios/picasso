@@ -1,7 +1,9 @@
 // ============================================================================
-// OPERATIONS V1
+// OPERATIONS V8
 // Converts constraint-based actions into structured JSON operations
 // Uses: gpt-4o-2024-08-06 with temperature 0.2
+// OPTIMIZATION: Non-strict JSON schema - Changed strict: true to strict: false
+// This may speed up validation and reduce processing time
 // ============================================================================
 
 import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan } from './execution';
@@ -695,7 +697,7 @@ Be precise and extract all operations from the natural language description.`;
             type: 'json_schema',
             json_schema: {
                 name: 'execution_plan',
-                strict: true,
+                strict: false, // V8 OPTIMIZATION: Non-strict mode may speed up validation
                 schema: schema
             }
         },

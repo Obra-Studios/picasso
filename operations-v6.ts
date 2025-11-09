@@ -1,7 +1,9 @@
 // ============================================================================
-// OPERATIONS V1
+// OPERATIONS V6
 // Converts constraint-based actions into structured JSON operations
 // Uses: gpt-4o-2024-08-06 with temperature 0.2
+// OPTIMIZATION: Skip DOM collection - Removed collectFigmaDOMInfo() call and DOM info from prompt
+// This significantly reduces prompt size and token count, especially for pages with many nodes
 // ============================================================================
 
 import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan } from './execution';
@@ -212,17 +214,12 @@ export async function parseNaturalLanguageOperations(
     naturalLanguageOperations: string,
     apiKey: string
 ): Promise<{ plan: ExecutionPlan; apiCall: APICallInfo }> {
-    // Collect current Figma DOM information for exact node ID matching
-    const domInfo = collectFigmaDOMInfo();
+    // V6 OPTIMIZATION: Skip DOM collection to reduce prompt size and token count
+    // For modify operations, use targetDescription instead of targetId
 
     const prompt = `You are an expert at converting natural language operation descriptions into structured JSON operations for a Figma plugin.
 
 The user has provided natural language descriptions of design operations with exact calculated values. Your task is to convert this into a structured JSON format that specifies exactly what objects to ADD or MODIFY.
-
-**CURRENT FIGMA PAGE DOM (for exact node identification):**
-The following is a list of all nodes currently on the Figma page. Use the exact "id" field for targetId when modifying existing nodes. This ensures precise node identification instead of fuzzy name matching.
-
-${domInfo}
 
 **NATURAL LANGUAGE OPERATIONS:**
 ${naturalLanguageOperations}
@@ -268,58 +265,12 @@ When a box, container, input field, or any shape that should contain text is bei
    - Use appropriate fontWeight (400 for body text, 500-600 for emphasis)
    - Ensure text fits within the container width minus padding
 
-**CRITICAL: MODIFY OPERATIONS - EXACT NODE IDENTIFICATION (NO FUZZY MATCHING)**
-When modifying existing nodes, you MUST identify the exact node using the DOM information above. Fuzzy matching is NOT allowed.
+**CRITICAL: MODIFY OPERATIONS**
+When modifying existing nodes, use targetDescription to identify the node (e.g., "login-button", "email-input-label").
+For text content modifications: Set textContent to the new text value. Keep other text properties unless they need to change.
+For text property modifications: Update fontSize, textAlign, fontFamily, fontWeight as specified.
 
-**STEP-BY-STEP NODE IDENTIFICATION PROCESS:**
-
-1. **Analyze the operation requirements**:
-   - What type of node needs to be modified? (RECTANGLE, TEXT, ELLIPSE, etc.)
-   - What is the target name or description from the constraints?
-   - What is the use case? (button box, button text, input field, label, etc.)
-
-2. **Search the DOM for matching nodes**:
-   - Filter nodes by TYPE first (e.g., if modifying a button box, look for RECTANGLE nodes)
-   - Then filter by NAME (match the targetId/description from constraints)
-   - Consider PARENT relationships (e.g., button text is usually a child of the button rectangle's parent frame)
-   - Consider POSITION relationships (e.g., button text is usually positioned near/inside the button rectangle)
-   - Consider CONTEXT clues:
-     * "button box" or "background" → RECTANGLE type
-     * "button text" or "label" → TEXT type
-     * "input field" → RECTANGLE type (the container)
-     * "placeholder" or "input text" → TEXT type (the text inside)
-
-3. **Identify the exact node**:
-   - Once you've found the matching node in the DOM, use its EXACT "id" field value for targetId
-   - Example: To modify "login-button" rectangle:
-     * Search DOM for type: "RECTANGLE"
-     * Find node with name: "login-button"
-     * Verify it's the button box (not text) by checking type and context
-     * Use exact id: "9:38" (from the DOM)
-   - Example: To modify "login-button" text:
-     * Search DOM for type: "TEXT"
-     * Find node with name containing "login" and "button" (e.g., "Login Button Text")
-     * Verify it's text by checking type and textContent
-     * Use exact id: "9:39" (from the DOM)
-
-4. **CRITICAL RULES**:
-   - **ALWAYS use exact node IDs from the DOM** - never use names for targetId in modify operations
-   - **Match by TYPE first** - if modifying a rectangle, only consider RECTANGLE nodes
-   - **Match by CONTEXT** - "button box" = RECTANGLE, "button text" = TEXT
-   - **Check PARENT relationships** - related nodes often share the same parent
-   - **Verify with POSITION** - text nodes are usually positioned near their container rectangles
-   - **NO FUZZY MATCHING** - if you can't find an exact match, the node may not exist or the description is unclear
-   
-2. **For text content modifications**:
-   - Set textContent to the new text value
-   - Keep other text properties (fontSize, textAlign, fontFamily, fontWeight) unless they need to change
-   - If only textContent is changing, set other text properties to 0 or empty string (as per schema requirements)
-   
-3. **For text property modifications**:
-   - Update fontSize, textAlign, fontFamily, fontWeight as specified
-   - If textContent is not changing, set it to empty string (as per schema requirements)
-
-5. **IMPORTANT: What NOT to modify as text**:
+**IMPORTANT: What NOT to modify as text**:
    - **Semantic roles, accessibility properties, or metadata** are NOT text nodes and should NOT be modified as text operations
    - These are properties of the container/shape itself, not separate text elements
    - If a constraint mentions "semantic role", "role", "accessibility", or similar metadata, DO NOT create a text modification operation for it

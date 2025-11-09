@@ -1,7 +1,7 @@
 // ============================================================================
-// OPERATIONS V1
+// OPERATIONS V3
 // Converts constraint-based actions into structured JSON operations
-// Uses: gpt-4o-2024-08-06 with temperature 0.2
+// Uses: gpt-4o-mini (faster, lower cost alternative to gpt-4o)
 // ============================================================================
 
 import { ExecutionPlan, ExecutionOperation, APICallInfo, ConstraintBasedPlan } from './execution';
@@ -86,68 +86,47 @@ export async function convertConstraintsToNaturalLanguage(
     constraintPlan: ConstraintBasedPlan,
     apiKey: string
 ): Promise<{ naturalLanguageOperations: string; apiCall: APICallInfo }> {
-    const prompt = `You are an expert at converting constraint-based design actions into clear, detailed natural language descriptions of operations.
+    const prompt = `You are an expert system that converts constraint-based design actions (like CSS constraints) into precise natural-language descriptions of visual operations.
 
-The user has provided constraint-based actions (similar to CSS constraints) that specify design operations. Your task is to convert these constraints into natural language descriptions that specify exactly what properties each object must have, including:
-- Exact positions (x, y coordinates)
-- Exact sizes (width, height)
-- Colors (fill and stroke)
-- Container relationships
-- Any other properties needed
-
-**CONSTRAINT-BASED ACTIONS:**
+### INPUT
+Constraint-based actions in JSON:
 ${JSON.stringify(constraintPlan, null, 2)}
 
-**CRITICAL: TEXT BOX DETECTION**
-When analyzing actions, detect if a text box is needed based on:
-1. **Action description keywords**: "text box", "input", "input field", "text field", "button", "label", "text area", "textarea"
-2. **Intent keywords**: If metadata.intent mentions "text", "input", "label", "button", "field"
-3. **Constraint types**: If an action has a "content" constraint type (text content), it needs a text box
-4. **Action patterns**: If an action creates a rectangle/frame AND has a follow-up action that creates text inside it
+### TASK
+Translate each action into a clear, numbered natural-language operation, including:
+- Action type: ADD or MODIFY
+- Object type: (rectangle, circle, text, frame, etc.)
+- Name (targetId or descriptive name)
+- Position: x, y (top-left origin, y increases downward)
+- Size: width, height (or radius for circles)
+- Colors: fill and stroke (RGB 0–1)
+- Container (parent)
+- Other properties: corner radius, stroke weight, padding
+- For text: content, font, alignment, size, weight
 
-**When a text box is detected:**
-- ALWAYS create TWO separate operations in your description:
-  1. First: Create the container/box (rectangle or frame) with position, size, fills, strokes, corner radius
-  2. Second: Create the text element that goes inside the box
-- Specify that the text should be placed inside the container with appropriate padding
-- Extract the actual text content from constraints or descriptions
+### SPECIAL RULE — Text Boxes
+If an action involves text or input elements (keywords: "text", "input", "label", "button", "field", or constraint type = "content"):
+1. First, describe creating the container (rectangle/frame)
+2. Then describe creating the text element inside it
+3. Include text, font size, alignment, and padding
 
-**REQUIREMENTS:**
-1. For each action, analyze all its constraints and determine the exact properties needed
-2. Resolve position constraints to specific x, y coordinates (top-left corner)
-3. Resolve size constraints to specific width and height values
-4. Resolve spacing constraints to specific positions relative to other objects
-5. Resolve color constraints to specific RGB values (0-1 range)
-6. Infer shape types from descriptions (circle, rectangle, ellipse, etc.)
-7. Consider container relationships and padding
-8. Calculate positions based on spacing constraints relative to other objects
-9. **DETECT TEXT BOX REQUIREMENTS**: If an action or intent suggests a text box is needed, explicitly describe creating both the box and the text inside it
+### INFERENCE RULES
+- Resolve all constraints to absolute x, y, width, height
+- Convert spacing to numeric offsets relative to referenced objects
+- Colors → RGB 0–1
+- If position anchor = center, compute top-left position
+- Be explicit: no ranges or vague terms
+- Use Figma coordinate conventions (top-left origin)
 
-**IMPORTANT:**
-- All coordinates are in Figma's coordinate system (top-left origin, y increases downward)
-- x, y coordinates represent the TOP-LEFT corner of the object, not the center
-- If a position constraint specifies an anchor point (like "center"), calculate the top-left position
-- RGB values must be in 0-1 range
-- Be specific and precise - calculate exact values, don't use ranges or approximations
-- For spacing constraints, calculate the exact position based on the reference object's position and size
-- **For text boxes**: Always describe creating the container first, then the text element with its content, padding, alignment, and styling
+### OUTPUT FORMAT
+Numbered list of operations:
+1. Action: [ADD] Rectangle "ButtonBase" — (x=120, y=50, w=200, h=40), fill=[0.9,0.9,0.9], stroke=[0.1,0.1,0.1]
+2. Action: [ADD] Text "ButtonLabel" inside "ButtonBase" — "Submit", font=Inter 14 bold, centered, padding=8
 
-**OUTPUT FORMAT:**
-Return a clear, structured natural language description. For each action, specify:
-1. Action type: "ADD" or "MODIFY"
-2. Object type: circle, rectangle, ellipse, frame, text, line, polygon, star, vector, arrow
-3. Name: the targetId or a descriptive name
-4. Position: exact x, y coordinates (top-left corner)
-5. Size: exact width and height (or radius for circles)
-6. Container: parent container name/ID
-7. Colors: fill color (RGB 0-1) and stroke color if specified
-8. Other properties: corner radius, stroke weight, etc.
-9. **For text boxes**: Text content, font size, alignment, padding, font family, font weight
-
-Format your response as a clear, numbered list of operations with all specific values calculated.`;
+Be concise and structured.`;
 
     const requestBody = {
-        model: 'gpt-4o-2024-08-06',
+        model: 'gpt-4o-mini', // V3: Using gpt-4o-mini for faster, lower-cost inference
         messages: [
             {
                 role: 'system',
@@ -158,7 +137,7 @@ Format your response as a clear, numbered list of operations with all specific v
                 content: prompt
             }
         ],
-        temperature: 0.2, // V1: Standard temperature for balanced creativity and determinism
+        temperature: 0.2,
     };
 
     const requestHeaders = {
@@ -680,7 +659,7 @@ Be precise and extract all operations from the natural language description.`;
     };
 
     const requestBody = {
-        model: 'gpt-4o-2024-08-06',
+        model: 'gpt-4o-mini', // V3: Using gpt-4o-mini for faster, lower-cost inference
         messages: [
             {
                 role: 'system',
@@ -699,7 +678,7 @@ Be precise and extract all operations from the natural language description.`;
                 schema: schema
             }
         },
-        temperature: 0.2, // V1: Standard temperature for balanced creativity and determinism
+        temperature: 0.2,
     };
 
     const requestHeaders = {
@@ -738,7 +717,18 @@ Be precise and extract all operations from the natural language description.`;
     }
 
     const content = responseData.choices[0]?.message?.content || '{"operations":[]}';
-    const plan = JSON.parse(content) as ExecutionPlan;
+
+    // Try to parse JSON with better error handling
+    let plan: ExecutionPlan;
+    try {
+        plan = JSON.parse(content) as ExecutionPlan;
+    } catch (parseError) {
+        // Log the actual content for debugging
+        console.error('JSON parse error in parseNaturalLanguageOperations:');
+        console.error('Content:', content);
+        console.error('Error:', parseError);
+        throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}. Content: ${content.substring(0, 200)}...`);
+    }
 
     return { plan, apiCall };
 }
