@@ -15,19 +15,60 @@
             padding: 24px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
             overflow-y: auto;
         }
 
         .logo-container {
-            margin-bottom: 24px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            max-width: 720px;
+            padding: 0 6px;
         }
 
         .logo {
-            width: 80px;
-            height: 80px;
+            width: 48px;
+            height: 48px;
             display: block;
+            flex: 0 0 auto;
+        }
+
+        .wordmark {
+            width: 70px; /* slightly smaller */
+            height: auto;
+            display: block;
+            flex: 0 0 auto;
+            opacity: 0.95;
+        }
+
+        /* Inline toggle (placed inside the same row) */
+        #tracking-toggle-container {
+            margin-left: auto; /* push toggle to the right */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #tracking-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: rgba(0,0,0,0.66);
+            transition: color 0.2s ease, filter 0.2s ease;
+        }
+
+        #tracking-toggle[aria-pressed="true"] {
+            color: #5a9d5f; /* brighter green for clear visibility */
+            filter: drop-shadow(0 0 12px rgba(90,157,95,0.6)) drop-shadow(0 0 6px rgba(90,157,95,0.4)); /* stronger green glow/hue */
         }
 
         h1 {
@@ -49,7 +90,13 @@
 
         .button-container {
             width: 100%;
-            max-width: 280px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            /* use remaining viewport height so the event stream can expand */
+            height: calc(100vh - 200px);
+            padding: 0 18px;
+            margin-top: 24px;
         }
 
         button {
@@ -58,7 +105,7 @@
             background: #1a1a1a;
             color: #FFF9F0;
             border: none;
-            border-radius: 8px;
+            border-radius: 0;
             font-size: 13px;
             font-weight: 500;
             cursor: pointer;
@@ -67,8 +114,11 @@
         }
 
         button:hover {
-            background: #333;
             transform: translateY(-1px);
+        }
+
+        button:not(.text-link):hover {
+            background: #333;
         }
 
         button:active {
@@ -89,7 +139,7 @@
             font-size: 11px;
             padding: 12px 16px;
             background: #fff;
-            border-radius: 8px;
+            border-radius: 0;
             margin-top: 8px;
             line-height: 1.5;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -121,7 +171,7 @@
             margin-top: 16px;
             padding: 16px;
             background: #fff;
-            border-radius: 8px;
+            border-radius: 0;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             display: none;
         }
@@ -152,217 +202,250 @@
             font-style: italic;
         }
 
-        .input-group {
+        /* Minimal textarea: no backdrop, no outline — just a black bottom line and native caret */
+        .minimal-textarea {
             width: 100%;
-            max-width: 280px;
-            margin-bottom: 16px;
-        }
-
-        .input-label {
-            font-size: 11px;
+            padding: 2px 4px 4px 4px; /* added bottom padding so text doesn't touch the line */
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
             font-weight: 500;
-            color: #666;
-            margin-bottom: 6px;
-            display: block;
+            border: none; /* underline handled by separate element so it can be positioned */
+            background: transparent;
+            resize: none;
+            min-height: 18px;
+            line-height: 1.4; /* increased line height */
+            caret-color: rgba(0,0,0,0.62);
+            color: rgba(0,0,0,0.62); /* match event-title color */
+            appearance: none;
+            -webkit-appearance: none;
         }
 
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 12px;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #fff;
-            color: #1a1a1a;
-            transition: border-color 0.2s ease;
+        .minimal-textarea::placeholder {
+            color: #9b9b9b;
+            opacity: 1;
         }
 
-        input[type="text"]:focus,
-        textarea:focus {
+        .minimal-textarea:focus {
             outline: none;
-            border-color: #1a1a1a;
+            box-shadow: none;
+            border-bottom-color: #000;
         }
 
-        input[type="password"] {
-            font-family: monospace;
-            font-size: 11px;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-size: 11px;
-            line-height: 1.5;
-        }
-
-        .execute-section {
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid #eee;
-            width: 100%;
-            max-width: 280px;
-        }
-
-        .execute-section-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .api-calls-box {
-            width: 100%;
-            max-width: 280px;
-            margin-top: 16px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            display: none;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .api-calls-box.visible {
-            display: block;
-        }
-
-        .api-calls-title {
-            font-size: 11px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .api-call-item {
-            margin-bottom: 12px;
-            padding: 8px;
-            background: #fff;
-            border-radius: 4px;
-            border-left: 3px solid #1a1a1a;
-        }
-
-        .api-call-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .api-call-method {
-            font-size: 10px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 4px;
-        }
-
-        .api-call-url {
-            font-size: 9px;
-            color: #666;
-            font-family: monospace;
-            word-break: break-all;
-            margin-bottom: 6px;
-        }
-
-        .api-call-section {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid #eee;
-        }
-
-        .api-call-section-title {
-            font-size: 9px;
-            font-weight: 600;
-            color: #999;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-
-        .api-call-content {
-            font-size: 9px;
-            font-family: monospace;
-            color: #333;
-            background: #f5f5f5;
-            padding: 6px;
-            border-radius: 3px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .api-call-status {
+        /* Simple inline text links for context/canvas selectors */
+        .text-link {
+            background: transparent;
+            border: none;
+            padding: 0 0 4px 0; /* added bottom padding for spacing between text and underline */
+            margin: 0;
+            font-size: 13px;
+            color: #9b9b9b; /* match textarea text color */
+            cursor: pointer;
+            border-bottom: 1.5px solid rgba(0,0,0,0.66);
+            line-height: 1.2;
+            text-decoration: none;
             display: inline-block;
-            font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: 600;
-            margin-bottom: 4px;
+            transition: transform 0.1s ease;
         }
 
-        .api-call-status.success {
-            background: #d4edda;
-            color: #155724;
+        .text-link:hover { transform: translateY(-1px); }
+
+        .text-link[selected], .text-link[aria-pressed="true"] {
+            color: #9b9b9b; /* match textarea text color */
+            border-bottom-color: rgba(0,0,0,0.66);
         }
 
-        .api-call-status.error {
-            background: #f8d7da;
-            color: #721c24;
+        .small-status {
+            font-size: 12px;
+            color: rgba(0,0,0,0.66);
+            margin-left: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1;
+            max-width: 220px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .selector-row { display:flex; gap:12px; align-items:center; justify-content:flex-start; }
+
+        /* wrapper keeps a fixed visual area while textarea inside auto-sizes up to the wrapper height */
+        .textarea-wrapper {
+            width: 100%;
+            height: 120px; /* visual fixed height for layout (increased cap) */
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        /* bottom fade mask so text doesn't cut off abruptly at the black line */
+        .textarea-wrapper::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 1px; /* positioned above the black line so it remains fully visible */
+            height: 14px;
+            background: linear-gradient(to top, #FFF9F0 0%, rgba(255,249,240,0) 100%);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .minimal-textarea {
+            /* let the textarea auto-size; JS will cap to wrapper height */
+            height: auto;
+            max-height: 100%;
+            overflow-y: auto;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: rgba(0,0,0,0.18) transparent;
+            background: transparent;
+            padding-right: 6px; /* space for tiny scrollbar */
+        }
+
+        .minimal-textarea::-webkit-scrollbar {
+            width: 2px;
+            height: 4px;
+        }
+
+        .minimal-textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .minimal-textarea::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.18);
+            border-radius: 2px;
+        }
+
+        /* underline element positioned under the live text */
+        .textarea-underline {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1.5px;
+            background: #000;
+            pointer-events: none;
+            bottom: 0; /* default: sit at bottom of wrapper */
+            top: auto;
+            z-index: 2;
+        }
+
+        /* Event stream: fixed to bottom, transparent background, compact events with fade masks */
+        .event-stream {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 24px; /* match body padding */
+            width: calc(100% - 48px);
+            max-width: 280px;
+            height: calc(100vh - 400px); /* fixed height instead of max-height to prevent squishing */
+            background: transparent; /* no background */
+            border-radius: 0;
+            padding: 20px 10px 6px 10px; /* top padding 20px, bottom padding 6px */
+            overflow-y: auto;
+            overflow-x: hidden;
+            font-size: 12px;
+            color: rgba(0,0,0,0.48); /* subtler default text */
+            line-height: 1.35;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* align content to bottom */
+            gap: 2px;
+            z-index: 30;
+        }
+
+        /* individual events: single-line, no separators; title + muted detail inline with truncation */
+        .event-stream .event {
+            padding: 0;
+            margin: 0;
+            color: #666;
+            font-size: 12px;
+            opacity: 0.95;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            overflow: hidden;
+            white-space: nowrap; /* keep a single line */
+            flex-shrink: 0; /* prevent squishing */
+        }
+
+        .event-stream .event-title {
+            color: rgba(0,0,0,0.62); /* slightly muted title */
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1;
+            margin: 0;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .event-stream .event-detail {
+            color: rgba(0,0,0,0.36); /* more subtle detail */
+            font-size: 11px;
+            line-height: 1;
+            margin: 0;
+            flex: 1 1 auto; /* take remaining space */
+            min-width: 0; /* allow truncation inside flex */
+            overflow: hidden;
+            text-overflow: ellipsis; /* show … when truncated */
+            white-space: nowrap;
+        }
+
+        /* top fade overlay so events don't look abruptly cut off */
+        .event-stream::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 40px;
+            pointer-events: none;
+            background: linear-gradient(to bottom, #FFF9F0 0%, rgba(255,249,240,0) 100%);
+            z-index: 1;
         }
     </style>
+    <!-- Icons are inlined to comply with Figma plugin CSP (no external scripts) -->
 </head>
 
 <body>
     <div class="logo-container">
-        <svg id="Layer_3" data-name="Layer 3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465.99 637.66"
-            class="logo">
+        <!-- Primary logo (icon) -->
+        <!-- Begin picasso.svg content -->
+        <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465.99 637.66" aria-hidden="true">
             <defs>
                 <style>
-                    .cls-1 {
-                        fill: #57b8c1;
-                    }
-
-                    .cls-2 {
-                        fill: #f1e912;
-                    }
-
-                    .cls-3 {
-                        fill: #fee600;
-                    }
-
-                    .cls-4 {
-                        fill: #fff;
-                    }
-
-                    .cls-5 {
-                        fill: #1f7741;
-                    }
-
-                    .cls-6 {
-                        fill: #0a0c0b;
-                    }
+                    .cls-1{fill:#57b8c1}.cls-2{fill:#f1e912}.cls-3{fill:#fee600}.cls-4{fill:#fff}.cls-5{fill:#1f7741}.cls-6{fill:#0a0c0b}
                 </style>
             </defs>
-            <path class="cls-2"
-                d="M47.77,161.36s140.53-32.23,191.28-35.88c47.99-3.45,148.18,9.99,186.16,50.57,5.86,6.26,26.77-45,26.77-45l-106.06-47.66-26.74-68.92-58.63,26.74-57.65-23.13-42.02-.98-63.25,86.24-80.03-5.06,30.16,63.07Z" />
-            <path class="cls-1"
-                d="M320.63,443.31c43.39,0,15.15-293.91-121.36-329.75C-22.21,55.41-17.57,421.61,48.83,536.5c66.4,114.89,153.71,107.65,207.74,93.19,43.22-11.57-3.32-137.43-8.33-186.38-1.06-10.35,30.97,0,72.38,0Z" />
-            <path class="cls-3"
-                d="M266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27Z" />
-            <path class="cls-6"
-                d="M270.57,564.48c-14.09,2.46-61.57,10.37-72.29,4.86-10.43-5.36-7.48-25.33-12.89-30.56-1.72-1.67-37.98-13.23-45.05-16.4-39.8-17.82-100.67-62.38-123.52-99.76-6.14-10.05-9.19-14.38-4-25.97,4.18-9.32,25.78-31.26,26.06-39.45.35-9.99-21.73-65.05-26.06-79.43C10.26,269.23-.71,235.89.04,229.59c.93-7.81,22.69-20.73,29.77-25.75,4.18-2.97,32.94-20.21,32.93-22.48-3.85-5.14-11.65-8.42-15.95-12.49-11.87-11.23-23.25-24.45-29.82-39.61-4.49-10.35-17.31-42.71,3.29-43.32l77.31,10.81C113.43,62.37,144.5-4.07,190.89,1.3c17.09,1.98,62.31,28.09,71.11,27.69,16.8-.78,44.21-47.3,65.93-20.86,10.26,12.48,25.75,70.67,28.96,72.94,2.34,1.65,24.04,2.91,29.76,4.21,19.59,4.44,43.09,19.62,58.22,32.7,7.39,6.39,23.79,18.37,18.97,28.9-4.82,10.52-41.97,38.25-43.43,46.56l38.73,119.6c-13.29,24.28-36.87,42.45-52.24,65.63l-17.21,152.62c-1.8,4.41-4.26,5.1-8.21,6.77-22.68,9.6-84.76,21.89-110.91,26.45ZM266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27ZM247.6,111.92c-1.28-1.27-31.24,2.6-35.97,3-40.61,3.47-73.97,5.21-114.89,2-9.05-.71-62.65-10.33-64.93-7.99-6.19,6.34,20.85,37.09,25.97,41.95,3.54,3.37,20.83,18.55,24.48,18.58,7.77.08,41.1-27.79,53.47-26.18,4.18.54,65.52,39.36,71.62,44.34,10.02,8.18,15.39,23.6-1.51,20.54-14.89-2.7-63.85-43.08-74.52-42.28-6.61.5-48.98,27.13-57.47,32.54-6.3,4.01-49.31,32.27-50.51,35.41-1.95,5.11,26.69,102.19,31.5,104.81,1.25.68,2.45-.37,3.48-.89,16.33-8.19,50.32-56.46,69.43-67.43,4.68-2.68,13.53-3.1,14.78,3.17-.54,3.98-1.67,7.78-7.21,14.17-8.66,9.99-13.44,14.72-18.62,20.56-13.99,13.69-81.85,81.12-84.68,95.19-1.29,6.4,7.73,15.57,11.79,20.68,28.02,35.29,76.06,69.3,117.89,85.91,3.21,1.27,17.75,8.35,18.87,4.92l-40.88-168.22h19.98c7.64,33.86,17.55,67.27,25.97,100.9,6.47,25.8,10.98,52.2,17.98,77.92.97,3.56,4.89,22.09,5.92,23.3,2.71,3.19,40.35.81,42.45-1.19,1.24-1.18.49-15.9.58-19.11.77-26.89-5.16-32.23,12.99-53.95,2.03-2.43,15.72-12.71,13.57-16.03-1.59-2.44-27.98-8.43-32.55-9.95-15.65-5.17-43.12-7.38-26.48-28.98,1.95-2.53,23.32-21.97,24.98-21.97h39.96c2.36,0,1.55-21.01,1.53-23.51-.27-56.45-7.75-116.54-6.08-172.74.18-6.11.15-13.99,3.04-19.53,6.02-11.54,29.05-18.52,41.43-17.95,27.1,1.26,78.81,36.96,54.44,67.37-20.59,25.7-66.9,11.85-66.9-15.95v-28.47c-15.84,2.06-11.79,15.39-11.99,26.97-1.28,74.43,10.14,152.94,6.99,226.78-1.12,26.24-4.31,22.19-19.98,40.96-4.14,4.96-11.78,9.42-14.2,16.27-3.08,8.7-.96,13.65-.78,21.7.02,1-.04,2,0,3v17.98l98.68-22.22,17.49-147.84,48.75-62.22-39.84-119.61c.43-9.68,43.14-42.61,42.68-47.08-42.86-52.64-112.11-41.19-171.23-31.6-2.25,2.44-2.22,41.27-2.52,47.93-2.84,63.98-3.7,128.09-6.21,192.09-1.45,11.04-45.24,7.29-48.33,3.81-2.99-3.38-2.69-12.54,1.19-14.98,5.69-3.58,25.78,2.32,28.37-4.6-.75-59.98,6.86-122.13,6.05-181.77l-.04-40.52ZM335,185.88c-1.42.45-1.02,26.49-.51,29.47,3.02,17.76,30,10.19,31.58-.46,1.32-8.9-27.16-30.25-31.06-29.01ZM287.06,415.63h-31.97c-1.99,0-10.5,8.58-13.02,9.96l.57,2.5,46.4,11.54-1.98-24Z" />
-            <path
-                d="M147.82,199.3c-15.29.37-36.02,9.95-44.64,22.99-15.76,23.84,31.49,41.85,50.78,40.6,13.21-.85,35.56-11.56,43.03-22.67,14.71-21.89-30.8-41.36-49.17-40.92Z" />
-            <path class="cls-5" d="M287.06,415.63h-31.97c-1.99,0-10.5,8.58-13.02,9.96l.57,2.5,46.4,11.54-1.98-24Z" />
-            <path class="cls-4"
-                d="M159.14,211.08c-7.12-.71-11.5,2.51-16.25,8.06-8.68,10.15,6.42,21.27,15.44,21.8,6.18.36,17.17-3.32,21.27-8.04,8.08-9.31-11.92-20.96-20.46-21.82Z" />
-        </svg>
-    </div>
+            <path class="cls-2" d="M47.77,161.36s140.53-32.23,191.28-35.88c47.99-3.45,148.18,9.99,186.16,50.57,5.86,6.26,26.77-45,26.77-45l-106.06-47.66-26.74-68.92-58.63,26.74-57.65-23.13-42.02-.98-63.25,86.24-80.03-5.06,30.16,63.07Z"/>
+            <path class="cls-1" d="M320.63,443.31c43.39,0,15.15-293.91-121.36-329.75C-22.21,55.41-17.57,421.61,48.83,536.5c66.4,114.89,153.71,107.65,207.74,93.19,43.22-11.57-3.32-137.43-8.33-186.38-1.06-10.35,30.97,0,72.38,0Z"/>
+            <path class="cls-3" d="M266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27Z"/>
+            <path class="cls-6" d="M270.57,564.48c-14.09,2.46-61.57,10.37-72.29,4.86-10.43-5.36-7.48-25.33-12.89-30.56-1.72-1.67-37.98-13.23-45.05-16.4-39.8-17.82-100.67-62.38-123.52-99.76-6.14-10.05-9.19-14.38-4-25.97,4.18-9.32,25.78-31.26,26.06-39.45.35-9.99-21.73-65.05-26.06-79.43C10.26,269.23-.71,235.89.04,229.59c.93-7.81,22.69-20.73,29.77-25.75,4.18-2.97,32.94-20.21,32.93-22.48-3.85-5.14-11.65-8.42-15.95-12.49-11.87-11.23-23.25-24.45-29.82-39.61-4.49-10.35-17.31-42.71,3.29-43.32l77.31,10.81C113.43,62.37,144.5-4.07,190.89,1.3c17.09,1.98,62.31,28.09,71.11,27.69,16.8-.78,44.21-47.3,65.93-20.86,10.26,12.48,25.75,70.67,28.96,72.94,2.34,1.65,24.04,2.91,29.76,4.21,19.59,4.44,43.09,19.62,58.22,32.7,7.39,6.39,23.79,18.37,18.97,28.9-4.82,10.52-41.97,38.25-43.43,46.56l38.73,119.6c-13.29,24.28-36.87,42.45-52.24,65.63l-17.21,152.62c-1.8,4.41-4.26,5.1-8.21,6.77-22.68,9.6-84.76,21.89-110.91,26.45ZM266.58,50.99c-12.38,3.41-64.49-33.83-86.74-29.29-23.71,4.84-54.65,54.22-59.12,77.24,66.86,1.31,133.75-6.91,199.81-15.98,5.47-.75,13.97,1.03,13.95-5.37-.01-4.8-18.49-53.68-21.21-54.87-7.87-3.45-38.16,25.92-46.69,28.27ZM247.6,111.92c-1.28-1.27-31.24,2.6-35.97,3-40.61,3.47-73.97,5.21-114.89,2-9.05-.71-62.65-10.33-64.93-7.99-6.19,6.34,20.85,37.09,25.97,41.95,3.54,3.37,20.83,18.55,24.48,18.58,7.77.08,41.1-27.79,53.47-26.18,4.18.54,65.52,39.36,71.62,44.34,10.02,8.18,15.39,23.6-1.51,20.54-14.89-2.7-63.85-43.08-74.52-42.28-6.61.5-48.98,27.13-57.47,32.54-6.3,4.01-49.31,32.27-50.51,35.41-1.95,5.11,26.69,102.19,31.5,104.81,1.25.68,2.45-.37,3.48-.89,16.33-8.19,50.32-56.46,69.43-67.43,4.68-2.68,13.53-3.1,14.78,3.17-.54,3.98-1.67,7.78-7.21,14.17-8.66,9.99-13.44,14.72-18.62,20.56-13.99,13.69-81.85,81.12-84.68,95.19-1.29,6.4,7.73,15.57,11.79,20.68,28.02,35.29,76.06,69.3,117.89,85.91,3.21,1.27,17.75,8.35,18.87,4.92l-40.88-168.22h19.98c7.64,33.86,17.55,67.27,25.97,100.9,6.47,25.8,10.98,52.2,17.98,77.92.97,3.56,4.89,22.09,5.92,23.3,2.71,3.19,40.35.81,42.45-1.19,1.24-1.18.49-15.9.58-19.11.77-26.89-5.16-32.23,12.99-53.95,2.03-2.43,15.72-12.71,13.57-16.03-1.59-2.44-27.98-8.43-32.55-9.95-15.65-5.17-43.12-7.38-26.48-28.98,1.95-2.53,23.32-21.97,24.98-21.97h39.96c2.36,0,1.55-21.01,1.53-23.51-.27-56.45-7.75-116.54-6.08-172.74.18-6.11.15-13.99,3.04-19.53,6.02-11.54,29.05-18.52,41.43-17.95,27.1,1.26,78.81,36.96,54.44,67.37-20.59,25.7-66.9,11.85-66.9-15.95v-28.47c-15.84,2.06-11.79,15.39-11.99,26.97-1.28,74.43,10.14,152.94,6.99,226.78-1.12,26.24-4.31,22.19-19.98,40.96-4.14,4.96-11.78,9.42-14.2,16.27-3.08,8.7-.96,13.65-.78,21.7.02,1-.04,2,0,3v17.98l98.68-22.22,17.49-147.84,48.75-62.22-39.84-119.61c.43-9.68,43.14-42.61,42.68-47.08-42.86-52.64-112.11-41.19-171.23-31.6-2.25,2.44-2.22,41.27-2.52,47.93-2.84,63.98-3.7,128.09-6.21,192.09-1.45,11.04-45.24,7.29-48.33,3.81-2.99-3.38-2.69-12.54,1.19-14.98,5.69-3.58,25.78,2.32,28.37-4.6-.75-59.98,6.86-122.13,6.05-181.77l-.04-40.52ZM335,185.88c-1.42.45-1.02,26.49-.51,29.47,3.02,17.76,30,10.19,31.58-.46,1.32-8.9-27.16-30.25-31.06-29.01Z"/>
+            <!-- End picasso.svg content -->
 
-    <h1>Picasso</h1>
-    <p class="subtitle">Move any object and watch AI arrange the rest</p>
+            <!-- Wordmark (inline) -->
+            <!-- Begin picasso-wordmark.svg content -->
+        </svg>
+
+        <svg class="wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 633.56 249.42" aria-hidden="true">
+            <path d="M622.04,0c2.87,7.45,2.77,15.52,4.69,23.46,1.74,7.2,4.92,14.17,6.82,21.33v10.34c-6.47,14.69-29.56,22.73-44.42,26.33-18.88,4.57-26.56,3.96-20.12-17.77,6.89-23.27,26.88-50.51,47.27-63.68h5.76ZM613.97,35.61c-2.79-2.15-14.16,14.91-14.75,18.08-1.37,7.32,4.75,11.39,10.73,7.17,10.39-7.33,6.62-14.69,4.02-25.25Z"/>
+            <path d="M631.25,103.37c.38,1.87-.47,2.38-1.87,3.29-3.49,2.27-21.13,4.57-26.68,5.55-78.55,13.98-157.82,24.48-236.56,37.42-84.27,13.85-168.33,30.27-252.73,43.11-13.23,2.01-29.4,5.42-42.45,5.95-3.16.13-5.64-.25-8.59-1.18-3.41-5.05,14.65-11.46,17.82-12.64,30.34-11.3,74.1-20.71,106.31-27.2,106.12-21.38,220.04-36.5,327.87-47.41,33.38-3.38,72.97-8.88,105.98-9.23,3.81-.04,7.24,1.73,10.89,2.34Z"/>
+            <path d="M.18,249.2c-1.15-1.37,3.48-15.42,4.29-18.1,15.12-49.89,33.93-98.76,48.98-148.68,3.01-9.99,7.42-21.94,9.52-31.85,1.03-4.9,2.41-10.14.53-14.95-5.82-3.97-19.43,24.47-31.46,20.49-13.38-15.87,7.29-39.93,24.09-42.22,34.44-4.7,85.19,15.77,89,54.59,2.39,24.33-19.61,44.31-43.66,38.94-4.26-2.71,7.24-15.56,8.36-19.31,2.09-7.04-.24-23.26-1.75-30.92-1.15-5.81-4.99-19.06-9.42-22.76-4.09-3.4-23.86-5.58-26.58-1.12-2.4,3.93,12.78,33.91,13.25,42.08.39,6.76-14.69,37.3-18.52,45.62-15.95,34.62-33.49,70.44-50.67,104.51-2.77,5.49-6.35,14.44-9.7,19.04-.66.9-5.13,6-6.25,4.66Z"/>
+            <path d="M352.57,94.16c2.29,2.3,20.3-12.87,23.57-14.96,9.16-5.85,19.07-11.06,28.62-16.24,8.61-4.67,34.98-19.66,42.94-20.42,10.51-1.01,40.86,19.68,41.89,30.5.92,9.65-22.06,18.17-29.88,19.46-3.12.52-6.13.73-9.28.51.05-8.06,5.45-13.32,1.4-21.5-1.32-2.65-10.34-11.4-12.99-12.4-3.11-1.17-8.69,2.56-11.79,4.26-29.3,16.03-59.96,47.04-95.85,44.61-7.75-.53-19.47-5.97-25.21-5.71-11.44.52-29.68,15.8-47.26,17.19-14.82,1.17-40.82.19-39.76-20.11.99-18.89,22.97-65.91,46.59-61.44,18.23,3.45-14.36,32.93-18.41,37.86-5.11,6.23-17.81,20.34-9.04,27.42,10.81,8.72,46.87,7.32,55.72-3.83,10.02-12.63-6.21-35.4,19.78-43.44,6.96-2.15,16.82-.84,21.96-3.36,5.33-2.62,7.05-11.69,14.78-15.12,17.14-7.6,15.49,16.55,13.18,26.92-2.26,10.19-11.29,18.64-10.99,29.79ZM333.83,64.52c-16.84,3.5,6.14,30.31,8.93,29.65,6.12-6.81,2.97-32.13-8.93-29.65Z"/>
+            <path d="M504.95,87.63c2.7-3.19,9.34-6.02,12.89-10.66,7.19-9.39,6.37-26.7,1.79-37.22l-2.92-.75c-1.07.33-2.05,5.65-5.22,4.63-2.87-3.26,8.31-32.92,15.38-34.36,3.9.68,15.38,24.98,17.4,29.81,6.99,16.73,14.9,35.88-6.31,45.31-4.62,2.05-27.79,8.84-31.78,8.57-3.42-.23-3.1-3.12-1.22-5.33Z"/>
+            <path d="M178.39,80.61c14.36-2.75,19.17,31.71,15.87,41.16-2.86,8.19-12.05,15.49-20.57,10.1-11.38-7.2-14.72-30.1-8.17-41.06,1.84-3.08,9.31-9.52,12.87-10.2Z"/>
+            <path d="M191.92,42.91c4.47-.03,18.36,12.96,13.26,18.55-8.14,8.94-26.79-18.47-13.26-18.55Z"/>
+        </svg>
+
+        <!-- Inline tracking toggle placed within the header row -->
+        <div id="tracking-toggle-container">
+            <button id="tracking-toggle" aria-pressed="false" title="Toggle AI tracking" aria-label="Toggle AI tracking">
+                <!-- Inline zap icon (icon-only button, no text) -->
+                <svg id="tracking-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <div class="input-group">
         <label class="input-label" for="api-key">OpenAI API Key</label>
@@ -370,58 +453,48 @@
     </div>
 
     <div class="button-container">
-        <div style="margin-bottom: 16px;">
-            <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Frames</div>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <button id="select-context" style="flex: 1; padding: 8px 12px; font-size: 11px; margin-bottom: 0;">Context</button>
-                <button id="select-canvas" style="flex: 1; padding: 8px 12px; font-size: 11px; margin-bottom: 0;">Canvas</button>
-            </div>
-            <div style="display: flex; gap: 8px; font-size: 10px; color: #666;">
-                <div style="flex: 1;" id="context-status">No context</div>
-                <div style="flex: 1;" id="canvas-status">No canvas</div>
+        <div style="margin-bottom: 8px;">
+            <div class="selector-row" style="margin-bottom:6px;">
+                <button id="select-context" class="text-link" aria-pressed="false" title="Select Context">Select Context</button>
+                <div id="context-status" class="small-status" style="display:none;">No context</div>
+
+                <button id="select-canvas" class="text-link" aria-pressed="false" title="Select Canvas">Select Canvas</button>
+                <div id="canvas-status" class="small-status" style="display:none;">No canvas</div>
             </div>
         </div>
-        <div style="margin-bottom: 16px;">
-            <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Additional Context</div>
+        <div class="textarea-wrapper">
             <textarea 
                 id="additional-context" 
-                placeholder="Enter any additional context or instructions for the AI..."
-                style="width: 100%; padding: 8px; font-size: 11px; font-family: 'Inter', sans-serif; border: 1px solid #e0e0e0; border-radius: 4px; resize: vertical; min-height: 60px; box-sizing: border-box;"
+                placeholder="What do you want to do?"
+                class="minimal-textarea"
+                rows="1"
+                aria-label="Additional notes"
             ></textarea>
+            <div class="textarea-underline" aria-hidden="true"></div>
         </div>
-        <button id="start-tracking">Start AI Tracking</button>
-        <button id="stop-tracking" class="stop-button" style="display: none;">Stop Tracking</button>
-    </div>
 
-    <div class="execute-section">
-        <div class="execute-section-title">Execute Actions</div>
-        <div class="input-group">
-            <label class="input-label" for="action-description">Natural Language Actions</label>
-            <textarea id="action-description"
-                placeholder="Enter natural language description of actions to execute..."></textarea>
-        </div>
-        <button id="execute-button">Execute</button>
-    </div>
+        <!-- Event stream: uses remaining vertical space in the button container -->
+        <div id="event-stream" class="event-stream" aria-live="polite" aria-atomic="false"></div>
 
-    <div id="status" class="status"></div>
-    <div id="interpretation" class="interpretation"></div>
-    <div id="api-calls" class="api-calls-box"></div>
+    <div id="status" class="status" style="display:none"></div>
+    <div id="interpretation" class="interpretation" style="display:none"></div>
 
     <script>
         let isTracking = false;
         let contextFrameId = null;
         let canvasFrameId = null;
 
-        document.getElementById('start-tracking').onclick = () => {
-            if (!apiKey) {
-                alert('Please enter your OpenAI API key first');
-                return;
+        // Tracking toggle handler (top-right)
+        document.getElementById('tracking-toggle').onclick = (e) => {
+            isTracking = !isTracking;
+            const btn = e.currentTarget;
+            btn.setAttribute('aria-pressed', String(isTracking));
+            if (isTracking) {
+                parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
+            } else {
+                parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
             }
-            parent.postMessage({ pluginMessage: { type: 'start-tracking', apiKey: apiKey } }, '*');
-        };
-
-        document.getElementById('stop-tracking').onclick = () => {
-            parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
+            updateToggleUI();
         };
 
         document.getElementById('select-context').onclick = () => {
@@ -432,17 +505,54 @@
             parent.postMessage({ pluginMessage: { type: 'select-canvas' } }, '*');
         };
 
-        // Save additional context when changed
+        // Save additional context when changed and auto-resize the textarea
         const additionalContextInput = document.getElementById('additional-context');
-        additionalContextInput.addEventListener('input', (e) => {
-            const context = e.target.value.trim();
-            parent.postMessage({ 
-                pluginMessage: { 
-                    type: 'save-additional-context',
-                    context: context
-                } 
-            }, '*');
-        });
+
+            function autoResizeTextarea(/* el */) {
+                    const el = additionalContextInput;
+                    if (!el) return;
+                    // reset to let scrollHeight be accurate
+                    el.style.height = 'auto';
+                    // compute content height
+                    const contentHeight = el.scrollHeight;
+                    // wrapper is the fixed-height container
+                    const wrapper = el.closest('.textarea-wrapper');
+                    const maxHeight = wrapper ? wrapper.clientHeight : 200;
+                    const newHeight = Math.min(contentHeight, maxHeight);
+                    el.style.height = newHeight + 'px';
+                    el.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
+
+                    // position the underline element directly under the live text
+                    const underline = wrapper ? wrapper.querySelector('.textarea-underline') : null;
+                    if (underline) {
+                        if (contentHeight <= maxHeight) {
+                            // place underline immediately after the visible text
+                            underline.style.top = newHeight + 'px';
+                            underline.style.bottom = 'auto';
+                        } else {
+                            // content overflows: keep the underline anchored to the bottom of the wrapper
+                            underline.style.top = '';
+                            underline.style.bottom = '0px';
+                        }
+                    }
+                }
+
+            additionalContextInput.addEventListener('input', (e) => {
+                const el = e.target;
+                // keep fixed height
+                autoResizeTextarea();
+
+                const context = el.value.trim();
+                parent.postMessage({ 
+                    pluginMessage: { 
+                        type: 'save-additional-context',
+                        context: context
+                    } 
+                }, '*');
+            });
+
+            // ensure fixed height initial
+            autoResizeTextarea();
 
         // Request saved additional context on load
         parent.postMessage({ pluginMessage: { type: 'get-additional-context' } }, '*');
@@ -451,26 +561,80 @@
             const msg = event.data.pluginMessage;
             const statusEl = document.getElementById('status');
             const interpretationEl = document.getElementById('interpretation');
-            
+            const eventStream = document.getElementById('event-stream');
+            function appendEvent(title, detail) {
+                if (!eventStream || !title) return;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'event';
+
+                const t = document.createElement('div');
+                t.className = 'event-title';
+                t.textContent = title;
+                wrapper.appendChild(t);
+
+                if (detail) {
+                    const d = document.createElement('div');
+                    d.className = 'event-detail';
+                    d.textContent = detail;
+                    wrapper.appendChild(d);
+                }
+
+                eventStream.appendChild(wrapper);
+                // keep scroll at bottom for new events
+                eventStream.scrollTop = eventStream.scrollHeight;
+                // cap to prevent unbounded growth
+                if (eventStream.children.length > 500) {
+                    eventStream.removeChild(eventStream.firstChild);
+                }
+            }
+
             if (msg.type === 'context-selected') {
                 contextFrameId = msg.frameId;
-                document.getElementById('context-status').textContent = msg.frameName || 'Selected';
+                const ctxName = msg.frameName || 'Selected';
+                const ctxDisplay = ctxName.length > 30 ? ctxName.slice(0, 27) + '…' : ctxName;
+                const ctxStatus = document.getElementById('context-status');
+                if (ctxStatus) {
+                    ctxStatus.style.display = 'none'; // hide status label when selected
+                }
+                const ctxBtn = document.getElementById('select-context');
+                if (ctxBtn) {
+                    ctxBtn.setAttribute('aria-pressed', 'true');
+                    ctxBtn.classList.add('selected');
+                    // replace button text with selected frame name (truncated for layout)
+                    ctxBtn.textContent = ctxDisplay;
+                    ctxBtn.title = ctxName;
+                }
             } else if (msg.type === 'canvas-selected') {
                 canvasFrameId = msg.frameId;
-                document.getElementById('canvas-status').textContent = msg.frameName || 'Selected';
+                const canName = msg.frameName || 'Selected';
+                const canDisplay = canName.length > 30 ? canName.slice(0, 27) + '…' : canName;
+                const canStatus = document.getElementById('canvas-status');
+                if (canStatus) {
+                    canStatus.style.display = 'none'; // hide status label when selected
+                }
+                const canBtn = document.getElementById('select-canvas');
+                if (canBtn) {
+                    canBtn.setAttribute('aria-pressed', 'true');
+                    canBtn.classList.add('selected');
+                    // replace button text with selected frame name (truncated for layout)
+                    canBtn.textContent = canDisplay;
+                    canBtn.title = canName;
+                }
             } else if (msg.type === 'additional-context-loaded') {
                 if (msg.context) {
                     additionalContextInput.value = msg.context;
+                    // adjust textarea size & underline after loading
+                    try { autoResizeTextarea(); } catch (e) { /* ignore */ }
                 }
             } else if (msg.type === 'tracking-started') {
                 isTracking = true;
-                updateButtons();
+                updateToggleUI();
                 statusEl.className = 'status visible success';
                 statusEl.textContent = '✓ Tracking active. Move any object!';
                 interpretationEl.className = 'interpretation';
             } else if (msg.type === 'tracking-stopped') {
                 isTracking = false;
-                updateButtons();
+                updateToggleUI();
                 statusEl.className = 'status visible';
                 statusEl.textContent = 'Tracking stopped.';
                 interpretationEl.className = 'interpretation';
@@ -625,6 +789,79 @@
                     actionDescriptionEl.value = msg.description;
                 }
             }
+            // Append a compact, human-readable event to the event stream with more context
+            try {
+                let title = '';
+                let detail = '';
+
+                if (msg.type === 'context-selected') {
+                    title = 'Context selected';
+                    detail = msg.frameName ? `${msg.frameName} (${msg.frameId || 'id'})` : (msg.frameId || 'frame selected');
+                } else if (msg.type === 'canvas-selected') {
+                    title = 'Canvas selected';
+                    detail = msg.frameName ? `${msg.frameName} (${msg.frameId || 'id'})` : (msg.frameId || 'frame selected');
+                } else if (msg.type === 'additional-context-loaded') {
+                    title = msg.context ? 'Loaded saved notes' : 'No saved notes';
+                    detail = msg.context ? (msg.context.length > 120 ? msg.context.slice(0, 117) + '…' : msg.context) : '';
+                } else if (msg.type === 'tracking-started') {
+                    title = 'Tracking started';
+                    detail = 'Move objects on the canvas to see live changes';
+                } else if (msg.type === 'tracking-stopped') {
+                    title = 'Tracking stopped';
+                } else if (msg.type === 'processing') {
+                    title = msg.message || 'Processing…';
+                    detail = msg.step ? `Step: ${msg.step}` : '';
+                } else if (msg.type === 'intent-extraction') {
+                    title = 'Extracting intent…';
+                    detail = msg.message || '';
+                } else if (msg.type === 'intent-extracted') {
+                    title = `Intent: ${msg.intent || 'detected'}`;
+                    detail = `Pattern: ${msg.pattern || 'n/a'} — ${msg.objectsToMoveCount || 0} to move, ${msg.objectsToKeepFixedCount || 0} fixed`;
+                } else if (msg.type === 'arrangement-started') {
+                    title = 'Arrangement started';
+                    detail = msg.intent || '';
+                } else if (msg.type === 'arrangement-iteration') {
+                    title = `Iteration ${msg.iteration}/${msg.maxIterations || '?'} started`;
+                    detail = `Corrections: ${msg.correctionsCount || 0}`;
+                } else if (msg.type === 'arrangement-evaluation') {
+                    title = `Iteration ${msg.iteration} evaluation`;
+                    detail = msg.intentSatisfied ? 'Intent satisfied' : `Applying ${msg.correctionsCount || 0} corrections`;
+                } else if (msg.type === 'arrangement-complete') {
+                    title = 'Arrangement complete';
+                    detail = msg.message || '';
+                } else if (msg.type === 'interpretation') {
+                    title = 'AI interpretation';
+                    detail = msg.interpretation || '';
+                } else if (msg.type === 'actions-applied') {
+                    title = 'Actions applied';
+                    detail = msg.message || '';
+                } else if (msg.type === 'refinement-started') {
+                    title = 'Refinement started';
+                    detail = msg.message || '';
+                } else if (msg.type === 'validation-step') {
+                    title = 'Validation';
+                    detail = msg.message || '';
+                } else if (msg.type === 'validation-result') {
+                    title = `Validation ${msg.iteration || ''}`.trim();
+                    detail = msg.isAligned ? 'Aligned' : `${msg.issues?.length || 0} issues found`;
+                } else if (msg.type === 'refinement-complete') {
+                    title = 'Refinement complete';
+                    detail = msg.message || '';
+                } else if (msg.type === 'error') {
+                    title = 'Error';
+                    detail = msg.message || 'Unknown error';
+                } else if (msg.type === 'save-screenshot') {
+                    title = 'Screenshot saved';
+                    detail = msg.filename || 'image.png';
+                } else {
+                    title = msg.type;
+                    detail = msg.message || '';
+                }
+
+                if (title) appendEvent(title, detail);
+            } catch (e) {
+                // swallow summarization errors
+            }
         };
 
         function saveScreenshot(base64Data, filename) {
@@ -654,26 +891,18 @@
             }
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function updateButtons() {
-            const startButton = document.getElementById('start-tracking');
-            const stopButton = document.getElementById('stop-tracking');
-
-            if (isTracking) {
-                startButton.style.display = 'none';
-                stopButton.style.display = 'block';
-            } else {
-                startButton.style.display = 'block';
-                stopButton.style.display = 'none';
+        function updateToggleUI() {
+            const toggle = document.getElementById('tracking-toggle');
+            // indicate active via icon color and glow
+            if (toggle) {
+                toggle.style.filter = isTracking ? 'drop-shadow(0 0 12px rgba(90,157,95,0.6)) drop-shadow(0 0 6px rgba(90,157,95,0.4))' : 'none';
+                toggle.style.color = isTracking ? '#5a9d5f' : 'rgba(0,0,0,0.66)';
+                toggle.setAttribute('aria-pressed', String(isTracking));
             }
         }
 
-        updateButtons();
+        // No external icon library (CSP); icons are inlined above.
+        updateToggleUI();
     </script>
 </body>
 
