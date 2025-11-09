@@ -397,11 +397,33 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
             return containerCache.get(name)!;
         }
 
+        // Normalize the search name (lowercase, remove spaces/dashes)
+        const normalizeName = (n: string) => n.toLowerCase().replace(/[\s\-_]/g, '');
+
         // Search all nodes recursively
         function searchNode(node: SceneNode): SceneNode | null {
+            // Try exact match first
             if (node.name === name) {
                 return node;
             }
+
+            // Try case-insensitive match
+            if (node.name.toLowerCase() === name.toLowerCase()) {
+                return node;
+            }
+
+            // Try normalized match (ignore spaces, dashes, underscores)
+            if (normalizeName(node.name) === normalizeName(name)) {
+                return node;
+            }
+
+            // Try partial match (name contains the search term or vice versa)
+            const nodeNameNorm = normalizeName(node.name);
+            const searchNameNorm = normalizeName(name);
+            if (nodeNameNorm.includes(searchNameNorm) || searchNameNorm.includes(nodeNameNorm)) {
+                return node;
+            }
+
             if ('children' in node) {
                 for (const child of node.children) {
                     const found = searchNode(child);
@@ -418,6 +440,17 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                 containerCache.set(name, found);
                 return found;
             }
+        }
+
+        // Also try to find by ID if name looks like an ID
+        try {
+            const nodeById = figma.getNodeById(name);
+            if (nodeById && nodeById.type !== 'PAGE' && 'appendChild' in nodeById) {
+                containerCache.set(name, nodeById as SceneNode);
+                return nodeById as SceneNode;
+            }
+        } catch {
+            // Not a valid ID, continue
         }
 
         return null;
