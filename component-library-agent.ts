@@ -68,7 +68,7 @@ OUTPUT:
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini', // Using mini for lower cost and rate limits
+      model: 'gpt-4o-2024-08-06',
       messages: [
         {
           role: 'system',
