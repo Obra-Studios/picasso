@@ -57,7 +57,7 @@ interface LLMResponse {
 
 function captureCanvasState(): CanvasState {
     const objects: CanvasObject[] = [];
-    
+
     // Get only top-level nodes on the current page (no children)
     for (const node of figma.currentPage.children) {
         // Include all top-level objects (frames, groups, and individual shapes)
@@ -73,7 +73,7 @@ function captureCanvasState(): CanvasState {
             });
         }
     }
-    
+
     return {
         objects,
         timestamp: Date.now(),
@@ -85,12 +85,12 @@ function detectMovement(before: CanvasState, after: CanvasState): MovementInfo |
     // Find objects that moved
     for (const afterObj of after.objects) {
         const beforeObj = before.objects.find(obj => obj.id === afterObj.id);
-        
+
         if (!beforeObj) continue; // New object, skip
-        
+
         const dx = afterObj.x - beforeObj.x;
         const dy = afterObj.y - beforeObj.y;
-        
+
         // Check if moved significantly (more than 1px)
         if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
             return {
@@ -102,7 +102,7 @@ function detectMovement(before: CanvasState, after: CanvasState): MovementInfo |
             };
         }
     }
-    
+
     return null;
 }
 
@@ -111,18 +111,18 @@ async function captureCanvasScreenshot(): Promise<string | null> {
     try {
         // Get all nodes on the current page
         const nodes = figma.currentPage.children;
-        
+
         if (nodes.length === 0) return null;
-        
+
         // Export the entire page directly
         const imageBytes = await figma.currentPage.exportAsync({
             format: 'PNG',
             constraint: { type: 'SCALE', value: 1 } // 1x resolution to keep size manageable
         });
-        
+
         // Convert to base64
         const base64 = figma.base64Encode(imageBytes);
-        
+
         return base64;
     } catch (error) {
         console.error('Failed to capture screenshot:', error);
@@ -149,7 +149,7 @@ async function extractUserIntent(
 ): Promise<UserIntent> {
     const movedObject = canvasState.objects.find(obj => obj.id === movement.objectId);
     const screenshot = await captureCanvasScreenshot();
-    
+
     const prompt = `You are an expert UI/UX intent analyzer. A user just moved an object on a canvas. Your job is to:
 1. Extract the user's intent
 2. Identify which objects should MOVE to satisfy the intent
@@ -255,7 +255,7 @@ Be specific and precise. The arrangement agent will ONLY move objects in "object
             content: 'You are an expert at understanding user intent in UI/UX design. You analyze movements and extract the underlying goal.',
         },
     ];
-    
+
     if (screenshot) {
         messages.push({
             role: 'user',
@@ -279,7 +279,7 @@ Be specific and precise. The arrangement agent will ONLY move objects in "object
             content: prompt,
         });
     }
-    
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -308,7 +308,7 @@ Be specific and precise. The arrangement agent will ONLY move objects in "object
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content || '{"description":"","targetPattern":"","alignmentType":"none","spacingRequirement":"","affectedObjects":[]}';
-    
+
     return JSON.parse(content);
 }
 
@@ -326,7 +326,7 @@ async function evaluateArrangement(
     iterationNumber: number
 ): Promise<ArrangementEvaluation> {
     const screenshot = await captureCanvasScreenshot();
-    
+
     const prompt = `You are an expert UI/UX arrangement validator. You have been given a SPECIFIC USER INTENT that MUST be satisfied.
 
 ITERATION: ${iterationNumber}/5
@@ -416,19 +416,19 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
                 items: {
                     type: "object",
                     properties: {
-                        objectId: { 
+                        objectId: {
                             type: "string",
                             description: "The ID of the object to move"
                         },
-                        newX: { 
+                        newX: {
                             type: "number",
                             description: "New X position to satisfy the intent"
                         },
-                        newY: { 
+                        newY: {
                             type: "number",
                             description: "New Y position to satisfy the intent"
                         },
-                        reasoning: { 
+                        reasoning: {
                             type: "string",
                             description: "How this correction helps satisfy the user intent"
                         }
@@ -448,7 +448,7 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
             content: 'You are a practical UI/UX arrangement validator. You verify that layouts reasonably satisfy the user intent. Be pragmatic - focus on whether the intent is achieved, not pixel perfection. Mark intentSatisfied=true when the layout clearly serves the intended purpose, even if there are minor imperfections. Use both the screenshot AND coordinate data to evaluate.',
         },
     ];
-    
+
     if (screenshot) {
         messages.push({
             role: 'user',
@@ -472,7 +472,7 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
             content: prompt,
         });
     }
-    
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -501,7 +501,7 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content || '{"intentSatisfied":true,"issues":[],"corrections":[]}';
-    
+
     return JSON.parse(content);
 }
 
@@ -509,27 +509,27 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
 async function arrangeUntilIntentSatisfied(userIntent: UserIntent): Promise<void> {
     const MAX_ITERATIONS = 10;
     let iteration = 0;
-    
+
     figma.ui.postMessage({
         type: 'arrangement-started',
         intent: userIntent.description,
     });
-    
+
     while (iteration < MAX_ITERATIONS) {
         iteration++;
-        
+
         figma.ui.postMessage({
             type: 'arrangement-iteration',
             iteration,
             maxIterations: MAX_ITERATIONS,
         });
-        
+
         // Capture current state
         const currentState = captureCanvasState();
-        
+
         // Evaluate if intent is satisfied
         const evaluation = await evaluateArrangement(currentState, userIntent, iteration);
-        
+
         figma.ui.postMessage({
             type: 'arrangement-evaluation',
             iteration,
@@ -537,7 +537,7 @@ async function arrangeUntilIntentSatisfied(userIntent: UserIntent): Promise<void
             issues: evaluation.issues,
             correctionsCount: evaluation.corrections.length,
         });
-        
+
         // Log evaluation details for debugging
         console.log(`Iteration ${iteration} Evaluation:`, {
             intentSatisfied: evaluation.intentSatisfied,
@@ -545,7 +545,7 @@ async function arrangeUntilIntentSatisfied(userIntent: UserIntent): Promise<void
             issues: evaluation.issues,
             correctionsCount: evaluation.corrections.length,
         });
-        
+
         if (evaluation.intentSatisfied) {
             figma.ui.postMessage({
                 type: 'arrangement-complete',
@@ -555,7 +555,7 @@ async function arrangeUntilIntentSatisfied(userIntent: UserIntent): Promise<void
             figma.notify(`✨ Intent perfectly satisfied in ${iteration} iteration(s)!`);
             return;
         }
-        
+
         if (evaluation.corrections.length === 0) {
             console.log('No corrections suggested, but intent not satisfied. Issues:', evaluation.issues);
             figma.ui.postMessage({
@@ -566,14 +566,14 @@ async function arrangeUntilIntentSatisfied(userIntent: UserIntent): Promise<void
             figma.notify(`Arrangement completed after ${iteration} iteration(s).`);
             return;
         }
-        
+
         // Apply corrections to satisfy intent (with validation)
         await applyLayoutActionsWithValidation(evaluation.corrections, userIntent.objectsToKeepFixed);
-        
+
         // Small delay to let Figma update
         await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     figma.ui.postMessage({
         type: 'arrangement-complete',
         message: `Reached maximum iterations (${MAX_ITERATIONS}).`,
@@ -589,10 +589,10 @@ async function interpretAndArrange(
     movement: MovementInfo
 ): Promise<LLMResponse> {
     const movedObject = canvasState.objects.find(obj => obj.id === movement.objectId);
-    
+
     // Capture screenshot of the canvas
     const screenshot = await captureCanvasScreenshot();
-    
+
     const prompt = `You are an expert UI/UX design assistant. A user just moved an object on a canvas, and you need to interpret their intent and suggest how to arrange ALL other objects accordingly.
 
 NOTE: You are also provided with a visual screenshot of the current canvas state to help you better understand the layout.
@@ -657,19 +657,19 @@ Respond with your interpretation and specific position changes for other objects
                 items: {
                     type: "object",
                     properties: {
-                        objectId: { 
+                        objectId: {
                             type: "string",
                             description: "The ID of the object to move"
                         },
-                        newX: { 
+                        newX: {
                             type: "number",
                             description: "New X position"
                         },
-                        newY: { 
+                        newY: {
                             type: "number",
                             description: "New Y position"
                         },
-                        reasoning: { 
+                        reasoning: {
                             type: "string",
                             description: "Why this object should be moved"
                         }
@@ -690,7 +690,7 @@ Respond with your interpretation and specific position changes for other objects
             content: 'You are an expert UI/UX design assistant. Analyze layout patterns and user intent to suggest intelligent object arrangements.',
         },
     ];
-    
+
     // Add user message with text and optional image
     if (screenshot) {
         messages.push({
@@ -715,7 +715,7 @@ Respond with your interpretation and specific position changes for other objects
             content: prompt,
         });
     }
-    
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -744,7 +744,7 @@ Respond with your interpretation and specific position changes for other objects
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content || '{"interpretation":"","actions":[]}';
-    
+
     return JSON.parse(content);
 }
 
@@ -757,7 +757,7 @@ interface ValidationResponse {
 
 async function validateAlignment(canvasState: CanvasState, iterationNumber: number): Promise<ValidationResponse> {
     const screenshot = await captureCanvasScreenshot();
-    
+
     const prompt = `You are an expert UI/UX design validator. Analyze the current layout and determine if all elements are perfectly aligned.
 
 VALIDATION ITERATION: ${iterationNumber}
@@ -808,19 +808,19 @@ Mark isAligned as true ONLY if the layout is PERFECT with no alignment issues wh
                 items: {
                     type: "object",
                     properties: {
-                        objectId: { 
+                        objectId: {
                             type: "string",
                             description: "The ID of the object to move"
                         },
-                        newX: { 
+                        newX: {
                             type: "number",
                             description: "New X position for perfect alignment"
                         },
-                        newY: { 
+                        newY: {
                             type: "number",
                             description: "New Y position for perfect alignment"
                         },
-                        reasoning: { 
+                        reasoning: {
                             type: "string",
                             description: "Why this adjustment is needed"
                         }
@@ -840,7 +840,7 @@ Mark isAligned as true ONLY if the layout is PERFECT with no alignment issues wh
             content: 'You are an expert UI/UX design validator. You have a keen eye for perfect alignment and spacing.',
         },
     ];
-    
+
     if (screenshot) {
         messages.push({
             role: 'user',
@@ -864,7 +864,7 @@ Mark isAligned as true ONLY if the layout is PERFECT with no alignment issues wh
             content: prompt,
         });
     }
-    
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -893,36 +893,36 @@ Mark isAligned as true ONLY if the layout is PERFECT with no alignment issues wh
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content || '{"isAligned":true,"issues":[],"suggestions":[]}';
-    
+
     return JSON.parse(content);
 }
 
 async function refineLayoutUntilPerfect(initialActions: LayoutAction[]): Promise<void> {
     const MAX_ITERATIONS = 5;
     let iteration = 0;
-    
+
     // Apply initial changes
     await applyLayoutActions(initialActions);
     figma.ui.postMessage({
         type: 'refinement-started',
         message: 'Starting alignment refinement process...',
     });
-    
+
     while (iteration < MAX_ITERATIONS) {
         iteration++;
-        
+
         figma.ui.postMessage({
             type: 'validation-step',
             iteration,
             message: `Validation iteration ${iteration}/${MAX_ITERATIONS}...`,
         });
-        
+
         // Capture current state
         const currentState = captureCanvasState();
-        
+
         // Validate alignment
         const validation = await validateAlignment(currentState, iteration);
-        
+
         figma.ui.postMessage({
             type: 'validation-result',
             iteration,
@@ -930,7 +930,7 @@ async function refineLayoutUntilPerfect(initialActions: LayoutAction[]): Promise
             issues: validation.issues,
             suggestionsCount: validation.suggestions.length,
         });
-        
+
         if (validation.isAligned) {
             figma.ui.postMessage({
                 type: 'refinement-complete',
@@ -939,7 +939,7 @@ async function refineLayoutUntilPerfect(initialActions: LayoutAction[]): Promise
             figma.notify(`✨ Perfect alignment achieved in ${iteration} iteration(s)!`);
             return;
         }
-        
+
         if (validation.suggestions.length === 0) {
             figma.ui.postMessage({
                 type: 'refinement-complete',
@@ -947,14 +947,14 @@ async function refineLayoutUntilPerfect(initialActions: LayoutAction[]): Promise
             });
             return;
         }
-        
+
         // Apply refinement suggestions
         await applyLayoutActions(validation.suggestions);
-        
+
         // Small delay to let Figma update
         await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     figma.ui.postMessage({
         type: 'refinement-complete',
         message: `Refinement completed after ${MAX_ITERATIONS} iterations.`,
@@ -989,7 +989,7 @@ async function applyLayoutActionsWithValidation(actions: LayoutAction[], fixedOb
             });
             continue;
         }
-        
+
         try {
             const node = await figma.getNodeByIdAsync(action.objectId);
             if (node && ('x' in node) && ('y' in node)) {
@@ -1009,16 +1009,16 @@ let hasMovedSinceLastCheck = false;
 
 async function startTracking() {
     if (isTracking) return;
-    
+
     // Capture initial state
     previousCanvasState = captureCanvasState();
     lastKnownState = previousCanvasState;
     hasMovedSinceLastCheck = false;
     isSyncing = false;
-    
+
     isTracking = true;
     figma.ui.postMessage({ type: 'tracking-started' });
-    
+
     // Poll for changes every 300ms
     trackingInterval = setInterval(async () => {
         if (!isTracking) {
@@ -1028,12 +1028,12 @@ async function startTracking() {
             }
             return;
         }
-        
+
         const currentState = captureCanvasState();
-        
+
         // Detect if anything moved
         const movement = lastKnownState ? detectMovement(lastKnownState, currentState) : null;
-        
+
         if (movement) {
             // Something is moving
             hasMovedSinceLastCheck = true;
@@ -1042,26 +1042,26 @@ async function startTracking() {
             // Movement stopped, trigger LLM
             hasMovedSinceLastCheck = false;
             isSyncing = true;
-            
+
             // Find the movement that occurred
-            const finalMovement = previousCanvasState ? 
+            const finalMovement = previousCanvasState ?
                 detectMovement(previousCanvasState, currentState) : null;
-            
+
             if (finalMovement) {
                 figma.ui.postMessage({
                     type: 'processing',
                     message: `Analyzing movement of "${finalMovement.objectName}"...`,
                 });
-                
+
                 try {
                     // AGENT 1: Extract user intent
                     figma.ui.postMessage({
                         type: 'intent-extraction',
                         message: 'Extracting user intent...',
                     });
-                    
+
                     const userIntent = await extractUserIntent(currentState, finalMovement);
-                    
+
                     figma.ui.postMessage({
                         type: 'intent-extracted',
                         intent: userIntent.description,
@@ -1070,14 +1070,14 @@ async function startTracking() {
                         objectsToKeepFixedCount: userIntent.objectsToKeepFixed.length,
                         fixedReasoning: userIntent.fixedObjectsReasoning,
                     });
-                    
+
                     // AGENT 2: Arrange until intent is satisfied
                     await arrangeUntilIntentSatisfied(userIntent);
-                    
+
                     // Update state after changes
                     previousCanvasState = captureCanvasState();
                     lastKnownState = previousCanvasState;
-                    
+
                     figma.notify(`✨ ${userIntent.description}`);
                 } catch (error) {
                     figma.ui.postMessage({
@@ -1113,9 +1113,9 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
     try {
         // STAGE 1: LLM extracts intent and defines target constraints
         figma.ui.postMessage({ type: 'processing', message: '🤖 Analyzing user intent and desired layout...' });
-        
+
         const intent = await extractUserIntent(canvasState, movement);
-        
+
         figma.ui.postMessage({
             type: 'intent-result',
             intent: {
@@ -1125,94 +1125,94 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
                 objectsToKeepFixed: intent.objectsToKeepFixed.length
             }
         });
-        
+
         // STAGE 2: Iterative refinement until constraints are met
         const MAX_ITERATIONS = 10;
         let iteration = 0;
         let allConstraintsMet = false;
         let llmApproved = false;
-        
+
         while (iteration < MAX_ITERATIONS && !llmApproved) {
             iteration++;
-            
-            figma.ui.postMessage({ 
-                type: 'processing', 
-                message: `🔄 Iteration ${iteration}/${MAX_ITERATIONS}: Arranging objects...` 
+
+            figma.ui.postMessage({
+                type: 'processing',
+                message: `🔄 Iteration ${iteration}/${MAX_ITERATIONS}: Arranging objects...`
             });
-            
+
             // Get current state
             const currentState = captureCanvasState();
-            
+
             // Ask LLM to generate arrangement
             const llmResponse = await interpretAndArrange(currentState, movement);
-            
+
             // Apply the arrangement
             if (llmResponse.actions.length > 0) {
                 await applyLayoutActions(llmResponse.actions);
-                
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `📐 Applied ${llmResponse.actions.length} adjustments` 
+
+                figma.ui.postMessage({
+                    type: 'processing',
+                    message: `📐 Applied ${llmResponse.actions.length} adjustments`
                 });
             }
-            
+
             // STAGE 3: Check if target constraints are satisfied
             const stateAfterArrangement = captureCanvasState();
             const currentConstraints = detectConstraints(stateAfterArrangement.objects);
-            
+
             // Check if intent-defined constraints are met
             if (intent.constraintsToSatisfy && intent.constraintsToSatisfy.length > 0) {
                 const objectsMap = new Map(stateAfterArrangement.objects.map(obj => [obj.id, obj]));
-                const satisfiedCount = intent.constraintsToSatisfy.filter(c => 
+                const satisfiedCount = intent.constraintsToSatisfy.filter(c =>
                     isConstraintSatisfied(c, objectsMap)
                 ).length;
-                
+
                 allConstraintsMet = satisfiedCount === intent.constraintsToSatisfy.length;
-                
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `✓ Constraints: ${satisfiedCount}/${intent.constraintsToSatisfy.length} satisfied` 
+
+                figma.ui.postMessage({
+                    type: 'processing',
+                    message: `✓ Constraints: ${satisfiedCount}/${intent.constraintsToSatisfy.length} satisfied`
                 });
             } else {
                 allConstraintsMet = true; // No specific constraints to check
             }
-            
+
             // STAGE 4: LLM validates the result (skip some iterations for speed)
             const shouldValidate = allConstraintsMet || iteration % 2 === 0 || iteration >= MAX_ITERATIONS;
-            
+
             if (shouldValidate) {
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `🔍 Validating arrangement quality...` 
+                figma.ui.postMessage({
+                    type: 'processing',
+                    message: `🔍 Validating arrangement quality...`
                 });
-                
+
                 const validation = await evaluateArrangement(stateAfterArrangement, intent, iteration);
                 llmApproved = validation.intentSatisfied;
-                
+
                 if (llmApproved && allConstraintsMet) {
                     figma.ui.postMessage({
                         type: 'success',
                         message: `✨ Layout perfected in ${iteration} iteration${iteration > 1 ? 's' : ''}!`
                     });
-                    
+
                     // Update constraints for next time
                     previousConstraints = currentConstraints;
                     return;
                 } else if (!llmApproved && validation.issues.length > 0) {
-                    figma.ui.postMessage({ 
-                        type: 'processing', 
-                        message: `⚠️ Issues: ${validation.issues.slice(0, 2).join(', ')}${validation.issues.length > 2 ? '...' : ''}` 
+                    figma.ui.postMessage({
+                        type: 'processing',
+                        message: `⚠️ Issues: ${validation.issues.slice(0, 2).join(', ')}${validation.issues.length > 2 ? '...' : ''}`
                     });
                 }
             } else {
                 // Skip validation, just continue iterating
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `⏭️ Skipping validation (iteration ${iteration})` 
+                figma.ui.postMessage({
+                    type: 'processing',
+                    message: `⏭️ Skipping validation (iteration ${iteration})`
                 });
             }
         }
-        
+
         // Max iterations reached
         if (iteration >= MAX_ITERATIONS) {
             figma.ui.postMessage({
@@ -1220,11 +1220,11 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
                 message: `⚠️ Layout adjusted (reached ${MAX_ITERATIONS} iterations limit)`
             });
         }
-        
+
         // Update constraints
         const finalState = captureCanvasState();
         previousConstraints = detectConstraints(finalState.objects);
-        
+
     } catch (error: any) {
         console.error('Arrangement error:', error);
         figma.ui.postMessage({
@@ -1236,19 +1236,19 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
 
 async function startTrackingEnhanced() {
     if (isTracking) return;
-    
+
     // Capture initial state and constraints
     previousCanvasState = captureCanvasState();
     previousConstraints = detectConstraints(previousCanvasState.objects);
     let lastKnownState = previousCanvasState;
     let hasMovedSinceLastCheck = false;
-    
+
     isTracking = true;
-    figma.ui.postMessage({ 
+    figma.ui.postMessage({
         type: 'tracking-started',
-        message: `Tracking started (${previousConstraints.length} constraints detected)` 
+        message: `Tracking started (${previousConstraints.length} constraints detected)`
     });
-    
+
     // Poll for changes every 300ms
     trackingInterval = setInterval(async () => {
         if (!isTracking) {
@@ -1258,12 +1258,12 @@ async function startTrackingEnhanced() {
             }
             return;
         }
-        
+
         const currentState = captureCanvasState();
-        
+
         // Detect if anything moved
         const movement = lastKnownState ? detectMovement(lastKnownState, currentState) : null;
-        
+
         if (movement) {
             // Something is moving
             hasMovedSinceLastCheck = true;
@@ -1272,20 +1272,20 @@ async function startTrackingEnhanced() {
             // Movement stopped, trigger constraint-based pipeline
             hasMovedSinceLastCheck = false;
             isSyncing = true;
-            
+
             // Find the movement that occurred
-            const finalMovement = previousCanvasState ? 
+            const finalMovement = previousCanvasState ?
                 detectMovement(previousCanvasState, currentState) : null;
-            
+
             if (finalMovement) {
                 figma.ui.postMessage({
                     type: 'processing',
                     message: `Analyzing movement of "${finalMovement.objectName}"...`,
                 });
-                
+
                 // Use constraint-based pipeline
                 await arrangeWithConstraints(finalMovement, currentState);
-                
+
                 // Update state
                 previousCanvasState = captureCanvasState();
                 isSyncing = false;
