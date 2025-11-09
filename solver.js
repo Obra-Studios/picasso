@@ -218,8 +218,8 @@ function solveDistribution(constraints, objectsMap, fixedObjects) {
         }
         // Sort objects by position
         const sorted = constraint.distributionType === 'horizontal'
-            ? [...objects].sort((a, b) => a.x - b.x)
-            : [...objects].sort((a, b) => a.y - b.y);
+            ? objects.slice().sort((a, b) => a.x - b.x)
+            : objects.slice().sort((a, b) => a.y - b.y);
         // Find fixed anchors
         const fixedIndices = sorted
             .map((obj, idx) => fixedObjects.has(obj.id) ? idx : -1)

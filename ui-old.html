@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 16px;
+            margin: 0;
+            background: #ffffff;
+        }
+        h2 {
+            margin: 0 0 16px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666666;
+            margin-bottom: 8px;
+        }
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #18a0fb;
+        }
+        button {
+            width: 100%;
+            padding: 8px 12px;
+            background: #18a0fb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        button:hover {
+            background: #0d8ce8;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .frame-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .frame-buttons button {
+            flex: 1;
+            margin-bottom: 0;
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+        .frame-status {
+            display: flex;
+            gap: 8px;
+            font-size: 10px;
+            color: #666666;
+        }
+        .frame-status-item {
+            flex: 1;
+        }
+        .status {
+            font-size: 11px;
+            color: #666666;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+        .processing {
+            font-size: 11px;
+            color: #18a0fb;
+            font-style: italic;
+        }
+    .llm-response {
+        margin-top: 12px;
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #333;
+        max-height: 150px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .output-box {
+        padding: 12px;
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #333;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    #modification-steps-box {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    #modification-steps-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .modification-step {
+        display: flex;
+        flex-direction: column;
+    }
+    .output-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #000;
+    }
+    #intent-box {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 6px;
+        padding: 12px;
+        min-height: 40px;
+    }
+    #intent-content {
+        font-size: 12px;
+        color: #0c4a6e;
+        line-height: 1.5;
+    }
+    #intent-content.empty {
+        color: #999;
+        font-style: italic;
+    }
+    #intent-content.processing {
+        color: #18a0fb;
+        font-style: italic;
+    }
+    #autocomplete-box {
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        border-radius: 6px;
+        padding: 12px;
+        min-height: 40px;
+    }
+    #autocomplete-content {
+        font-size: 12px;
+        color: #166534;
+        line-height: 1.5;
+    }
+    #autocomplete-content.empty {
+        color: #999;
+        font-style: italic;
+    }
+    #autocomplete-content.processing {
+        color: #18a0fb;
+        font-style: italic;
+    }
+    #context-description-box {
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 6px;
+        padding: 12px;
+        min-height: 40px;
+        max-height: 100px;
+    }
+    #context-description-content {
+        font-size: 12px;
+        color: #78350f;
+        line-height: 1.5;
+    }
+    #context-description-content.empty {
+        color: #999;
+        font-style: italic;
+    }
+    #context-description-content.processing {
+        color: #18a0fb;
+        font-style: italic;
+    }
+    </style>
+</head>
+<body>
+    <h2>Picasso - AI Style Matcher</h2>
+    
+    <div class="section">
+        <div class="section-title">Frames</div>
+        <div class="frame-buttons">
+            <button id="select-context">Context</button>
+            <button id="select-canvas">Canvas</button>
+        </div>
+        <div class="frame-status">
+            <div class="frame-status-item" id="context-status">No context</div>
+            <div class="frame-status-item" id="canvas-status">No canvas</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Context Description</div>
+        <div id="context-description-box" class="output-box">
+            <div id="context-description-content" class="empty">No context description yet</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Identified Intent</div>
+        <div id="intent-box" class="output-box">
+            <div id="intent-content" class="empty">No intent identified yet</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Autocomplete</div>
+        <div id="autocomplete-box" class="output-box">
+            <div id="autocomplete-content" class="empty">No autocomplete suggestion yet</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Modification Steps</div>
+        <div id="modification-steps-box" class="output-box">
+            <div id="modification-steps-content" class="empty">No steps yet</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">OpenAI API Key</div>
+        <input type="password" id="api-key" placeholder="Enter your OpenAI API key (sk-...)" />
+    </div>
+
+<script>
+        let contextFrameId = null;
+        let canvasFrameId = null;
+
+        // Request API key from plugin on load
+        parent.postMessage({ pluginMessage: { type: 'get-api-key' } }, '*');
+
+        // Save API key to clientStorage when changed
+        document.getElementById('api-key').addEventListener('change', (e) => {
+            const apiKey = e.target.value.trim();
+            parent.postMessage({ 
+                pluginMessage: { 
+                    type: 'save-api-key',
+                    apiKey: apiKey
+                } 
+            }, '*');
+        });
+
+        document.getElementById('select-context').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-context' } }, '*');
+        };
+
+        document.getElementById('select-canvas').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'select-canvas' } }, '*');
+        };
+
+        // Listen for messages from the plugin code
+        window.onmessage = (event) => {
+            const msg = event.data.pluginMessage;
+            if (msg.type === 'api-key-loaded') {
+                if (msg.apiKey) {
+                    document.getElementById('api-key').value = msg.apiKey;
+                }
+            } else if (msg.type === 'context-selected') {
+                contextFrameId = msg.frameId;
+                document.getElementById('context-status').textContent = msg.frameName || 'Selected';
+            } else if (msg.type === 'canvas-selected') {
+                canvasFrameId = msg.frameId;
+                document.getElementById('canvas-status').textContent = msg.frameName || 'Selected';
+            } else if (msg.type === 'processing') {
+                // Update intent box if message is specifically about intent
+                if (msg.message && msg.message.toLowerCase().includes('intent')) {
+                    const intentContent = document.getElementById('intent-content');
+                    intentContent.textContent = msg.message || 'Processing...';
+                    intentContent.classList.add('processing');
+                    intentContent.classList.remove('empty');
+                }
+                // Update context description box if message is specifically about context (and not intent)
+                else if (msg.message && msg.message.toLowerCase().includes('context') && !msg.message.toLowerCase().includes('intent')) {
+                    const contextDescContent = document.getElementById('context-description-content');
+                    contextDescContent.textContent = msg.message || 'Analyzing context...';
+                    contextDescContent.classList.add('processing');
+                    contextDescContent.classList.remove('empty');
+                }
+            } else if (msg.type === 'style-description-generated') {
+                const contextDescContent = document.getElementById('context-description-content');
+                contextDescContent.textContent = msg.styleDescription || '';
+                contextDescContent.classList.remove('empty', 'processing');
+            } else if (msg.type === 'modification-step') {
+                const stepsContent = document.getElementById('modification-steps-content');
+                stepsContent.classList.remove('empty');
+                
+                // Create or update step entry
+                const stepId = `step-${msg.iteration}`;
+                let stepDiv = document.getElementById(stepId);
+                if (!stepDiv) {
+                    stepDiv = document.createElement('div');
+                    stepDiv.id = stepId;
+                    stepDiv.className = 'modification-step';
+                    stepDiv.style.marginBottom = '12px';
+                    stepDiv.style.padding = '8px';
+                    stepDiv.style.border = '1px solid #e0e0e0';
+                    stepDiv.style.borderRadius = '4px';
+                    stepDiv.style.backgroundColor = '#fafafa';
+                    stepsContent.appendChild(stepDiv);
+                }
+                
+                // Clear and rebuild step content
+                stepDiv.innerHTML = '';
+                
+                // Step number header
+                const stepHeader = document.createElement('div');
+                stepHeader.style.fontWeight = '700';
+                stepHeader.style.fontSize = '12px';
+                stepHeader.style.marginBottom = '8px';
+                stepHeader.style.color = '#333';
+                stepHeader.style.borderBottom = '1px solid #e0e0e0';
+                stepHeader.style.paddingBottom = '4px';
+                stepHeader.textContent = `Step ${msg.iteration + 1}`;
+                stepDiv.appendChild(stepHeader);
+                
+                // Autocomplete section
+                if (msg.autocomplete) {
+                    const autocompleteTitle = document.createElement('div');
+                    autocompleteTitle.style.fontWeight = '600';
+                    autocompleteTitle.style.fontSize = '11px';
+                    autocompleteTitle.style.marginTop = '6px';
+                    autocompleteTitle.style.marginBottom = '4px';
+                    autocompleteTitle.style.color = '#333';
+                    autocompleteTitle.textContent = 'Autocomplete:';
+                    
+                    const autocompleteContent = document.createElement('div');
+                    autocompleteContent.style.fontSize = '11px';
+                    autocompleteContent.style.color = '#666';
+                    autocompleteContent.style.marginBottom = '8px';
+                    autocompleteContent.style.whiteSpace = 'pre-wrap';
+                    autocompleteContent.style.padding = '6px';
+                    autocompleteContent.style.backgroundColor = '#ffffff';
+                    autocompleteContent.style.borderRadius = '2px';
+                    autocompleteContent.textContent = msg.autocomplete;
+                    
+                    stepDiv.appendChild(autocompleteTitle);
+                    stepDiv.appendChild(autocompleteContent);
+                }
+                
+                // JSON section
+                if (msg.json) {
+                    const jsonTitle = document.createElement('div');
+                    jsonTitle.style.fontWeight = '600';
+                    jsonTitle.style.fontSize = '11px';
+                    jsonTitle.style.marginTop = '6px';
+                    jsonTitle.style.marginBottom = '4px';
+                    jsonTitle.style.color = '#333';
+                    jsonTitle.textContent = 'Modification Instructions:';
+                    
+                    const jsonContent = document.createElement('div');
+                    jsonContent.style.fontSize = '10px';
+                    jsonContent.style.fontFamily = 'monospace';
+                    jsonContent.style.color = '#333';
+                    jsonContent.style.backgroundColor = '#ffffff';
+                    jsonContent.style.padding = '6px';
+                    jsonContent.style.borderRadius = '2px';
+                    jsonContent.style.maxHeight = '200px';
+                    jsonContent.style.overflowY = 'auto';
+                    jsonContent.style.whiteSpace = 'pre-wrap';
+                    jsonContent.style.wordBreak = 'break-word';
+                    
+                    try {
+                        // Try to format JSON nicely
+                        const parsed = JSON.parse(msg.json || '{}');
+                        jsonContent.textContent = JSON.stringify(parsed, null, 2);
+                    } catch (e) {
+                        // If not valid JSON, display as-is
+                        jsonContent.textContent = msg.json || 'No JSON';
+                    }
+                    
+                    stepDiv.appendChild(jsonTitle);
+                    stepDiv.appendChild(jsonContent);
+                }
+            } else if (msg.type === 'intent-identified') {
+                const intentContent = document.getElementById('intent-content');
+                const autocompleteContent = document.getElementById('autocomplete-content');
+                
+                // Update intent
+                intentContent.textContent = msg.intent || '';
+                intentContent.classList.remove('empty', 'processing');
+                
+                // Update autocomplete
+                if (msg.autocomplete) {
+                    autocompleteContent.textContent = msg.autocomplete || '';
+                    autocompleteContent.classList.remove('empty', 'processing');
+                } else {
+                    autocompleteContent.textContent = 'No autocomplete suggestion yet';
+                    autocompleteContent.classList.add('empty');
+                    autocompleteContent.classList.remove('processing');
+                }
+            } else if (msg.type === 'error') {
+                const intentContent = document.getElementById('intent-content');
+                intentContent.textContent = 'Error: ' + (msg.message || 'Unknown error');
+                intentContent.classList.add('empty');
+                intentContent.classList.remove('processing');
+                alert(msg.message);
+            }
+        };
+</script>
+</body>
+</html>
