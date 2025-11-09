@@ -12,3 +12,6 @@ code.js
 config.ts
 config.js
 .venv/
+
+# macOS
+.DS_Store
