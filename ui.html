@@ -1,17 +1,315 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #FFF9F0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .logo-container {
+            margin-bottom: 24px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+        }
+        
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 32px;
+            line-height: 1.5;
+            max-width: 280px;
+        }
+        
+        .button-container {
+            width: 100%;
+            max-width: 280px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px 20px;
+            background: #1a1a1a;
+            color: #FFF9F0;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+        }
+        
+        button:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .stop-button {
+            background: #d4380d;
+        }
+        
+        .stop-button:hover {
+            background: #ad2102;
+        }
+        
+        .status {
+            width: 100%;
+            max-width: 280px;
+            font-size: 11px;
+            padding: 12px 16px;
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 8px;
+            line-height: 1.5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: none;
+        }
+        
+        .status.visible {
+            display: block;
+        }
+        
+        .status.processing {
+            color: #1a1a1a;
+            border-left: 3px solid #faad14;
+        }
+        
+        .status.success {
+            color: #237804;
+            border-left: 3px solid #52c41a;
+        }
+        
+        .status.error {
+            color: #cf1322;
+            border-left: 3px solid #f5222d;
+        }
+        
+        .interpretation {
+            width: 100%;
+            max-width: 280px;
+            margin-top: 16px;
+            padding: 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: none;
+        }
+        
+        .interpretation.visible {
+            display: block;
+        }
+        
+        .interpretation-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8b5cf6;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .interpretation-text {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .actions-count {
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="/picasso-logo-v1.png" alt="Picasso" class="logo">
+    </div>
+    
+    <h1>Picasso</h1>
+    <p class="subtitle">Move any object and watch AI arrange the rest</p>
+    
+    <div class="button-container">
+        <button id="start-tracking">Start AI Tracking</button>
+        <button id="stop-tracking" class="stop-button" style="display: none;">Stop Tracking</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+    <div id="interpretation" class="interpretation"></div>
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
+    <script>
+        let isTracking = false;
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+        document.getElementById('start-tracking').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
+        };
 
-</script>
+        document.getElementById('stop-tracking').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
+        };
+
+        window.onmessage = (event) => {
+            const msg = event.data.pluginMessage;
+            const statusEl = document.getElementById('status');
+            const interpretationEl = document.getElementById('interpretation');
+            
+            if (msg.type === 'tracking-started') {
+                isTracking = true;
+                updateButtons();
+                statusEl.className = 'status visible success';
+                statusEl.textContent = '✓ Tracking active. Move any object!';
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'tracking-stopped') {
+                isTracking = false;
+                updateButtons();
+                statusEl.className = 'status visible';
+                statusEl.textContent = 'Tracking stopped.';
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'processing') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = msg.message;
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'intent-extraction') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = '🧠 ' + msg.message;
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'intent-extracted') {
+                interpretationEl.className = 'interpretation visible';
+                interpretationEl.innerHTML = `
+                    <div class="interpretation-title">User Intent Detected</div>
+                    <div class="interpretation-text">${msg.intent}</div>
+                    <div class="actions-count">Pattern: ${msg.pattern}</div>
+                    <div style="font-size:10px;color:#666;margin-top:8px;">
+                        🔓 ${msg.objectsToMoveCount} object(s) to move • 
+                        🔒 ${msg.objectsToKeepFixedCount} object(s) fixed
+                    </div>
+                    <div style="font-size:10px;color:#999;margin-top:4px;">${msg.fixedReasoning}</div>
+                `;
+                statusEl.className = 'status visible success';
+                statusEl.textContent = '✅ Intent extracted. Starting arrangement...';
+            } else if (msg.type === 'arrangement-started') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = `🎯 Arranging to satisfy: "${msg.intent}"`;
+            } else if (msg.type === 'arrangement-iteration') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = `🔄 Arrangement iteration ${msg.iteration}/${msg.maxIterations}...`;
+            } else if (msg.type === 'arrangement-evaluation') {
+                if (msg.intentSatisfied) {
+                    statusEl.className = 'status visible success';
+                    statusEl.textContent = `✅ Iteration ${msg.iteration}: Intent perfectly satisfied!`;
+                } else {
+                    statusEl.className = 'status visible processing';
+                    statusEl.textContent = `⚙️ Iteration ${msg.iteration}: Applying ${msg.correctionsCount} correction(s)...`;
+                }
+            } else if (msg.type === 'arrangement-complete') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = msg.message;
+            } else if (msg.type === 'interpretation') {
+                interpretationEl.className = 'interpretation visible';
+                interpretationEl.innerHTML = `
+                    <div class="interpretation-title">AI Interpretation</div>
+                    <div class="interpretation-text">${msg.interpretation}</div>
+                    <div class="actions-count">${msg.actionsCount} layout ${msg.actionsCount === 1 ? 'change' : 'changes'} applied</div>
+                `;
+            } else if (msg.type === 'actions-applied') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = '✨ ' + msg.message;
+            } else if (msg.type === 'refinement-started') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = '🔄 ' + msg.message;
+            } else if (msg.type === 'validation-step') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = `🔍 ${msg.message}`;
+            } else if (msg.type === 'validation-result') {
+                if (msg.isAligned) {
+                    statusEl.className = 'status visible success';
+                    statusEl.textContent = `✅ Iteration ${msg.iteration}: Perfect alignment!`;
+                } else {
+                    statusEl.className = 'status visible processing';
+                    statusEl.textContent = `⚙️ Iteration ${msg.iteration}: Found ${msg.issues.length} issues, applying ${msg.suggestionsCount} fixes...`;
+                }
+            } else if (msg.type === 'refinement-complete') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = msg.message;
+            } else if (msg.type === 'error') {
+                statusEl.className = 'status visible error';
+                statusEl.textContent = '⚠️ ' + msg.message;
+            } else if (msg.type === 'save-screenshot') {
+                // Save screenshot to downloads folder
+                saveScreenshot(msg.screenshot, msg.filename);
+            }
+        };
+
+        function saveScreenshot(base64Data, filename) {
+            try {
+                // Convert base64 to blob
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/png' });
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('Screenshot saved:', filename);
+            } catch (error) {
+                console.error('Failed to save screenshot:', error);
+            }
+        }
+
+        function updateButtons() {
+            const startButton = document.getElementById('start-tracking');
+            const stopButton = document.getElementById('stop-tracking');
+            
+            if (isTracking) {
+                startButton.style.display = 'none';
+                stopButton.style.display = 'block';
+            } else {
+                startButton.style.display = 'block';
+                stopButton.style.display = 'none';
+            }
+        }
+
+        updateButtons();
+    </script>
+</body>
+</html>
