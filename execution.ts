@@ -3,6 +3,70 @@
 // Converts natural language action descriptions into Figma DOM modifications
 // ============================================================================
 
+/**
+ * Collects current Figma page DOM information for LLM context
+ */
+function collectFigmaDOMInfo(): string {
+    const nodes: Array<{
+        id: string;
+        name: string;
+        type: string;
+        parent?: string;
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+    }> = [];
+
+    function collectNodeInfo(node: SceneNode, parentName?: string) {
+        const nodeInfo: any = {
+            id: node.id,
+            name: node.name,
+            type: node.type,
+        };
+
+        if (parentName) {
+            nodeInfo.parent = parentName;
+        }
+
+        if ('x' in node && 'y' in node) {
+            nodeInfo.x = node.x;
+            nodeInfo.y = node.y;
+        }
+
+        if ('width' in node && 'height' in node) {
+            nodeInfo.width = node.width;
+            nodeInfo.height = node.height;
+        }
+
+        // For text nodes, include text content
+        if (node.type === 'TEXT') {
+            const textNode = node as TextNode;
+            try {
+                nodeInfo.textContent = textNode.characters;
+            } catch {
+                // Font may not be loaded
+            }
+        }
+
+        nodes.push(nodeInfo);
+
+        // Recursively collect children
+        if ('children' in node) {
+            for (const child of node.children) {
+                collectNodeInfo(child, node.name);
+            }
+        }
+    }
+
+    // Collect all nodes from current page
+    for (const node of figma.currentPage.children) {
+        collectNodeInfo(node);
+    }
+
+    return JSON.stringify(nodes, null, 2);
+}
+
 export interface ExecutionOperation {
     action: 'add' | 'modify';
     type?: 'circle' | 'rectangle' | 'ellipse' | 'frame' | 'text' | 'line' | 'polygon' | 'star' | 'vector' | 'arrow';
@@ -293,9 +357,17 @@ export async function parseNaturalLanguageOperations(
     naturalLanguageOperations: string,
     apiKey: string
 ): Promise<{ plan: ExecutionPlan; apiCall: APICallInfo }> {
+    // Collect current Figma DOM information for exact node ID matching
+    const domInfo = collectFigmaDOMInfo();
+
     const prompt = `You are an expert at converting natural language operation descriptions into structured JSON operations for a Figma plugin.
 
 The user has provided natural language descriptions of design operations with exact calculated values. Your task is to convert this into a structured JSON format that specifies exactly what objects to ADD or MODIFY.
+
+**CURRENT FIGMA PAGE DOM (for exact node identification):**
+The following is a list of all nodes currently on the Figma page. Use the exact "id" field for targetId when modifying existing nodes. This ensures precise node identification instead of fuzzy name matching.
+
+${domInfo}
 
 **NATURAL LANGUAGE OPERATIONS:**
 ${naturalLanguageOperations}
@@ -340,6 +412,73 @@ When a box, container, input field, or any shape that should contain text is bei
    - Use appropriate fontFamily (typically "Inter" for modern UIs)
    - Use appropriate fontWeight (400 for body text, 500-600 for emphasis)
    - Ensure text fits within the container width minus padding
+
+**CRITICAL: MODIFY OPERATIONS - EXACT NODE IDENTIFICATION (NO FUZZY MATCHING)**
+When modifying existing nodes, you MUST identify the exact node using the DOM information above. Fuzzy matching is NOT allowed.
+
+**STEP-BY-STEP NODE IDENTIFICATION PROCESS:**
+
+1. **Analyze the operation requirements**:
+   - What type of node needs to be modified? (RECTANGLE, TEXT, ELLIPSE, etc.)
+   - What is the target name or description from the constraints?
+   - What is the use case? (button box, button text, input field, label, etc.)
+
+2. **Search the DOM for matching nodes**:
+   - Filter nodes by TYPE first (e.g., if modifying a button box, look for RECTANGLE nodes)
+   - Then filter by NAME (match the targetId/description from constraints)
+   - Consider PARENT relationships (e.g., button text is usually a child of the button rectangle's parent frame)
+   - Consider POSITION relationships (e.g., button text is usually positioned near/inside the button rectangle)
+   - Consider CONTEXT clues:
+     * "button box" or "background" → RECTANGLE type
+     * "button text" or "label" → TEXT type
+     * "input field" → RECTANGLE type (the container)
+     * "placeholder" or "input text" → TEXT type (the text inside)
+
+3. **Identify the exact node**:
+   - Once you've found the matching node in the DOM, use its EXACT "id" field value for targetId
+   - Example: To modify "login-button" rectangle:
+     * Search DOM for type: "RECTANGLE"
+     * Find node with name: "login-button"
+     * Verify it's the button box (not text) by checking type and context
+     * Use exact id: "9:38" (from the DOM)
+   - Example: To modify "login-button" text:
+     * Search DOM for type: "TEXT"
+     * Find node with name containing "login" and "button" (e.g., "Login Button Text")
+     * Verify it's text by checking type and textContent
+     * Use exact id: "9:39" (from the DOM)
+
+4. **CRITICAL RULES**:
+   - **ALWAYS use exact node IDs from the DOM** - never use names for targetId in modify operations
+   - **Match by TYPE first** - if modifying a rectangle, only consider RECTANGLE nodes
+   - **Match by CONTEXT** - "button box" = RECTANGLE, "button text" = TEXT
+   - **Check PARENT relationships** - related nodes often share the same parent
+   - **Verify with POSITION** - text nodes are usually positioned near their container rectangles
+   - **NO FUZZY MATCHING** - if you can't find an exact match, the node may not exist or the description is unclear
+   
+2. **For text content modifications**:
+   - Set textContent to the new text value
+   - Keep other text properties (fontSize, textAlign, fontFamily, fontWeight) unless they need to change
+   - If only textContent is changing, set other text properties to 0 or empty string (as per schema requirements)
+   
+3. **For text property modifications**:
+   - Update fontSize, textAlign, fontFamily, fontWeight as specified
+   - If textContent is not changing, set it to empty string (as per schema requirements)
+
+5. **IMPORTANT: What NOT to modify as text**:
+   - **Semantic roles, accessibility properties, or metadata** are NOT text nodes and should NOT be modified as text operations
+   - These are properties of the container/shape itself, not separate text elements
+   - If a constraint mentions "semantic role", "role", "accessibility", or similar metadata, DO NOT create a text modification operation for it
+   - Only create text modifications for actual visible text content (labels, placeholders, button text, etc.)
+
+**CRITICAL: WHEN TO CREATE MULTIPLE VS SINGLE MODIFY OPERATIONS**
+- **Create SEPARATE modify operations** when modifying DIFFERENT nodes (different targetId or targetDescription)
+  * Example: Modifying "email-input-label" text AND "email-input" placeholder text → 2 separate operations (different targetIds)
+  * Example: Modifying "button-1" text AND "button-2" text → 2 separate operations (different targetIds)
+- **Create ONE modify operation** when modifying the SAME node with multiple properties
+  * Example: Modifying "email-input-label" text content AND fontSize → 1 operation (same targetId, multiple properties)
+  * Example: Modifying "button-1" text content AND textAlign → 1 operation (same targetId, multiple properties)
+- **DO NOT create modify operations** for semantic roles, accessibility properties, or metadata (these are not text nodes)
+- **Summary**: One operation per unique targetId/targetDescription. If multiple constraints target the same node, combine them into one operation.
 
 **REQUIREMENTS:**
 1. Parse all ADD operations - these create new objects
@@ -1201,70 +1340,93 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
         collectShapes(node);
     }
 
-    function findShapeByIdOrDescription(targetId?: string, targetDescription?: string): SceneNode | null {
+    function findShapeByIdOrDescription(targetId?: string, targetDescription?: string, preferredType?: string): SceneNode | null {
         if (targetId) {
-            // Try to find by ID first (Figma node ID)
+            // Check if targetId looks like a Figma ID (contains ":" which is the format for Figma node IDs)
+            // Figma IDs are in format like "123:456" or "I123:456;789:012"
+            const isFigmaId = targetId.includes(':');
+
+            // Try to find by ID first (Figma node ID) - prioritize this for exact matching
             const found = findNodeById(targetId);
-            if (found) return found;
+            if (found) {
+                // If preferredType is specified, verify it matches
+                if (!preferredType || found.type === preferredType) {
+                    return found;
+                }
+                // If it's a Figma ID but wrong type, don't fall back to name search
+                // This ensures exact IDs are respected
+                if (isFigmaId) {
+                    return null; // Exact ID found but wrong type - fail rather than fuzzy match
+                }
+            }
 
-            // If ID lookup fails, targetId might be a name - search by name
-            // First check the cache of newly created shapes
+            // If targetId is a Figma ID format but not found, don't try name matching
+            // This prevents confusion between IDs and names
+            if (isFigmaId && !found) {
+                return null; // Exact ID not found - fail rather than fuzzy match
+            }
+
+            // NO FUZZY MATCHING - only allow exact name matches for newly created shapes in cache
+            // This is a temporary fallback during transition - LLM should always provide exact IDs
             if (createdShapesByName.has(targetId)) {
-                return createdShapesByName.get(targetId)!;
-            }
-
-            const normalizeName = (n: string) => n.toLowerCase().replace(/[\s\-_]/g, '');
-            const searchNameNorm = normalizeName(targetId);
-
-            // Search in created shapes cache (case-insensitive)
-            for (const [name, shape] of createdShapesByName.entries()) {
-                if (name.toLowerCase() === targetId.toLowerCase() ||
-                    normalizeName(name) === searchNameNorm) {
+                const shape = createdShapesByName.get(targetId)!;
+                if (!preferredType || shape.type === preferredType) {
                     return shape;
                 }
+                return null;
             }
 
-            // Search in existing shapes on the page
-            for (const shape of availableShapes) {
-                if (shape.name) {
-                    const shapeNameNorm = normalizeName(shape.name);
-                    // Try exact match first
-                    if (shape.name === targetId || shape.name.toLowerCase() === targetId.toLowerCase()) {
-                        return shape;
-                    }
-                    // Try normalized match
-                    if (shapeNameNorm === searchNameNorm) {
-                        return shape;
-                    }
-                    // Try partial match
-                    if (shapeNameNorm.includes(searchNameNorm) || searchNameNorm.includes(shapeNameNorm)) {
-                        return shape;
+            // No fuzzy matching - if it's not an exact ID and not in the cache, fail
+            return null;
+        }
+
+        // NO FUZZY MATCHING - targetDescription is not supported
+        // The LLM should provide exact IDs from the DOM
+        return null;
+    }
+
+    // Helper to find text nodes - ONLY uses exact Figma IDs, NO fuzzy matching
+    function findTextNode(targetId?: string, targetDescription?: string, textBoxId?: string): TextNode | null {
+        // ONLY use exact Figma ID lookups - NO fuzzy matching
+        if (targetId) {
+            // Check if targetId looks like a Figma ID (contains ":")
+            const isFigmaId = targetId.includes(':');
+
+            if (isFigmaId) {
+                const found = findNodeById(targetId);
+                if (found && found.type === 'TEXT') {
+                    return found as TextNode;
+                }
+                // Exact ID not found or wrong type - fail
+                return null;
+            }
+
+            // If targetId is not a Figma ID, check cache for newly created shapes
+            if (createdShapesByName.has(targetId)) {
+                const found = createdShapesByName.get(targetId)!;
+                if (found.type === 'TEXT') {
+                    return found as TextNode;
+                }
+            }
+        }
+
+        // If textBoxId is provided, try to find text nodes associated with that container
+        // But only if textBoxId is a Figma ID
+        if (textBoxId && textBoxId.includes(':')) {
+            const container = findShapeByIdOrDescription(textBoxId);
+            if (container && container.parent && 'children' in container.parent) {
+                // Look for text nodes in the same parent (frame)
+                // This is a fallback for when textBoxId is provided but targetId is not
+                for (const child of container.parent.children) {
+                    if (child.type === 'TEXT') {
+                        // Return first text node found in the same parent
+                        // The LLM should provide exact IDs, so this is just a fallback
+                        return child as TextNode;
                     }
                 }
             }
         }
-        if (targetDescription) {
-            // Try to find by description (match name or type)
-            const descLower = targetDescription.toLowerCase();
 
-            // First check created shapes cache
-            for (const [name, shape] of createdShapesByName.entries()) {
-                const nameMatch = name.toLowerCase().includes(descLower);
-                const typeMatch = shape.type.toLowerCase().includes(descLower);
-                if (nameMatch || typeMatch) {
-                    return shape;
-                }
-            }
-
-            // Then check existing shapes on the page
-            for (const shape of availableShapes) {
-                const nameMatch = shape.name && shape.name.toLowerCase().includes(descLower);
-                const typeMatch = shape.type.toLowerCase().includes(descLower);
-                if (nameMatch || typeMatch) {
-                    return shape;
-                }
-            }
-        }
         return null;
     }
 
@@ -1746,30 +1908,116 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                 results.created++;
 
             } else if (operation.action === 'modify') {
-                // Modify existing object
-                const targetNode = findShapeByIdOrDescription(operation.targetId, operation.targetDescription);
+                // ============================================================================
+                // MODIFY OPERATION - SIMPLIFIED LOGIC (REWRITTEN FROM SCRATCH)
+                // ============================================================================
 
+                // Step 1: Determine what type of node we're looking for
+                const typeMap: Record<string, string> = {
+                    'rectangle': 'RECTANGLE',
+                    'circle': 'ELLIPSE',
+                    'ellipse': 'ELLIPSE',
+                    'frame': 'FRAME',
+                    'text': 'TEXT',
+                    'line': 'LINE',
+                    'polygon': 'POLYGON',
+                    'star': 'STAR',
+                    'vector': 'VECTOR',
+                    'arrow': 'LINE'
+                };
+
+                // Determine expected type from operation.type
+                const expectedFigmaType = operation.type ? typeMap[operation.type.toLowerCase()] : null;
+
+                // Step 2: Find the target node by name (from targetId, targetDescription, or operation.name)
+                let targetNode: SceneNode | null = null;
+
+                // Get the search name - prefer operation.name, then targetId, then targetDescription
+                const searchName = operation.name || operation.targetId || operation.targetDescription || '';
+
+                if (searchName) {
+                    // First, try to find by name in the cache of newly created shapes
+                    if (createdShapesByName.has(searchName)) {
+                        const cached = createdShapesByName.get(searchName)!;
+                        // If expectedFigmaType is specified, verify it matches
+                        if (!expectedFigmaType || cached.type === expectedFigmaType) {
+                            targetNode = cached;
+                        }
+                    }
+
+                    // If not found in cache, search through available shapes on the page
+                    if (!targetNode) {
+                        // Search for exact name match first, filtering by type if specified
+                        for (const shape of availableShapes) {
+                            if (shape.name === searchName) {
+                                // If expectedFigmaType is specified, only match if type matches
+                                if (!expectedFigmaType || shape.type === expectedFigmaType) {
+                                    targetNode = shape;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // If not found, try case-insensitive match
+                        if (!targetNode) {
+                            const searchNameLower = searchName.toLowerCase();
+                            for (const shape of availableShapes) {
+                                if (shape.name && shape.name.toLowerCase() === searchNameLower) {
+                                    // If expectedFigmaType is specified, only match if type matches
+                                    if (!expectedFigmaType || shape.type === expectedFigmaType) {
+                                        targetNode = shape;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step 3: Validate the node was found
                 if (!targetNode) {
-                    results.errors.push(`Could not find shape to modify: ${operation.targetId || operation.targetDescription} `);
+                    const targetInfo = operation.targetId || operation.targetDescription || 'unknown';
+                    const typeInfo = expectedFigmaType ? ` (expected type: ${expectedFigmaType})` : '';
+                    results.errors.push(`Could not find node to modify: ${targetInfo}${typeInfo}`);
                     continue;
                 }
 
-                // Update position
-                if (operation.x !== undefined && 'x' in targetNode) {
+                // Step 4: Validate the node type matches expected type (if specified)
+                if (expectedFigmaType && targetNode.type !== expectedFigmaType) {
+                    results.errors.push(`Type mismatch: Expected ${expectedFigmaType} but found ${targetNode.type} with ID "${operation.targetId}" and name "${targetNode.name}". Skipping modification.`);
+                    continue;
+                }
+
+                // Update position - only if explicitly provided (not placeholder 0,0)
+                // For modify operations, when x:0, y:0, width:0, height:0 are all set,
+                // it typically means "don't change position/size" (schema placeholder values)
+                // Only update position if the value is non-zero (indicating a real position update)
+                if (operation.x !== undefined && operation.x !== 0 && 'x' in targetNode) {
                     targetNode.x = operation.x;
                 }
-                if (operation.y !== undefined && 'y' in targetNode) {
+                if (operation.y !== undefined && operation.y !== 0 && 'y' in targetNode) {
                     targetNode.y = operation.y;
                 }
 
                 // Update size (only for nodes that support resize)
+                // Only update if both width and height are provided and at least one is non-zero
                 if (operation.width !== undefined && operation.height !== undefined) {
-                    if ('resize' in targetNode && typeof targetNode.resize === 'function') {
-                        targetNode.resize(operation.width, operation.height);
+                    // If both are 0, it's likely a placeholder - don't update
+                    if (operation.width !== 0 || operation.height !== 0) {
+                        if ('resize' in targetNode && typeof targetNode.resize === 'function') {
+                            // Use current size if one dimension is 0 (placeholder)
+                            const newWidth = operation.width !== 0 ? operation.width :
+                                ('width' in targetNode ? targetNode.width : operation.width);
+                            const newHeight = operation.height !== 0 ? operation.height :
+                                ('height' in targetNode ? targetNode.height : operation.height);
+                            targetNode.resize(newWidth, newHeight);
+                        }
                     }
                 }
 
                 // Update fills (only for nodes that support fills)
+                // For modify operations, empty fills array typically means "don't change" (schema placeholder)
+                // Only update if fills array is provided and has at least one fill
                 if (operation.fills && operation.fills.length > 0 && 'fills' in targetNode) {
                     const normalizedFills: SolidPaint[] = operation.fills.map((fill) => ({
                         type: 'SOLID',
@@ -1778,8 +2026,11 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                     }));
                     targetNode.fills = normalizedFills;
                 }
+                // Note: If fills is empty array [], we don't update (preserves existing fills)
 
                 // Update strokes (only for nodes that support strokes)
+                // Empty array [] means "don't change" (schema placeholder)
+                // Only update if strokes array is provided and has at least one stroke
                 if (operation.strokes && operation.strokes.length > 0 && 'strokes' in targetNode) {
                     const normalizedStrokes: SolidPaint[] = operation.strokes.map((stroke) => ({
                         type: 'SOLID',
@@ -1788,14 +2039,23 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                     }));
                     targetNode.strokes = normalizedStrokes;
                 }
-                if (operation.strokeWeight !== undefined && 'strokeWeight' in targetNode) {
+                // Note: If strokes is empty array [], we don't update (preserves existing strokes)
+
+                // Update strokeWeight - only if explicitly provided and non-zero
+                // strokeWeight: 0 in modify operations typically means "don't change" (schema placeholder)
+                // Only update if strokeWeight > 0 (indicating a real stroke weight update)
+                if (operation.strokeWeight !== undefined && operation.strokeWeight > 0 && 'strokeWeight' in targetNode) {
                     targetNode.strokeWeight = operation.strokeWeight;
                 }
+                // Note: If strokeWeight is 0, we don't update (preserves existing stroke weight)
 
                 // Update type-specific properties
-                if (targetNode.type === 'RECTANGLE' && operation.cornerRadius !== undefined) {
+                // cornerRadius: 0 in modify operations typically means "don't change" (schema placeholder)
+                // Only update if cornerRadius > 0 (indicating a real corner radius update)
+                if (targetNode.type === 'RECTANGLE' && operation.cornerRadius !== undefined && operation.cornerRadius > 0) {
                     targetNode.cornerRadius = operation.cornerRadius;
                 }
+                // Note: If cornerRadius is 0, we don't update (preserves existing corner radius)
                 if (targetNode.type === 'POLYGON' && operation.pointCount !== undefined) {
                     targetNode.pointCount = operation.pointCount;
                 }
@@ -1814,8 +2074,10 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                     }));
                 }
 
-                // Update opacity
-                if (operation.opacity !== undefined && 'opacity' in targetNode) {
+                // Update opacity - only if explicitly provided and non-zero
+                // For modify operations, opacity: 0 typically means "don't change" (schema placeholder)
+                // Only update if opacity is > 0 (indicating a real opacity update)
+                if (operation.opacity !== undefined && operation.opacity > 0 && 'opacity' in targetNode) {
                     targetNode.opacity = operation.opacity;
                 }
 
@@ -1824,9 +2086,202 @@ export async function executePlan(plan: ExecutionPlan): Promise<{
                     targetNode.rotation = (operation.rotation * Math.PI) / 180;
                 }
 
-                // Update name
-                if (operation.name) {
+                // Update name - only if explicitly provided and not empty
+                // Empty string "" means "don't change" (schema placeholder)
+                if (operation.name && operation.name.trim() !== '') {
                     targetNode.name = operation.name;
+                }
+
+                // Update text-specific properties (for TEXT nodes)
+                if (targetNode.type === 'TEXT') {
+                    const textNode = targetNode as TextNode;
+
+                    // CRITICAL: Load font FIRST before any text operations
+                    // Get current font or use defaults
+                    let loadedFontFamily = 'Inter';
+                    let loadedFontStyle = 'Regular';
+
+                    // Try to get current font from the text node
+                    try {
+                        const currentFont = textNode.fontName;
+                        // Check if fontName is a FontName object (not a symbol)
+                        if (typeof currentFont === 'object' && 'family' in currentFont && 'style' in currentFont) {
+                            loadedFontFamily = currentFont.family;
+                            loadedFontStyle = currentFont.style;
+                        } else {
+                            // If it's a symbol or can't be accessed, use defaults
+                            loadedFontFamily = (operation.fontFamily && operation.fontFamily.trim() !== '') ? operation.fontFamily : 'Inter';
+                            const fontWeight = (operation.fontWeight && operation.fontWeight > 0) ? operation.fontWeight : 400;
+
+                            // Map numeric font weight to Figma style names
+                            const weightToStyle = (weight: number): string => {
+                                if (weight <= 300) return 'Light';
+                                if (weight <= 400) return 'Regular';
+                                if (weight <= 500) return 'Medium';
+                                if (weight <= 600) return 'Semi Bold';
+                                if (weight <= 700) return 'Bold';
+                                return 'Extra Bold';
+                            };
+                            loadedFontStyle = weightToStyle(fontWeight);
+                        }
+                    } catch {
+                        // If we can't get current font, use defaults
+                        loadedFontFamily = (operation.fontFamily && operation.fontFamily.trim() !== '') ? operation.fontFamily : 'Inter';
+                        const fontWeight = (operation.fontWeight && operation.fontWeight > 0) ? operation.fontWeight : 400;
+
+                        // Map numeric font weight to Figma style names
+                        const weightToStyle = (weight: number): string => {
+                            if (weight <= 300) return 'Light';
+                            if (weight <= 400) return 'Regular';
+                            if (weight <= 500) return 'Medium';
+                            if (weight <= 600) return 'Semi Bold';
+                            if (weight <= 700) return 'Bold';
+                            return 'Extra Bold';
+                        };
+                        loadedFontStyle = weightToStyle(fontWeight);
+                    }
+
+                    // If font family/weight is being updated, use the new values
+                    if (operation.fontFamily || operation.fontWeight !== undefined) {
+                        loadedFontFamily = (operation.fontFamily && operation.fontFamily.trim() !== '') ? operation.fontFamily : loadedFontFamily;
+                        const fontWeight = (operation.fontWeight && operation.fontWeight > 0) ? operation.fontWeight : 400;
+
+                        const weightToStyle = (weight: number): string => {
+                            if (weight <= 300) return 'Light';
+                            if (weight <= 400) return 'Regular';
+                            if (weight <= 500) return 'Medium';
+                            if (weight <= 600) return 'Semi Bold';
+                            if (weight <= 700) return 'Bold';
+                            return 'Extra Bold';
+                        };
+                        loadedFontStyle = weightToStyle(fontWeight);
+                    }
+
+                    // Load the font before any text operations
+                    let fontLoaded = false;
+                    try {
+                        await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
+                        fontLoaded = true;
+                    } catch (fontError) {
+                        // Try fallback to Regular style
+                        try {
+                            await figma.loadFontAsync({ family: loadedFontFamily, style: 'Regular' });
+                            loadedFontStyle = 'Regular';
+                            fontLoaded = true;
+                        } catch (fallbackError) {
+                            // Try Inter as final fallback
+                            try {
+                                await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+                                loadedFontFamily = 'Inter';
+                                loadedFontStyle = 'Regular';
+                                fontLoaded = true;
+                            } catch (finalError) {
+                                // Font loading failed, but we'll still try to update text
+                                // The font might already be loaded, or we can try to use existing font
+                                results.errors.push(`Warning: Failed to load font: ${loadedFontFamily} ${loadedFontStyle}. Will attempt text update anyway. Error: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
+                                // Don't continue - try to proceed with text update anyway
+                            }
+                        }
+                    }
+
+                    // Set font name to ensure it's active (only if font was successfully loaded)
+                    if (fontLoaded) {
+                        try {
+                            textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
+                        } catch (fontNameError) {
+                            // Continue anyway - font should be loaded
+                        }
+                    } else {
+                        // Try to get and use existing font if available
+                        try {
+                            const existingFont = textNode.fontName;
+                            if (typeof existingFont === 'object' && 'family' in existingFont && 'style' in existingFont) {
+                                // Use existing font - it should already be loaded
+                                loadedFontFamily = existingFont.family;
+                                loadedFontStyle = existingFont.style;
+                            }
+                        } catch {
+                            // If we can't get existing font, we'll try anyway
+                        }
+                    }
+
+                    // Update text content (font must be loaded first)
+                    // For modify operations, only update if textContent is provided and not empty
+                    // (empty string in modify operations typically means "don't change")
+                    if (operation.textContent !== undefined && operation.textContent !== null && operation.textContent.trim() !== '') {
+                        try {
+                            // Ensure font is loaded before setting characters
+                            if (!fontLoaded) {
+                                // Try one more time to load the font
+                                try {
+                                    await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
+                                    textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
+                                    fontLoaded = true;
+                                } catch {
+                                    // If still fails, try with existing font or Inter
+                                    try {
+                                        const existingFont = textNode.fontName;
+                                        if (typeof existingFont === 'object' && 'family' in existingFont && 'style' in existingFont) {
+                                            await figma.loadFontAsync({ family: existingFont.family, style: existingFont.style });
+                                            loadedFontFamily = existingFont.family;
+                                            loadedFontStyle = existingFont.style;
+                                        } else {
+                                            await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+                                            loadedFontFamily = 'Inter';
+                                            loadedFontStyle = 'Regular';
+                                        }
+                                        textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
+                                        fontLoaded = true;
+                                    } catch {
+                                        // Last resort - try to set anyway
+                                    }
+                                }
+                            }
+
+                            textNode.characters = operation.textContent;
+                        } catch (charError) {
+                            // Try reloading font and retrying
+                            try {
+                                await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
+                                textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
+                                textNode.characters = operation.textContent;
+                            } catch (retryError) {
+                                const errorMsg = `Failed to update text content for "${targetNode.name}": ${charError instanceof Error ? charError.message : String(charError)}`;
+                                results.errors.push(errorMsg);
+                            }
+                        }
+                    } else if (operation.textContent === '') {
+                        // Empty string explicitly provided - this might be intentional, but log it
+                        // Don't update if it's empty string (likely a placeholder)
+                    }
+
+                    // Update font size (font must be loaded first)
+                    if (operation.fontSize !== undefined && operation.fontSize > 0) {
+                        try {
+                            textNode.fontSize = operation.fontSize;
+                        } catch (sizeError) {
+                            results.errors.push(`Failed to update font size: ${sizeError instanceof Error ? sizeError.message : String(sizeError)}`);
+                        }
+                    }
+
+                    // Update text alignment (font must be loaded first)
+                    if (operation.textAlign) {
+                        const validAlignments = ['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED'];
+                        if (validAlignments.indexOf(operation.textAlign) !== -1) {
+                            try {
+                                textNode.textAlignHorizontal = operation.textAlign;
+                            } catch (alignError) {
+                                // Try reloading font and retrying
+                                try {
+                                    await figma.loadFontAsync({ family: loadedFontFamily, style: loadedFontStyle });
+                                    textNode.fontName = { family: loadedFontFamily, style: loadedFontStyle };
+                                    textNode.textAlignHorizontal = operation.textAlign;
+                                } catch (retryError) {
+                                    results.errors.push(`Failed to update text alignment: ${alignError instanceof Error ? alignError.message : String(alignError)}`);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 results.modified++;
