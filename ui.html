@@ -2,239 +2,314 @@
 <html>
 <head>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            padding: 16px;
+        * {
             margin: 0;
-            background: #ffffff;
-        }
-        h2 {
-            margin: 0 0 16px 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: #000000;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .section-title {
-            font-size: 12px;
-            font-weight: 500;
-            color: #666666;
-            margin-bottom: 8px;
-        }
-        input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 0;
             box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #FFF9F0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .logo-container {
+            margin-bottom: 24px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+        }
+        
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
             margin-bottom: 8px;
+            text-align: center;
         }
-        input:focus {
-            outline: none;
-            border-color: #18a0fb;
+        
+        .subtitle {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 32px;
+            line-height: 1.5;
+            max-width: 280px;
         }
+        
+        .button-container {
+            width: 100%;
+            max-width: 280px;
+        }
+        
         button {
             width: 100%;
-            padding: 8px 12px;
-            background: #18a0fb;
-            color: white;
+            padding: 14px 20px;
+            background: #1a1a1a;
+            color: #FFF9F0;
             border: none;
-            border-radius: 4px;
-            font-size: 12px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+        }
+        
+        button:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .stop-button {
+            background: #d4380d;
+        }
+        
+        .stop-button:hover {
+            background: #ad2102;
+        }
+        
+        .status {
+            width: 100%;
+            max-width: 280px;
+            font-size: 11px;
+            padding: 12px 16px;
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 8px;
+            line-height: 1.5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: none;
+        }
+        
+        .status.visible {
+            display: block;
+        }
+        
+        .status.processing {
+            color: #1a1a1a;
+            border-left: 3px solid #faad14;
+        }
+        
+        .status.success {
+            color: #237804;
+            border-left: 3px solid #52c41a;
+        }
+        
+        .status.error {
+            color: #cf1322;
+            border-left: 3px solid #f5222d;
+        }
+        
+        .interpretation {
+            width: 100%;
+            max-width: 280px;
+            margin-top: 16px;
+            padding: 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: none;
+        }
+        
+        .interpretation.visible {
+            display: block;
+        }
+        
+        .interpretation-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8b5cf6;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .interpretation-text {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.6;
             margin-bottom: 8px;
         }
-        button:hover {
-            background: #0d8ce8;
-        }
-        button:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-        }
-        .status {
-            font-size: 11px;
-            color: #666666;
-            margin-top: 4px;
-            min-height: 16px;
-        }
-        .match-button {
-            background: #7c3aed;
-            margin-top: 16px;
-        }
-        .match-button:hover {
-            background: #6d28d9;
-        }
-        .match-button:disabled {
-            background: #cccccc;
-        }
-        .processing {
-            font-size: 11px;
-            color: #18a0fb;
+        
+        .actions-count {
+            font-size: 10px;
+            color: #999;
             font-style: italic;
         }
-    .llm-response {
-        margin-top: 12px;
-        padding: 8px;
-        background: #f5f5f5;
-        border-radius: 4px;
-        font-size: 11px;
-        color: #333;
-        max-height: 150px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-    .output-box {
-        margin-top: 16px;
-        padding: 12px;
-        background: #f9f9f9;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        font-size: 11px;
-        color: #333;
-        max-height: 200px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-    .output-title {
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #000;
-    }
     </style>
 </head>
 <body>
-    <h2>Picasso - AI Style Matcher</h2>
-    
-    <div class="section">
-        <div class="section-title">OpenAI API Key</div>
-        <input type="password" id="api-key" placeholder="Enter your OpenAI API key (sk-...)" />
-    </div>
-
-    <div class="section">
-        <div class="section-title">Context Frame (Reference)</div>
-        <button id="select-context">Select Context Frame</button>
-        <div class="status" id="context-status">No frame selected</div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Canvas Frame (Target)</div>
-        <button id="select-canvas">Select Canvas Frame</button>
-        <div class="status" id="canvas-status">No frame selected</div>
-    </div>
-
-    <button id="match-style" class="match-button" disabled>Match Style with AI</button>
-    
-    <div id="processing-status" class="status processing" style="display: none;"></div>
-    
-    <div id="style-description-box" class="output-box" style="display: none;">
-        <div class="output-title">Style Description (from Context Frame)</div>
-        <div id="style-description-content"></div>
+    <div class="logo-container">
+        <img src="/picasso-logo-v1.png" alt="Picasso" class="logo">
     </div>
     
-    <div id="modification-instructions-box" class="output-box" style="display: none;">
-        <div class="output-title">Modification Instructions (for Canvas Frame)</div>
-        <div id="modification-instructions-content"></div>
+    <h1>Picasso</h1>
+    <p class="subtitle">Move any object and watch AI arrange the rest</p>
+    
+    <div class="button-container">
+        <button id="start-tracking">Start AI Tracking</button>
+        <button id="stop-tracking" class="stop-button" style="display: none;">Stop Tracking</button>
     </div>
+    
+    <div id="status" class="status"></div>
+    <div id="interpretation" class="interpretation"></div>
 
     <script>
-        let contextFrameId = null;
-        let canvasFrameId = null;
+        let isTracking = false;
 
-        // Request API key from plugin on load
-        parent.postMessage({ pluginMessage: { type: 'get-api-key' } }, '*');
-
-        // Save API key to clientStorage when changed
-        document.getElementById('api-key').addEventListener('change', (e) => {
-            const apiKey = e.target.value.trim();
-            parent.postMessage({ 
-                pluginMessage: { 
-                    type: 'save-api-key',
-                    apiKey: apiKey
-                } 
-            }, '*');
-        });
-
-        document.getElementById('select-context').onclick = () => {
-            parent.postMessage({ pluginMessage: { type: 'select-context' } }, '*');
+        document.getElementById('start-tracking').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
         };
 
-        document.getElementById('select-canvas').onclick = () => {
-            parent.postMessage({ pluginMessage: { type: 'select-canvas' } }, '*');
+        document.getElementById('stop-tracking').onclick = () => {
+            parent.postMessage({ pluginMessage: { type: 'stop-tracking' } }, '*');
         };
 
-        document.getElementById('match-style').onclick = () => {
-            const apiKey = document.getElementById('api-key').value.trim();
-            if (!apiKey) {
-                alert('Please enter your OpenAI API key');
-                return;
-            }
-            if (contextFrameId && canvasFrameId) {
-                parent.postMessage({ 
-                    pluginMessage: { 
-                        type: 'match-style',
-                        contextFrameId,
-                        canvasFrameId,
-                        apiKey
-                    } 
-                }, '*');
-            }
-        };
-
-        // Listen for messages from the plugin code
         window.onmessage = (event) => {
             const msg = event.data.pluginMessage;
-            if (msg.type === 'api-key-loaded') {
-                if (msg.apiKey) {
-                    document.getElementById('api-key').value = msg.apiKey;
-                    updateMatchButton();
-                }
-            } else if (msg.type === 'context-selected') {
-                contextFrameId = msg.frameId;
-                document.getElementById('context-status').textContent = msg.frameName || 'Frame selected';
-                updateMatchButton();
-            } else if (msg.type === 'canvas-selected') {
-                canvasFrameId = msg.frameId;
-                document.getElementById('canvas-status').textContent = msg.frameName || 'Frame selected';
-                console.log("selected canvas");
-                updateMatchButton();
+            const statusEl = document.getElementById('status');
+            const interpretationEl = document.getElementById('interpretation');
+            
+            if (msg.type === 'tracking-started') {
+                isTracking = true;
+                updateButtons();
+                statusEl.className = 'status visible success';
+                statusEl.textContent = '✓ Tracking active. Move any object!';
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'tracking-stopped') {
+                isTracking = false;
+                updateButtons();
+                statusEl.className = 'status visible';
+                statusEl.textContent = 'Tracking stopped.';
+                interpretationEl.className = 'interpretation';
             } else if (msg.type === 'processing') {
-                document.getElementById('processing-status').style.display = 'block';
-                document.getElementById('processing-status').textContent = msg.message;
-            } else if (msg.type === 'style-description-generated') {
-                document.getElementById('style-description-box').style.display = 'block';
-                document.getElementById('style-description-content').textContent = msg.styleDescription || '';
-            } else if (msg.type === 'modification-instructions-generated') {
-                document.getElementById('processing-status').style.display = 'none';
-                document.getElementById('modification-instructions-box').style.display = 'block';
-                const jsonContent = msg.modificationInstructions || '';
-                try {
-                    // Try to format JSON nicely
-                    const parsed = JSON.parse(jsonContent);
-                    document.getElementById('modification-instructions-content').textContent = JSON.stringify(parsed, null, 2);
-                } catch (e) {
-                    // If not valid JSON, display as-is
-                    document.getElementById('modification-instructions-content').textContent = jsonContent;
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = msg.message;
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'intent-extraction') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = '🧠 ' + msg.message;
+                interpretationEl.className = 'interpretation';
+            } else if (msg.type === 'intent-extracted') {
+                interpretationEl.className = 'interpretation visible';
+                interpretationEl.innerHTML = `
+                    <div class="interpretation-title">User Intent Detected</div>
+                    <div class="interpretation-text">${msg.intent}</div>
+                    <div class="actions-count">Pattern: ${msg.pattern}</div>
+                    <div style="font-size:10px;color:#666;margin-top:8px;">
+                        🔓 ${msg.objectsToMoveCount} object(s) to move • 
+                        🔒 ${msg.objectsToKeepFixedCount} object(s) fixed
+                    </div>
+                    <div style="font-size:10px;color:#999;margin-top:4px;">${msg.fixedReasoning}</div>
+                `;
+                statusEl.className = 'status visible success';
+                statusEl.textContent = '✅ Intent extracted. Starting arrangement...';
+            } else if (msg.type === 'arrangement-started') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = `🎯 Arranging to satisfy: "${msg.intent}"`;
+            } else if (msg.type === 'arrangement-iteration') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = `🔄 Arrangement iteration ${msg.iteration}/${msg.maxIterations}...`;
+            } else if (msg.type === 'arrangement-evaluation') {
+                if (msg.intentSatisfied) {
+                    statusEl.className = 'status visible success';
+                    statusEl.textContent = `✅ Iteration ${msg.iteration}: Intent perfectly satisfied!`;
+                } else {
+                    statusEl.className = 'status visible processing';
+                    statusEl.textContent = `⚙️ Iteration ${msg.iteration}: Applying ${msg.correctionsCount} correction(s)...`;
                 }
+            } else if (msg.type === 'arrangement-complete') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = msg.message;
+            } else if (msg.type === 'interpretation') {
+                interpretationEl.className = 'interpretation visible';
+                interpretationEl.innerHTML = `
+                    <div class="interpretation-title">AI Interpretation</div>
+                    <div class="interpretation-text">${msg.interpretation}</div>
+                    <div class="actions-count">${msg.actionsCount} layout ${msg.actionsCount === 1 ? 'change' : 'changes'} applied</div>
+                `;
+            } else if (msg.type === 'actions-applied') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = '✨ ' + msg.message;
+            } else if (msg.type === 'refinement-started') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = '🔄 ' + msg.message;
+            } else if (msg.type === 'validation-step') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = `🔍 ${msg.message}`;
+            } else if (msg.type === 'validation-result') {
+                if (msg.isAligned) {
+                    statusEl.className = 'status visible success';
+                    statusEl.textContent = `✅ Iteration ${msg.iteration}: Perfect alignment!`;
+                } else {
+                    statusEl.className = 'status visible processing';
+                    statusEl.textContent = `⚙️ Iteration ${msg.iteration}: Found ${msg.issues.length} issues, applying ${msg.suggestionsCount} fixes...`;
+                }
+            } else if (msg.type === 'refinement-complete') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = msg.message;
             } else if (msg.type === 'error') {
-                document.getElementById('processing-status').style.display = 'none';
-                alert(msg.message);
+                statusEl.className = 'status visible error';
+                statusEl.textContent = '⚠️ ' + msg.message;
+            } else if (msg.type === 'save-screenshot') {
+                // Save screenshot to downloads folder
+                saveScreenshot(msg.screenshot, msg.filename);
             }
         };
 
-        function updateMatchButton() {
-            const matchButton = document.getElementById('match-style');
-            const apiKey = document.getElementById('api-key').value.trim();
-            matchButton.disabled = !(contextFrameId && canvasFrameId && apiKey);
+        function saveScreenshot(base64Data, filename) {
+            try {
+                // Convert base64 to blob
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/png' });
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('Screenshot saved:', filename);
+            } catch (error) {
+                console.error('Failed to save screenshot:', error);
+            }
         }
 
-        // Update button state when API key changes
-        document.getElementById('api-key').addEventListener('input', updateMatchButton);
+        function updateButtons() {
+            const startButton = document.getElementById('start-tracking');
+            const stopButton = document.getElementById('stop-tracking');
+            
+            if (isTracking) {
+                startButton.style.display = 'none';
+                stopButton.style.display = 'block';
+            } else {
+                startButton.style.display = 'block';
+                stopButton.style.display = 'none';
+            }
+        }
+
+        updateButtons();
     </script>
 </body>
 </html>
