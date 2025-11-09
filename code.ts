@@ -1,6 +1,6 @@
 // ============================================================================
 // PICASSO - AI-Powered Layout Assistant for Figma
-// Architecture: Constraint-Based Multi-Stage Pipeline
+// Execution Agent Only
 // ============================================================================
 
 import { detectConstraints, isConstraintSatisfied } from './constraints';
@@ -141,6 +141,8 @@ interface LLMResponse {
     actions: LayoutAction[];
 }
 
+// ... all other functions commented out ...
+*/
 
 function captureCanvasState(frame?: FrameNode): CanvasState {
     const objects: CanvasObject[] = [];
@@ -779,65 +781,22 @@ IMPORTANT: Only suggest corrections for objects in the "objectsToMove" list.`;
 }
 
 
-async function arrangeUntilIntentSatisfied(userIntent: UserIntent): Promise<void> {
-    const MAX_ITERATIONS = 10;
-    let iteration = 0;
-    
-    figma.ui.postMessage({
-        type: 'arrangement-started',
-        intent: userIntent.description,
-    });
-    
-    while (iteration < MAX_ITERATIONS) {
-        iteration++;
-        
-        figma.ui.postMessage({
-            type: 'arrangement-iteration',
-            iteration,
-            maxIterations: MAX_ITERATIONS,
-        });
-        
-        // Capture current state
-        const currentState = captureCanvasState();
-        
-        // Evaluate if intent is satisfied
-        const evaluation = await evaluateArrangement(currentState, userIntent, iteration);
-        
-        figma.ui.postMessage({
-            type: 'arrangement-evaluation',
-            iteration,
-            intentSatisfied: evaluation.intentSatisfied,
-            issues: evaluation.issues,
-            correctionsCount: evaluation.corrections.length,
-        });
-        
-        // Log evaluation details for debugging
-        console.log(`Iteration ${iteration} Evaluation:`, {
-            intentSatisfied: evaluation.intentSatisfied,
-            issuesCount: evaluation.issues.length,
-            issues: evaluation.issues,
-            correctionsCount: evaluation.corrections.length,
-        });
-        
-        if (evaluation.intentSatisfied) {
+figma.ui.onmessage = async (msg) => {
+    // Handle API key requests
+    if (msg.type === 'get-api-key') {
+        try {
+            const storedKey = await figma.clientStorage.getAsync('openai_api_key');
+            OPENAI_API_KEY = storedKey || '';
             figma.ui.postMessage({
-                type: 'arrangement-complete',
-                message: `✨ Intent satisfied in ${iteration} iteration(s)!`,
-                iterations: iteration,
+                type: 'api-key-loaded',
+                apiKey: storedKey || '',
             });
-            figma.notify(`✨ Intent perfectly satisfied in ${iteration} iteration(s)!`);
-            return;
-        }
-        
-        if (evaluation.corrections.length === 0) {
-            console.log('No corrections suggested, but intent not satisfied. Issues:', evaluation.issues);
+        } catch (error) {
+            OPENAI_API_KEY = '';
             figma.ui.postMessage({
-                type: 'arrangement-complete',
-                message: `⚠️ No more corrections suggested after ${iteration} iteration(s).`,
-                iterations: iteration,
+                type: 'api-key-loaded',
+                apiKey: '',
             });
-            figma.notify(`Arrangement completed after ${iteration} iteration(s).`);
-            return;
         }
         
         // Apply corrections to satisfy intent (with validation)
@@ -1219,72 +1178,58 @@ async function refineLayoutUntilPerfect(initialActions: LayoutAction[]): Promise
         
         if (validation.isAligned) {
             figma.ui.postMessage({
-                type: 'refinement-complete',
-                message: `✨ Perfect alignment achieved in ${iteration} iteration(s)!`,
+                type: 'action-description-loaded',
+                description: storedDescription || '',
             });
-            figma.notify(`✨ Perfect alignment achieved in ${iteration} iteration(s)!`);
-            return;
-        }
-        
-        if (validation.suggestions.length === 0) {
+        } catch (error) {
             figma.ui.postMessage({
-                type: 'refinement-complete',
-                message: `No more refinements suggested after ${iteration} iteration(s).`,
+                type: 'action-description-loaded',
+                description: '',
             });
-            return;
         }
-        
-        // Apply refinement suggestions
-        await applyLayoutActions(validation.suggestions);
-        
-        // Small delay to let Figma update
-        await new Promise(resolve => setTimeout(resolve, 100));
+        return;
     }
-    
-    figma.ui.postMessage({
-        type: 'refinement-complete',
-        message: `Refinement completed after ${MAX_ITERATIONS} iterations.`,
-    });
-    figma.notify(`Alignment refinement completed after ${MAX_ITERATIONS} iterations.`);
-}
 
-
-async function applyLayoutActions(actions: LayoutAction[]): Promise<void> {
-    for (const action of actions) {
-        try {
-            const node = await figma.getNodeByIdAsync(action.objectId);
-            if (node && ('x' in node) && ('y' in node)) {
-                node.x = action.newX;
-                node.y = action.newY;
-                console.log(`Moved ${node.name}: ${action.reasoning}`);
-            }
-        } catch (e) {
-            console.log(`Failed to move object ${action.objectId}:`, e);
+    // Handle action description save
+    if (msg.type === 'save-action-description') {
+        if (msg.description !== undefined) {
+            await figma.clientStorage.setAsync('action_description', msg.description);
+            console.log('Action description saved to storage');
         }
+        return;
     }
-}
 
-async function applyLayoutActionsWithValidation(actions: LayoutAction[], fixedObjectIds: string[]): Promise<void> {
-    for (const action of actions) {
-        // Validate that we're not trying to move a fixed object
-        if (fixedObjectIds.indexOf(action.objectId) !== -1) {
-            console.warn(`⚠️ Skipping move for fixed object ${action.objectId}`);
-            figma.ui.postMessage({
-                type: 'error',
-                message: `Warning: Attempted to move fixed object (${action.objectId}). Skipped.`,
-            });
-            continue;
-        }
-        
-        try {
-            const node = await figma.getNodeByIdAsync(action.objectId);
-            if (node && ('x' in node) && ('y' in node)) {
-                node.x = action.newX;
-                node.y = action.newY;
-                console.log(`Moved ${node.name}: ${action.reasoning}`);
+    // COMMENTED OUT: start-tracking and stop-tracking handlers
+    /*
+    if (msg.type === 'start-tracking') {
+        // Store API key if provided
+        if (msg.apiKey) {
+            OPENAI_API_KEY = msg.apiKey;
+            await figma.clientStorage.setAsync('openai_api_key', msg.apiKey);
+        } else {
+            // Try to load from storage
+            const storedKey = await figma.clientStorage.getAsync('openai_api_key');
+            if (storedKey) {
+                OPENAI_API_KEY = storedKey;
             }
-        } catch (e) {
-            console.log(`Failed to move object ${action.objectId}:`, e);
+        }
+        await startTrackingEnhanced();
+    } else if (msg.type === 'stop-tracking') {
+        stopTracking();
+    } else 
+    */
+
+    if (msg.type === 'execute') {
+        // Store API key if provided
+        if (msg.apiKey) {
+            OPENAI_API_KEY = msg.apiKey;
+            await figma.clientStorage.setAsync('openai_api_key', msg.apiKey);
+        } else {
+            // Try to load from storage
+            const storedKey = await figma.clientStorage.getAsync('openai_api_key');
+            if (storedKey) {
+                OPENAI_API_KEY = storedKey;
+            }
         }
     }
 }
@@ -1294,35 +1239,16 @@ async function applyLayoutActionsWithValidation(actions: LayoutAction[], fixedOb
 // Multi-Stage Pipeline: Constraints → Quick Solve → Intent → LLM Refinement
 // ============================================================================
 
-async function arrangeWithConstraints(movement: MovementInfo, canvasState: CanvasState): Promise<void> {
-    try {
-        // STAGE 1: LLM extracts intent and defines target constraints
-        figma.ui.postMessage({ type: 'processing', message: '🤖 Analyzing user intent and desired layout...' });
-        
-        const intent = await extractUserIntent(canvasState, movement);
-        
-        figma.ui.postMessage({
-            type: 'intent-result',
-            intent: {
-                description: intent.description,
-                targetPattern: intent.targetPattern,
-                objectsToMove: intent.objectsToMove.length,
-                objectsToKeepFixed: intent.objectsToKeepFixed.length
-            }
-        });
-        
-        // STAGE 2: Iterative refinement until constraints are met
-        const MAX_ITERATIONS = 10;
-        let iteration = 0;
-        let allConstraintsMet = false;
-        let llmApproved = false;
-        
-        while (iteration < MAX_ITERATIONS && !llmApproved) {
-            iteration++;
-            
-            figma.ui.postMessage({ 
-                type: 'processing', 
-                message: `🔄 Iteration ${iteration}/${MAX_ITERATIONS}: Arranging objects...` 
+            const result = await executeNaturalLanguage(msg.description, OPENAI_API_KEY);
+
+            figma.ui.postMessage({
+                type: 'execution-complete',
+                success: result.success,
+                created: result.created,
+                modified: result.modified,
+                errors: result.errors,
+                summary: result.summary,
+                apiCalls: result.apiCalls,
             });
             
             // Get current state
@@ -1389,20 +1315,14 @@ async function arrangeWithConstraints(movement: MovementInfo, canvasState: Canva
                     });
                 }
             } else {
-                // Skip validation, just continue iterating
-                figma.ui.postMessage({ 
-                    type: 'processing', 
-                    message: `⏭️ Skipping validation (iteration ${iteration})` 
-                });
+                figma.notify(`⚠️ Execution completed with ${result.errors.length} error(s)`);
             }
-        }
-        
-        // Max iterations reached
-        if (iteration >= MAX_ITERATIONS) {
+        } catch (error) {
             figma.ui.postMessage({
-                type: 'success',
-                message: `⚠️ Layout adjusted (reached ${MAX_ITERATIONS} iterations limit)`
+                type: 'error',
+                message: error instanceof Error ? error.message : 'Failed to execute actions',
             });
+            figma.notify(`❌ Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
         
         // Update state

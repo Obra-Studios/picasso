@@ -17,6 +17,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-y: auto;
         }
 
         .logo-container {
@@ -150,6 +151,166 @@
             color: #999;
             font-style: italic;
         }
+
+        .input-group {
+            width: 100%;
+            max-width: 280px;
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fff;
+            color: #1a1a1a;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        input[type="password"] {
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .execute-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .execute-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .api-calls-box {
+            width: 100%;
+            max-width: 280px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .api-calls-box.visible {
+            display: block;
+        }
+
+        .api-calls-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-call-item {
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            border-left: 3px solid #1a1a1a;
+        }
+
+        .api-call-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .api-call-method {
+            font-size: 10px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .api-call-url {
+            font-size: 9px;
+            color: #666;
+            font-family: monospace;
+            word-break: break-all;
+            margin-bottom: 6px;
+        }
+
+        .api-call-section {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #eee;
+        }
+
+        .api-call-section-title {
+            font-size: 9px;
+            font-weight: 600;
+            color: #999;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .api-call-content {
+            font-size: 9px;
+            font-family: monospace;
+            color: #333;
+            background: #f5f5f5;
+            padding: 6px;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .api-call-status {
+            display: inline-block;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .api-call-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .api-call-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 
@@ -203,6 +364,11 @@
     <h1>Picasso</h1>
     <p class="subtitle">Move any object and watch AI arrange the rest</p>
 
+    <div class="input-group">
+        <label class="input-label" for="api-key">OpenAI API Key</label>
+        <input type="password" id="api-key" placeholder="sk-..." />
+    </div>
+
     <div class="button-container">
         <div style="margin-bottom: 16px;">
             <div style="font-size: 11px; font-weight: 500; color: #666; margin-bottom: 8px;">Frames</div>
@@ -227,8 +393,19 @@
         <button id="stop-tracking" class="stop-button" style="display: none;">Stop Tracking</button>
     </div>
 
+    <div class="execute-section">
+        <div class="execute-section-title">Execute Actions</div>
+        <div class="input-group">
+            <label class="input-label" for="action-description">Natural Language Actions</label>
+            <textarea id="action-description"
+                placeholder="Enter natural language description of actions to execute..."></textarea>
+        </div>
+        <button id="execute-button">Execute</button>
+    </div>
+
     <div id="status" class="status"></div>
     <div id="interpretation" class="interpretation"></div>
+    <div id="api-calls" class="api-calls-box"></div>
 
     <script>
         let isTracking = false;
@@ -236,7 +413,11 @@
         let canvasFrameId = null;
 
         document.getElementById('start-tracking').onclick = () => {
-            parent.postMessage({ pluginMessage: { type: 'start-tracking' } }, '*');
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key first');
+                return;
+            }
+            parent.postMessage({ pluginMessage: { type: 'start-tracking', apiKey: apiKey } }, '*');
         };
 
         document.getElementById('stop-tracking').onclick = () => {
@@ -362,9 +543,87 @@
             } else if (msg.type === 'error') {
                 statusEl.className = 'status visible error';
                 statusEl.textContent = '⚠️ ' + msg.message;
+            } else if (msg.type === 'execution-started') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = '🔄 Parsing and executing actions...';
+                interpretationEl.className = 'interpretation';
+                const apiCallsEl = document.getElementById('api-calls');
+                apiCallsEl.className = 'api-calls-box';
+                apiCallsEl.innerHTML = '';
+            } else if (msg.type === 'execution-progress') {
+                statusEl.className = 'status visible processing';
+                statusEl.textContent = msg.message;
+            } else if (msg.type === 'execution-complete') {
+                statusEl.className = 'status visible success';
+                statusEl.textContent = `✅ Execution complete! Created: ${msg.created}, Modified: ${msg.modified}`;
+
+                // Display API calls
+                const apiCallsEl = document.getElementById('api-calls');
+                if (msg.apiCalls && msg.apiCalls.length > 0) {
+                    apiCallsEl.className = 'api-calls-box visible';
+                    apiCallsEl.innerHTML = `
+                        <div class="api-calls-title">API Calls</div>
+                        ${msg.apiCalls.map((apiCall, index) => {
+                        const isSuccess = apiCall.response.status >= 200 && apiCall.response.status < 300;
+                        const requestBodyStr = JSON.stringify(apiCall.request.body, null, 2);
+                        const responseBodyStr = JSON.stringify(apiCall.response.body, null, 2);
+                        const timestamp = new Date(apiCall.timestamp).toLocaleTimeString();
+
+                        return `
+                                <div class="api-call-item">
+                                    <div class="api-call-method">${apiCall.request.method} ${apiCall.request.url}</div>
+                                    <div class="api-call-url">${timestamp}</div>
+                                    <span class="api-call-status ${isSuccess ? 'success' : 'error'}">
+                                        ${apiCall.response.status} ${apiCall.response.statusText}
+                                    </span>
+                                    <div class="api-call-section">
+                                        <div class="api-call-section-title">Request</div>
+                                        <div class="api-call-content">${escapeHtml(requestBodyStr)}</div>
+                                    </div>
+                                    <div class="api-call-section">
+                                        <div class="api-call-section-title">Response</div>
+                                        <div class="api-call-content">${escapeHtml(responseBodyStr)}</div>
+                                    </div>
+                                </div>
+                            `;
+                    }).join('')}
+                    `;
+                } else {
+                    apiCallsEl.className = 'api-calls-box';
+                }
+
+                if (msg.errors && msg.errors.length > 0) {
+                    statusEl.textContent += ` (${msg.errors.length} error(s))`;
+                    interpretationEl.className = 'interpretation visible';
+                    interpretationEl.innerHTML = `
+                        <div class="interpretation-title">Execution Errors</div>
+                        <div class="interpretation-text" style="font-size: 10px;">
+                            ${msg.errors.map(e => `• ${e}`).join('<br>')}
+                        </div>
+                    `;
+                } else {
+                    interpretationEl.className = 'interpretation visible';
+                    interpretationEl.innerHTML = `
+                        <div class="interpretation-title">Execution Summary</div>
+                        <div class="interpretation-text">${msg.summary || 'Actions executed successfully'}</div>
+                        <div class="actions-count">Created: ${msg.created} • Modified: ${msg.modified}</div>
+                    `;
+                }
             } else if (msg.type === 'save-screenshot') {
                 // Save screenshot to downloads folder
                 saveScreenshot(msg.screenshot, msg.filename);
+            } else if (msg.type === 'api-key-loaded') {
+                // Load API key from plugin storage
+                if (msg.apiKey) {
+                    document.getElementById('api-key').value = msg.apiKey;
+                    apiKey = msg.apiKey;
+                }
+            } else if (msg.type === 'action-description-loaded') {
+                // Load action description from plugin storage
+                const actionDescriptionEl = document.getElementById('action-description');
+                if (actionDescriptionEl && msg.description) {
+                    actionDescriptionEl.value = msg.description;
+                }
             }
         };
 
@@ -393,6 +652,12 @@
             } catch (error) {
                 console.error('Failed to save screenshot:', error);
             }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function updateButtons() {

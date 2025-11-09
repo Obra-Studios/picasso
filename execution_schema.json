@@ -1,0 +1,419 @@
+{
+    "type": "object",
+    "properties": {
+        "actions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the action"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "create",
+                            "modify"
+                        ],
+                        "description": "Action type: 'create' to create new object, 'modify' to modify existing object"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description of what this action does"
+                    },
+                    "constraints": {
+                        "type": "array",
+                        "items": {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "position"
+                                            ]
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "targetId": {
+                                            "type": "string"
+                                        },
+                                        "parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "containerId": {
+                                                    "type": "string"
+                                                },
+                                                "padding": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "top": {
+                                                            "type": "number"
+                                                        },
+                                                        "right": {
+                                                            "type": "number"
+                                                        },
+                                                        "bottom": {
+                                                            "type": "number"
+                                                        },
+                                                        "left": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "top",
+                                                        "right",
+                                                        "bottom",
+                                                        "left"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                "xRange": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "min": {
+                                                            "type": "number"
+                                                        },
+                                                        "max": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "min",
+                                                        "max"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                "yRange": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "min": {
+                                                            "type": "number"
+                                                        },
+                                                        "max": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "min",
+                                                        "max"
+                                                    ],
+                                                    "additionalProperties": false
+                                                }
+                                            },
+                                            "required": [
+                                                "containerId",
+                                                "padding",
+                                                "xRange",
+                                                "yRange"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "type",
+                                        "description",
+                                        "targetId",
+                                        "parameters"
+                                    ],
+                                    "additionalProperties": false
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "size"
+                                            ]
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "targetId": {
+                                            "type": "string"
+                                        },
+                                        "parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "width": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "operator": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "eq",
+                                                                "min",
+                                                                "max",
+                                                                "range"
+                                                            ]
+                                                        },
+                                                        "value": {
+                                                            "type": "number"
+                                                        },
+                                                        "min": {
+                                                            "type": "number"
+                                                        },
+                                                        "max": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "operator",
+                                                        "value",
+                                                        "min",
+                                                        "max"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                "height": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "operator": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "eq",
+                                                                "min",
+                                                                "max",
+                                                                "range"
+                                                            ]
+                                                        },
+                                                        "value": {
+                                                            "type": "number"
+                                                        },
+                                                        "min": {
+                                                            "type": "number"
+                                                        },
+                                                        "max": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "operator",
+                                                        "value",
+                                                        "min",
+                                                        "max"
+                                                    ],
+                                                    "additionalProperties": false
+                                                }
+                                            },
+                                            "required": [
+                                                "width",
+                                                "height"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "type",
+                                        "description",
+                                        "targetId",
+                                        "parameters"
+                                    ],
+                                    "additionalProperties": false
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "spacing"
+                                            ]
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "targetId": {
+                                            "type": "string"
+                                        },
+                                        "parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "referenceId": {
+                                                    "type": "string"
+                                                },
+                                                "direction": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "horizontal",
+                                                        "vertical"
+                                                    ]
+                                                },
+                                                "distance": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "operator": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "eq",
+                                                                "min",
+                                                                "max"
+                                                            ]
+                                                        },
+                                                        "value": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "operator",
+                                                        "value"
+                                                    ],
+                                                    "additionalProperties": false
+                                                }
+                                            },
+                                            "required": [
+                                                "referenceId",
+                                                "direction",
+                                                "distance"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "type",
+                                        "description",
+                                        "targetId",
+                                        "parameters"
+                                    ],
+                                    "additionalProperties": false
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "color"
+                                            ]
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "targetId": {
+                                            "type": "string"
+                                        },
+                                        "parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "property": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "fill",
+                                                        "stroke"
+                                                    ]
+                                                },
+                                                "value": {
+                                                    "oneOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "r": {
+                                                                    "type": "number",
+                                                                    "minimum": 0,
+                                                                    "maximum": 1
+                                                                },
+                                                                "g": {
+                                                                    "type": "number",
+                                                                    "minimum": 0,
+                                                                    "maximum": 1
+                                                                },
+                                                                "b": {
+                                                                    "type": "number",
+                                                                    "minimum": 0,
+                                                                    "maximum": 1
+                                                                },
+                                                                "a": {
+                                                                    "type": "number",
+                                                                    "minimum": 0,
+                                                                    "maximum": 1
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "r",
+                                                                "g",
+                                                                "b",
+                                                                "a"
+                                                            ],
+                                                            "additionalProperties": false
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "property",
+                                                "value"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "type",
+                                        "description",
+                                        "targetId",
+                                        "parameters"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "description",
+                    "constraints"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "type": "number"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "intent": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "timestamp",
+                "model",
+                "intent"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "actions",
+        "metadata"
+    ],
+    "additionalProperties": false
+}
